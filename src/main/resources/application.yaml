@@ -1,6 +1,9 @@
 spring:
   application:
     name: Auto Casting
+  profiles:
+    active:
+      - dev
   datasource:
     hikari:
       connection-timeout: 20000
