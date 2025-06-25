@@ -25,7 +25,7 @@ public class AuthServiceImpl implements AuthService {
         boolean exists = userRepository.existsByEmail(request.email());
 
         if (exists) {
-            throw new IllegalArgumentException("auth.user_exists|" + request.email());
+            throw new IllegalArgumentException("auth.user_exists" + "|" + request.email());
         }
 
         var user = new UserEntity();

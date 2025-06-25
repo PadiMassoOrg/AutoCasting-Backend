@@ -2,15 +2,20 @@ package com.padimasso.autocasting.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -19,25 +24,50 @@ public class GlobalExceptionHandler {
 
     private final MessageSource messageSource;
 
-    private ResponseEntity<ApiErrorResponse> buildResponse(
-            HttpStatus status,
-            String messageKey,
-            Object[] args,
+    // Authentication
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(
+            MethodArgumentNotValidException ex,
             HttpServletRequest request,
             Locale locale
     ) {
-        String message = messageSource.getMessage(messageKey, args, locale);
+        Map<String, String> fieldErrors = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            String field = error.getField();
+            String key = error.getDefaultMessage();
+            assert key != null;
+            String message = messageSource.getMessage(key, null, locale);
+            fieldErrors.put(field, message);
+        });
+
         var error = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .message(message)
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Validation Error")
                 .path(request.getRequestURI())
+                .errors(fieldErrors)
                 .build();
-        return ResponseEntity.status(status).body(error);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingParam(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request,
+            Locale locale
+    ) {
+        var error = ApiErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Missing required parameter: " + ex.getParameterName())
+                .path(request.getRequestURI())
+                .build();
 
-    // Authentication
+        return ResponseEntity.badRequest().body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
             IllegalArgumentException ex,
@@ -66,5 +96,22 @@ public class GlobalExceptionHandler {
                 request,
                 locale
         );
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildResponse(
+            HttpStatus status,
+            String messageKey,
+            Object[] args,
+            HttpServletRequest request,
+            Locale locale
+    ) {
+        String message = messageSource.getMessage(messageKey, args, locale);
+        var error = ApiErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .message(message)
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(status).body(error);
     }
 }

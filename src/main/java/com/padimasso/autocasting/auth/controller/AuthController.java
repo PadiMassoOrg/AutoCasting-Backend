@@ -4,6 +4,7 @@ import com.padimasso.autocasting.auth.dto.request.LoginRequest;
 import com.padimasso.autocasting.auth.dto.request.RegisterRequest;
 import com.padimasso.autocasting.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.auth.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,12 +24,12 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping(REGISTER_API_URL)
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping(LOGIN_API_URL)
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 }
