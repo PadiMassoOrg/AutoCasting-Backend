@@ -1,6 +1,17 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="AutoCasting Backend [DEV]" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
+      <option name="env">
+        <map>
+          <entry key="DATABASE_PASSWORD" value="root" />
+          <entry key="DATABASE_URL" value="jdbc:postgresql://localhost:5434/autocasting" />
+          <entry key="DATABASE_USERNAME" value="postgres" />
+          <entry key="FRONTEND_URL" value="http://localhost:5173" />
+          <entry key="GOOGLE_CLIENT_ID" value="862485855125-8b3kgvqgaktfk8ifdnlfd1cljd0c9e0d.apps.googleusercontent.com" />
+          <entry key="GOOGLE_CLIENT_SECRET" value="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" />
+          <entry key="GOOGLE_REDIRECT_URL" value="http://localhost:8080" />
+        </map>
+      </option>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
@@ -11,7 +22,6 @@
       <option name="taskNames">
         <list>
           <option value="bootRun" />
-          <option value="--args='--spring.profiles.active=dev'" />
         </list>
       </option>
       <option name="vmOptions" />

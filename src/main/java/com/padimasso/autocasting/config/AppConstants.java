@@ -23,13 +23,14 @@ public class AppConstants {
     public static final String TEST_USER_API_URL = TEST_API_URL + "/user";
     public static final String TEST_ADMIN_API_URL = TEST_API_URL + "/admin";
 
-    // Profile
-    public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
-
     /*
      * Spring Security
      */
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
-    public static final long EXPIRATION_TIME = 864_000_000; // 10 days
+    public static final long EXPIRATION_TIME = 86400; // 10 days
+
+    /*
+     * Spring Security
+     */
 }

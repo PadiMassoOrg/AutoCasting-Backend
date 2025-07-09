@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         var user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("auth.user_not_found|" + request.email()));
+                .orElseThrow(() -> new IllegalArgumentException("auth.invalid_credentials|" + request.email()));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException("auth.invalid_credentials");
