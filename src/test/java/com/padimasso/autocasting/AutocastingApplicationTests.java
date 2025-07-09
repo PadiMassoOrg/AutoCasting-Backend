@@ -6,9 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class AutocastingApplicationTests {
 
-	@Test
-	void contextLoads() {
-		// Empty
-	}
+    @Test
+    void contextLoads() {
+        // Empty
+    }
 
 }

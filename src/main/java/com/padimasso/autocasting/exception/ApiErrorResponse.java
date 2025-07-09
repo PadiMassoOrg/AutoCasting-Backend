@@ -12,4 +12,5 @@ public record ApiErrorResponse(
         String message,
         Map<String, String> errors,
         String path
-) {}
+) {
+}
