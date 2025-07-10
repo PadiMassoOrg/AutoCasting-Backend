@@ -36,14 +36,17 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
         if (original == null) return null;
 
         String role = request.getParameter("role");
-        if (role == null) throw new RuntimeException("Missing role param");
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("oauth.role_missing");
+        }
 
         Map<String, Object> additionalParams = new HashMap<>(original.getAdditionalParameters());
         additionalParams.put("role", role);
 
         return OAuth2AuthorizationRequest.from(original)
-                .additionalParameters(additionalParams)
-                .state(role) // usamos `state` como transporte
-                .build();
+            .additionalParameters(additionalParams)
+            .additionalParameters(params -> params.put("prompt", "select_account"))
+            .state(role) // usamos `state` como transporte
+            .build();
     }
 }

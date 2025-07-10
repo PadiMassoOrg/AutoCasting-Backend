@@ -34,13 +34,13 @@ public class JwtServiceImpl implements JwtService {
         claims.put("role", user.getRole().name());
 
         return Jwts.builder()
-                .claims(claims)
-                .subject(user.getEmail())
-                .issuer(ISSUER)
-                .issuedAt(new Date())
-                .expiration(Date.from(Instant.now().plusSeconds(EXPIRATION_TIME)))
-                .signWith(getSignInKey())
-                .compact();
+            .claims(claims)
+            .subject(user.getEmail())
+            .issuer(ISSUER)
+            .issuedAt(new Date())
+            .expiration(Date.from(Instant.now().plusSeconds(EXPIRATION_TIME)))
+            .signWith(getSignInKey())
+            .compact();
     }
 
     public String extractEmail(String token) {
@@ -59,9 +59,9 @@ public class JwtServiceImpl implements JwtService {
 
     private Jws<Claims> getClaims(String token) {
         return Jwts.parser()
-                .verifyWith((SecretKey) getSignInKey())
-                .build()
-                .parseSignedClaims(token);
+            .verifyWith((SecretKey) getSignInKey())
+            .build()
+            .parseSignedClaims(token);
     }
 }
 

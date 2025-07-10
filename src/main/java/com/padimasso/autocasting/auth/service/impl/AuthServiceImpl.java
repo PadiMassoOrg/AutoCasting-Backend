@@ -25,7 +25,8 @@ public class AuthServiceImpl implements AuthService {
         boolean exists = userRepository.existsByEmail(request.email());
 
         if (exists) {
-            throw new IllegalArgumentException("auth.user_exists" + "|" + request.email());
+            var userExistsErr = "auth.user_exists";
+            throw new IllegalArgumentException(userExistsErr + "|" + request.email());
         }
 
         var user = new UserEntity();
@@ -42,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         var user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("auth.invalid_credentials|" + request.email()));
+            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_credentials|" + request.email()));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException("auth.invalid_credentials");

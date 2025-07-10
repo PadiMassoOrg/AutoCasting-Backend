@@ -20,8 +20,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2User user = new DefaultOAuth2UserService().loadUser(userRequest);
 
         String role = userRequest.getAdditionalParameters().get("role") != null
-                ? userRequest.getAdditionalParameters().get("role").toString()
-                : userRequest.getClientRegistration().getClientName(); // fallback
+            ? userRequest.getAdditionalParameters().get("role").toString()
+            : userRequest.getClientRegistration().getClientName(); // fallback
 
         return unifiedOAuthUserService.loadUser(userRequest, user, role);
     }

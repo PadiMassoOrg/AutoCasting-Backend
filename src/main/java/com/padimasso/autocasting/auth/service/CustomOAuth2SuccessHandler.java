@@ -31,13 +31,13 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String email = oAuth2User.getAttribute("email");
 
         if (email == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Email not found in OAuth2User");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "oauth.google.user_missing_email");
             return;
         }
 
         Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not registered in database");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "auth.user_not_found");
             return;
         }
 

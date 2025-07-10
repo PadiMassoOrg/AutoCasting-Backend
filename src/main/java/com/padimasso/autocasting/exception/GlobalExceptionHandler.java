@@ -26,11 +26,10 @@ public class GlobalExceptionHandler {
 
     // Authentication
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request,
-            Locale locale
-    ) {
+    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex,
+                                                                       HttpServletRequest request,
+                                                                       Locale locale) {
+
         Map<String, String> fieldErrors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error -> {
@@ -53,11 +52,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiErrorResponse> handleMissingParam(
-            MissingServletRequestParameterException ex,
-            HttpServletRequest request,
-            Locale locale
-    ) {
+    public ResponseEntity<ApiErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
+                                                               HttpServletRequest request,
+                                                               Locale locale) {
         var error = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -69,11 +66,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
-            IllegalArgumentException ex,
-            HttpServletRequest request,
-            Locale locale
-    ) {
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
+                                                                  HttpServletRequest request,
+                                                                  Locale locale) {
         // Ejemplo de mensaje: "user.exists|test@email.com"
         String[] parts = ex.getMessage().split("\\|");
         String key = parts[0];
@@ -84,11 +79,9 @@ public class GlobalExceptionHandler {
 
     // General
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleAnyException(
-            Exception ex,
-            HttpServletRequest request,
-            Locale locale
-    ) {
+    public ResponseEntity<ApiErrorResponse> handleAnyException(Exception ex,
+                                                               HttpServletRequest request,
+                                                               Locale locale) {
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "general.unexpected",
@@ -98,13 +91,11 @@ public class GlobalExceptionHandler {
         );
     }
 
-    private ResponseEntity<ApiErrorResponse> buildResponse(
-            HttpStatus status,
-            String messageKey,
-            Object[] args,
-            HttpServletRequest request,
-            Locale locale
-    ) {
+    private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status,
+                                                           String messageKey,
+                                                           Object[] args,
+                                                           HttpServletRequest request,
+                                                           Locale locale) {
         String message = messageSource.getMessage(messageKey, args, locale);
         var error = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())

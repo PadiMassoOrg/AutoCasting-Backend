@@ -20,8 +20,8 @@ public class CustomOidcUserService implements OAuth2UserService<OidcUserRequest,
         OidcUser oidcUser = new OidcUserService().loadUser(userRequest);
 
         String role = userRequest.getAdditionalParameters().get("role") != null
-                ? userRequest.getAdditionalParameters().get("role").toString()
-                : userRequest.getClientRegistration().getClientName(); // fallback
+            ? userRequest.getAdditionalParameters().get("role").toString()
+            : userRequest.getClientRegistration().getClientName(); // fallback
 
         return unifiedOAuthUserService.loadUser(userRequest, oidcUser, role);
     }
