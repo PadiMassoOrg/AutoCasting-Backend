@@ -8,8 +8,6 @@ import com.padimasso.autocasting.auth.repository.UserRepository;
 import com.padimasso.autocasting.auth.service.AuthService;
 import com.padimasso.autocasting.auth.service.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +19,20 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final AuthenticationManager authManager;
 
+    @Override
     public AuthResponse register(RegisterRequest request) {
+        boolean exists = userRepository.existsByEmail(request.email());
+
+        if (exists) {
+            var userExistsErr = "auth.user_exists";
+            throw new IllegalArgumentException(userExistsErr + "|" + request.email());
+        }
+
         var user = new UserEntity();
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole(request.role()); // ACTOR o CASTINERA
+        user.setRole(request.role());
 
         userRepository.save(user);
 
@@ -35,13 +40,14 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponse(jwt);
     }
 
+    @Override
     public AuthResponse login(LoginRequest request) {
-        authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
-
         var user = userRepository.findByEmail(request.email())
-                .orElseThrow();
+            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_credentials|" + request.email()));
+
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new IllegalArgumentException("auth.invalid_credentials");
+        }
 
         String jwt = jwtService.generateToken(user);
         return new AuthResponse(jwt);

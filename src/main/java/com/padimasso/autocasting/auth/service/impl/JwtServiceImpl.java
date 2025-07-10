@@ -17,11 +17,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.padimasso.autocasting.config.AppConstants.*;
+
 @Service
 @SuppressWarnings("unused")
 public class JwtServiceImpl implements JwtService {
 
-    private static final String SECRET = "mysupersecurekeyforhs256mustbe32chars";
 
     private Key getSignInKey() {
         byte[] keyBytes = SECRET.getBytes(StandardCharsets.UTF_8);
@@ -33,12 +34,13 @@ public class JwtServiceImpl implements JwtService {
         claims.put("role", user.getRole().name());
 
         return Jwts.builder()
-                .claims(claims)
-                .subject(user.getEmail())
-                .issuedAt(new Date())
-                .expiration(Date.from(Instant.now().plusSeconds(86400)))
-                .signWith(getSignInKey())
-                .compact();
+            .claims(claims)
+            .subject(user.getEmail())
+            .issuer(ISSUER)
+            .issuedAt(new Date())
+            .expiration(Date.from(Instant.now().plusSeconds(EXPIRATION_TIME)))
+            .signWith(getSignInKey())
+            .compact();
     }
 
     public String extractEmail(String token) {
@@ -57,9 +59,9 @@ public class JwtServiceImpl implements JwtService {
 
     private Jws<Claims> getClaims(String token) {
         return Jwts.parser()
-                .verifyWith((SecretKey) getSignInKey())
-                .build()
-                .parseSignedClaims(token);
+            .verifyWith((SecretKey) getSignInKey())
+            .build()
+            .parseSignedClaims(token);
     }
 }
 

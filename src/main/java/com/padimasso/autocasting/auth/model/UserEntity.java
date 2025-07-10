@@ -26,13 +26,11 @@ public class UserEntity implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    // en el futuro podés agregar: plan, nombre, fotos, etc.
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -25,7 +25,7 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
         String password = authentication.getCredentials().toString();
 
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
