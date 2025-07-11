@@ -41,12 +41,12 @@ public class GlobalExceptionHandler {
         });
 
         var error = ApiErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message("Validation Error")
-                .path(request.getRequestURI())
-                .errors(fieldErrors)
-                .build();
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .message("Validation Error")
+            .path(request.getRequestURI())
+            .errors(fieldErrors)
+            .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -56,11 +56,11 @@ public class GlobalExceptionHandler {
                                                                HttpServletRequest request,
                                                                Locale locale) {
         var error = ApiErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message("Missing required parameter: " + ex.getParameterName())
-                .path(request.getRequestURI())
-                .build();
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .message("Missing required parameter: " + ex.getParameterName())
+            .path(request.getRequestURI())
+            .build();
 
         return ResponseEntity.badRequest().body(error);
     }
@@ -83,11 +83,11 @@ public class GlobalExceptionHandler {
                                                                HttpServletRequest request,
                                                                Locale locale) {
         return buildResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "general.unexpected",
-                new Object[]{ex.getMessage()},
-                request,
-                locale
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "general.unexpected",
+            new Object[]{ex.getMessage()},
+            request,
+            locale
         );
     }
 
@@ -98,11 +98,11 @@ public class GlobalExceptionHandler {
                                                            Locale locale) {
         String message = messageSource.getMessage(messageKey, args, locale);
         var error = ApiErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .message(message)
-                .path(request.getRequestURI())
-                .build();
+            .timestamp(LocalDateTime.now())
+            .status(status.value())
+            .message(message)
+            .path(request.getRequestURI())
+            .build();
         return ResponseEntity.status(status).body(error);
     }
 }

@@ -46,34 +46,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(
-                        request -> request
-                                // Test Endpoints
-                                .requestMatchers(HttpMethod.GET, AppConstants.TEST_ADMIN_API_URL)
-                                .hasRole(String.valueOf(Role.CASTINERA))
-                                .requestMatchers(HttpMethod.GET, AppConstants.TEST_USER_API_URL)
-                                .hasRole(String.valueOf(Role.ACTOR))
-                                // Any
-                                .anyRequest().permitAll())
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(endpoint -> endpoint
-                                .authorizationRequestResolver(customAuthorizationRequestResolver)
-                        )
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .oidcUserService(customOidcUserService)
-                                .userService(customOAuth2UserService)
-                        )
-                        .successHandler(customOAuth2SuccessHandler)
-                        .failureHandler(customOAuth2FailureHandler)
+                request -> request
+                    // Test Endpoints
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ADMIN_API_URL)
+                    .hasRole(String.valueOf(Role.CASTINERA))
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_USER_API_URL)
+                    .hasRole(String.valueOf(Role.ACTOR))
+                    // Any
+                    .anyRequest().permitAll())
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(endpoint -> endpoint
+                    .authorizationRequestResolver(customAuthorizationRequestResolver)
                 )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider)
+                .userInfoEndpoint(userInfo -> userInfo
+                    .oidcUserService(customOidcUserService)
+                    .userService(customOAuth2UserService)
+                )
+                .successHandler(customOAuth2SuccessHandler)
+                .failureHandler(customOAuth2FailureHandler)
+            )
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider)
 
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
