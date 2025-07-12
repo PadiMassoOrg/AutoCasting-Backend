@@ -17,7 +17,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -32,19 +34,17 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class SecurityConfig {
 
+    private final AppProperties appProperties;
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final ClientRegistrationRepository clientRegistrationRepository;
-    private final CustomOidcUserService customOidcUserService;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final CustomAuthorizationRequestResolver customAuthorizationRequestResolver;
-    private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
-    private final CustomOAuth2FailureHandler customOAuth2FailureHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   ClientRegistrationRepository clientRegistrationRepository,
+                                                   GoogleOidcUserService oidcSrv,
+                                                   GoogleOauth2UserService oauthSrv) throws Exception {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
@@ -58,17 +58,13 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
-            .oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(endpoint -> endpoint
-                    .authorizationRequestResolver(customAuthorizationRequestResolver)
-                )
-                .userInfoEndpoint(userInfo -> userInfo
-                    .oidcUserService(customOidcUserService)
-                    .userService(customOAuth2UserService)
-                )
-                .successHandler(customOAuth2SuccessHandler)
-                .failureHandler(customOAuth2FailureHandler)
-            )
+            .oauth2Login(o -> o
+                .authorizationEndpoint(a -> a
+                    .authorizationRequestResolver(new CustomAuthorizationRequestResolver(clientRegistrationRepository)))
+                .userInfoEndpoint(ui -> ui
+                    .oidcUserService(oidcSrv)   // OIDC
+                    .userService(oauthSrv))     // OAuth2
+                .successHandler(customOAuth2SuccessHandler()))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
@@ -81,6 +77,17 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
+    }
+
+
+    @Bean
+    public OAuth2AuthorizationRequestResolver customAuthorizationRequestResolver(ClientRegistrationRepository repo) {
+        return new CustomAuthorizationRequestResolver(repo);
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler customOAuth2SuccessHandler() {
+        return new CustomOAuth2SuccessHandler(appProperties, jwtService, userRepository);
     }
 
     @Bean

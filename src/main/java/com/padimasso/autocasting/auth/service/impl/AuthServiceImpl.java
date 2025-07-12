@@ -6,6 +6,7 @@ import com.padimasso.autocasting.auth.dto.request.RegisterRequest;
 import com.padimasso.autocasting.auth.dto.request.ResetPasswordRequest;
 import com.padimasso.autocasting.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.auth.dto.response.ForgotPasswordResponse;
+import com.padimasso.autocasting.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.auth.model.UserEntity;
 import com.padimasso.autocasting.auth.repository.UserRepository;
 import com.padimasso.autocasting.auth.service.AuthService;
@@ -36,14 +37,16 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException(userExistsErr + "|" + request.email());
         }
 
-        var user = new UserEntity();
-        user.setEmail(request.email());
-        user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole(request.role());
+        var user = UserEntity.builder()
+            .email(request.email())
+            .role(request.role())
+            .password(passwordEncoder.encode(request.password()))
+            .userAccountProvider(UserAccountProvider.LOCAL)
+            .build();
 
         userRepository.save(user);
-
         String jwt = jwtService.generateToken(user);
+        
         return new AuthResponse(jwt);
     }
 

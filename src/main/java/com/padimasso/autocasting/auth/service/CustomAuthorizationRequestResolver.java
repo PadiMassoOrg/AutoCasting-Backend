@@ -5,48 +5,45 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
-@Component
-@SuppressWarnings("unused")
-public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
 
-    private final OAuth2AuthorizationRequestResolver defaultResolver;
+public class CustomAuthorizationRequestResolver
+    implements OAuth2AuthorizationRequestResolver {
+
+    private final DefaultOAuth2AuthorizationRequestResolver delegate;
 
     public CustomAuthorizationRequestResolver(ClientRegistrationRepository repo) {
-        this.defaultResolver = new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+        this.delegate = new DefaultOAuth2AuthorizationRequestResolver(
+            repo, "/oauth2/authorization");
     }
 
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
-        OAuth2AuthorizationRequest original = defaultResolver.resolve(request);
-        return customizeRequest(request, original);
+        return customize(delegate.resolve(request), request);
     }
 
     @Override
-    public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientId) {
-        OAuth2AuthorizationRequest original = defaultResolver.resolve(request, clientId);
-        return customizeRequest(request, original);
+    public OAuth2AuthorizationRequest resolve(HttpServletRequest request,
+                                              String clientId) {
+        return customize(delegate.resolve(request, clientId), request);
     }
 
-    private OAuth2AuthorizationRequest customizeRequest(HttpServletRequest request, OAuth2AuthorizationRequest original) {
+    private OAuth2AuthorizationRequest customize(OAuth2AuthorizationRequest original,
+                                                 HttpServletRequest req) {
         if (original == null) return null;
 
-        String role = request.getParameter("role");
-        if (role == null || role.isBlank()) {
-            throw new IllegalArgumentException("oauth.role_missing");
+        String role = req.getParameter("role");
+        String nonce = UUID.randomUUID().toString();
+
+        OAuth2AuthorizationRequest.Builder builder =
+            OAuth2AuthorizationRequest.from(original)
+                .additionalParameters(p -> p.put("prompt", "select_account"));
+
+        if (role != null && !role.isBlank()) {
+            builder.state(nonce + ":" + role);               // <nonce>:<ACTOR>
         }
-
-        Map<String, Object> additionalParams = new HashMap<>(original.getAdditionalParameters());
-        additionalParams.put("role", role);
-
-        return OAuth2AuthorizationRequest.from(original)
-            .additionalParameters(additionalParams)
-            .additionalParameters(params -> params.put("prompt", "select_account"))
-            .state(role) // usamos `state` como transporte
-            .build();
+        return builder.build();
     }
 }
