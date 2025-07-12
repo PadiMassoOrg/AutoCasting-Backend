@@ -46,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
         String jwt = jwtService.generateToken(user);
-        
+
         return new AuthResponse(jwt);
     }
 
@@ -67,6 +67,10 @@ public class AuthServiceImpl implements AuthService {
     public ForgotPasswordResponse sendResetPasswordEmail(ForgotPasswordRequest request) {
         var user = userRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("auth.user_not_found|" + request.email()));
+
+        if (user.getUserAccountProvider() != UserAccountProvider.LOCAL) {
+            throw new IllegalArgumentException("auth.password_reset_external");
+        }
 
         String token = jwtService.generateToken(user); // Expira en 15 min
 
