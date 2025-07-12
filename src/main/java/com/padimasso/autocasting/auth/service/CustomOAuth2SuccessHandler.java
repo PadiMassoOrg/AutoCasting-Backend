@@ -9,43 +9,31 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Optional;
 
-@Component
 @RequiredArgsConstructor
-@SuppressWarnings("unused")
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final AppProperties appProperties;
     private final JwtService jwtService;
-    private final UserRepository userRepository;
+    private final UserRepository userRepo;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest req,
+                                        HttpServletResponse res,
+                                        Authentication auth) throws IOException {
 
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
+        OAuth2User principal = (OAuth2User) auth.getPrincipal();
+        String email = principal.getAttribute("email");
 
-        if (email == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "oauth.google.user_missing_email");
-            return;
-        }
+        UserEntity user = userRepo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("oauth.google.user_missing_email"));
 
-        Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "auth.user_not_found");
-            return;
-        }
-
-        UserEntity user = optionalUser.get();
         String jwt = jwtService.generateToken(user);
 
         // Redirigir con el token como query param
-        String redirectUrl = appProperties.getFrontendUrl() + "?token=" + jwt;
-        response.sendRedirect(redirectUrl);
+        String redirectUrl = appProperties.getOauthSuccessUrl() + "?token=" + jwt;
+        res.sendRedirect(redirectUrl);
     }
 }

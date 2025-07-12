@@ -11,7 +11,5 @@ import org.springframework.stereotype.Component;
 @Setter
 public class AppProperties {
     private String frontendUrl;
-    private Integer jwtExpirationMinutes;
-    private String oauthRedirectPath;
-    private Boolean someFeatureFlag;
+    private String oauthSuccessUrl;
 }
