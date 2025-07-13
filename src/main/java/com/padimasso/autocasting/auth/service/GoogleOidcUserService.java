@@ -32,8 +32,8 @@ public class GoogleOidcUserService implements OAuth2UserService<OidcUserRequest,
             provision.ensureUser(
                 oidc.getAttribute("email"),
                 role,
-                oidc.getGivenName() + oidc.getFamilyName());
-            
+                oidc.getGivenName() + " " + oidc.getFamilyName());
+
             return oidc;
         } catch (OAuth2AuthenticationException e) {
             throw e;
