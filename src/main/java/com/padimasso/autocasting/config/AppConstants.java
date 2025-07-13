@@ -18,6 +18,7 @@ public class AppConstants {
 
     // Profile
     public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
+    public static final String PUBLIC_PROFILE_API_URL = BASE_API_URL + "/profile/public";
     /*
      * Spring Security
      */

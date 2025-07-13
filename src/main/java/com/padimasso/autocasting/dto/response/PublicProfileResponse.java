@@ -1,6 +1,6 @@
-package com.padimasso.autocasting.dto;
+package com.padimasso.autocasting.dto.response;
 
-public record ProfileResponse(
+public record PublicProfileResponse(
     String email,
     String roleStringCode,
     String planStringCode,
