@@ -1,6 +1,5 @@
 package com.padimasso.autocasting.config;
 
-import com.padimasso.autocasting.auth.model.Role;
 import com.padimasso.autocasting.auth.repository.UserRepository;
 import com.padimasso.autocasting.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.auth.service.*;
@@ -34,6 +33,8 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class SecurityConfig {
 
+    private static final String ROLE_CASTINERA = "CASTINERA";
+    private static final String ROLE_ACTOR = "ACTOR";
     private final AppProperties appProperties;
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -48,10 +49,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ADMIN_API_URL)
-                    .hasRole(String.valueOf(Role.CASTINERA))
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_USER_API_URL)
-                    .hasRole(String.valueOf(Role.ACTOR))
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ADMIN_API_URL).hasRole(ROLE_CASTINERA)
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_USER_API_URL).hasRole(ROLE_ACTOR)
                     // Any
                     .anyRequest().permitAll())
             .httpBasic(AbstractHttpConfigurer::disable)

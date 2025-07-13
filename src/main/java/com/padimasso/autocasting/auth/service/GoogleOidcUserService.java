@@ -1,6 +1,5 @@
 package com.padimasso.autocasting.auth.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
@@ -24,23 +23,21 @@ public class GoogleOidcUserService
         try {
             OidcUser oidc = new OidcUserService().loadUser(req);
             String email = oidc.getAttribute("email");
+            String state = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                .getRequest().getParameter(OAuth2ParameterNames.STATE);
 
-            // El 'state' viene en el request actual como query-param
-            HttpServletRequest servletReq =
-                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                    .getRequest();
-            String state = servletReq.getParameter(OAuth2ParameterNames.STATE);   // uuid:ACTOR
-
+            // Find in STATE:
             String role = (state != null && state.contains(":")) ?
                 state.substring(state.indexOf(':') + 1) : null;
 
+            // Perform:
             provision.ensureUser(email, role);
+
             return oidc;
         } catch (OAuth2AuthenticationException e) {
             throw e;
         } catch (Exception e) {
             throw new OAuth2AuthenticationException("oauth.google.failure");
         }
-
     }
 }

@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.auth.model;
 
+import com.padimasso.autocasting.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserEntity implements UserDetails {
+public class UserEntity extends AuditableEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,15 +32,15 @@ public class UserEntity implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private UserAccountProvider userAccountProvider;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private RoleEntity role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getCode()));
     }
 
     @Override

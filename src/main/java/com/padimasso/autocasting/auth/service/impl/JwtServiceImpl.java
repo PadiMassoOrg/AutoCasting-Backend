@@ -17,7 +17,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.config.AppConstants.ISSUER;
+import static com.padimasso.autocasting.config.AppConstants.SECRET;
 
 @Service
 @SuppressWarnings("unused")
@@ -29,16 +30,16 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UserEntity user) {
+    public String generateTokenWithCustomExpirationTime(UserEntity user, Long customExpirationTime) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getRole().name());
+        claims.put("role", user.getRole().getCode());
 
         return Jwts.builder()
             .claims(claims)
             .subject(user.getEmail())
             .issuer(ISSUER)
             .issuedAt(new Date())
-            .expiration(Date.from(Instant.now().plusSeconds(EXPIRATION_TIME)))
+            .expiration(Date.from(Instant.now().plusSeconds(customExpirationTime)))
             .signWith(getSignInKey())
             .compact();
     }
