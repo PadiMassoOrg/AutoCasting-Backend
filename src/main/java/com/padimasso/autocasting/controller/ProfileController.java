@@ -2,14 +2,15 @@ package com.padimasso.autocasting.controller;
 
 
 import com.padimasso.autocasting.config.AppConstants;
-import com.padimasso.autocasting.dto.request.PublicProfileRequest;
 import com.padimasso.autocasting.dto.response.ProfileResponse;
 import com.padimasso.autocasting.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.service.ProfileService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping
@@ -24,9 +25,9 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getMyProfile());
     }
 
-    @PostMapping(AppConstants.PUBLIC_PROFILE_API_URL)
+    @GetMapping(AppConstants.PUBLIC_PROFILE_API_URL + "/{slug}")
     @SuppressWarnings("unused")
-    public ResponseEntity<PublicProfileResponse> getPublicProfile(@Valid @RequestBody PublicProfileRequest publicProfileRequest) {
-        return ResponseEntity.ok(profileService.getProfileBySlug(publicProfileRequest));
+    public ResponseEntity<PublicProfileResponse> getPublicProfile(@PathVariable String slug) {
+        return ResponseEntity.ok(profileService.getProfileBySlug(slug));
     }
 }

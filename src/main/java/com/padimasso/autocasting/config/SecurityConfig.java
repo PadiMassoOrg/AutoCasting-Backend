@@ -51,6 +51,8 @@ public class SecurityConfig {
                     // Test Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ADMIN_API_URL).hasRole(ROLE_CASTINERA)
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_USER_API_URL).hasRole(ROLE_ACTOR)
+                    // Profile
+                    .requestMatchers(HttpMethod.GET, AppConstants.PROFILE_API_URL).authenticated()
                     // Any
                     .anyRequest().permitAll())
             .httpBasic(AbstractHttpConfigurer::disable)

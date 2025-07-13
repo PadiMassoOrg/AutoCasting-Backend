@@ -3,7 +3,6 @@ package com.padimasso.autocasting.service.impl;
 import com.padimasso.autocasting.auth.model.UserEntity;
 import com.padimasso.autocasting.auth.repository.UserRepository;
 import com.padimasso.autocasting.auth.service.AuthContext;
-import com.padimasso.autocasting.dto.request.PublicProfileRequest;
 import com.padimasso.autocasting.dto.response.ProfileResponse;
 import com.padimasso.autocasting.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.model.ProfileEntity;
@@ -38,10 +37,10 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    public PublicProfileResponse getProfileBySlug(PublicProfileRequest publicProfileRequest) {
+    public PublicProfileResponse getProfileBySlug(String slug) {
 
         ProfileEntity foundProfile = profileRepository
-            .findByDefaultSlugOrPremiumSlug(publicProfileRequest.slug(), publicProfileRequest.slug())
+            .findByDefaultSlugOrPremiumSlug(slug, slug)
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
 
         return new PublicProfileResponse(
