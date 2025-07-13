@@ -15,6 +15,9 @@ public class AppConstants {
     public static final String TEST_API_URL = BASE_API_URL + "/test";
     public static final String TEST_USER_API_URL = TEST_API_URL + "/user";
     public static final String TEST_ADMIN_API_URL = TEST_API_URL + "/admin";
+
+    // Profile
+    public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
     /*
      * Spring Security
      */

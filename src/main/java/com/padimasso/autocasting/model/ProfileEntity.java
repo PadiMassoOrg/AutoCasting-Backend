@@ -19,9 +19,11 @@ public class ProfileEntity extends AuditableEntity {
     @NotBlank()
     @Column(nullable = false)
     String name;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
     @Column(unique = true, nullable = false)
     private String defaultSlug;
 
@@ -47,6 +49,7 @@ public class ProfileEntity extends AuditableEntity {
     }
 
     @PrePersist
+    @SuppressWarnings("unused")
     public void generateDefaultSlug() {
         if (this.defaultSlug == null || this.defaultSlug.isBlank()) {
             this.defaultSlug = "AC-" + UUID.randomUUID().toString().substring(0, 8);
