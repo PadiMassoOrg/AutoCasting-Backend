@@ -13,8 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleOidcUserService
-    implements OAuth2UserService<OidcUserRequest, OidcUser> {
+public class GoogleOidcUserService implements OAuth2UserService<OidcUserRequest, OidcUser> {
 
     private final UserProvisioningService provision;
 
@@ -22,17 +21,19 @@ public class GoogleOidcUserService
     public OidcUser loadUser(OidcUserRequest req) throws OAuth2AuthenticationException {
         try {
             OidcUser oidc = new OidcUserService().loadUser(req);
-            String email = oidc.getAttribute("email");
             String state = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                .getRequest().getParameter(OAuth2ParameterNames.STATE);
+                .getRequest()
+                .getParameter(OAuth2ParameterNames.STATE);
 
             // Find in STATE:
-            String role = (state != null && state.contains(":")) ?
-                state.substring(state.indexOf(':') + 1) : null;
+            String role = (state != null && state.contains(":")) ? state.substring(state.indexOf(':') + 1) : null;
 
             // Perform:
-            provision.ensureUser(email, role);
-
+            provision.ensureUser(
+                oidc.getAttribute("email"),
+                role,
+                oidc.getGivenName() + oidc.getFamilyName());
+            
             return oidc;
         } catch (OAuth2AuthenticationException e) {
             throw e;

@@ -10,8 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleOauth2UserService
-    implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+public class GoogleOauth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserProvisioningService provision;
 
@@ -19,9 +18,9 @@ public class GoogleOauth2UserService
     public OAuth2User loadUser(OAuth2UserRequest req) throws OAuth2AuthenticationException {
         OAuth2User oauth = new DefaultOAuth2UserService().loadUser(req);
 
-        provision.ensureUser(
-            oauth.getAttribute("email"),
-            req.getAdditionalParameters().get("role"));
+        provision.ensureUser(oauth.getAttribute("email"),
+            req.getAdditionalParameters().get("role").toString(),
+            oauth.getName());
 
         return oauth;
     }

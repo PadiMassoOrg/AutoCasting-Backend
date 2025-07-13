@@ -46,11 +46,11 @@ public class AuthServiceImpl implements AuthService {
         }
 
         final RoleEntity foundRole = roleRepository.findByCode(request.role())
-            .orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
+            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"));
         final PlanEntity freePlan = planRepository.findByCode("FREE")
-            .orElseThrow(() -> new IllegalStateException("No se encontró el plan FREE"));
+            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
-        var user = UserEntity.builder()
+        UserEntity user = UserEntity.builder()
             .email(request.email())
             .password(passwordEncoder.encode(request.password()))
             .userAccountProvider(UserAccountProvider.LOCAL)
