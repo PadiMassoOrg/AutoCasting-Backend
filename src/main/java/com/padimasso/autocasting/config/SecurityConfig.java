@@ -1,8 +1,8 @@
 package com.padimasso.autocasting.config;
 
-import com.padimasso.autocasting.auth.repository.UserRepository;
-import com.padimasso.autocasting.auth.security.filter.JwtAuthenticationFilter;
-import com.padimasso.autocasting.auth.service.*;
+import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
+import com.padimasso.autocasting.application.auth.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,8 +49,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ADMIN_API_URL).hasRole(ROLE_CASTINERA)
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_USER_API_URL).hasRole(ROLE_ACTOR)
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(ROLE_CASTINERA)
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(ROLE_ACTOR)
                     // Profile
                     .requestMatchers(HttpMethod.GET, AppConstants.PROFILE_API_URL).authenticated()
                     // Any
