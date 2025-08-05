@@ -47,3 +47,14 @@ VALUES
     (gen_random_uuid(), 'skill.clown', true),
     (gen_random_uuid(), 'skill.physical_theater', true),
     (gen_random_uuid(), 'skill.fencing', true);
+
+INSERT INTO professions (id, string_code, is_active)
+VALUES
+    (gen_random_uuid(), 'profession.actor', true),
+    (gen_random_uuid(), 'profession.singer', true),
+    (gen_random_uuid(), 'profession.model', true),
+    (gen_random_uuid(), 'profession.musician', true),
+    (gen_random_uuid(), 'profession.dancer', true),
+    (gen_random_uuid(), 'profession.voice_talent', true),
+    (gen_random_uuid(), 'profession.comedy_standup', true);
+
