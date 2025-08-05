@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "3. Perfil", description = "Operaciones relacionadas al perfil de usuario")
+@Tag(name = "Perfil", description = "Operaciones relacionadas al perfil de usuario")
 @SuppressWarnings("unused")
 public class ProfileController {
 

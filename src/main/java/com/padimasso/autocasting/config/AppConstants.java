@@ -1,27 +1,27 @@
 package com.padimasso.autocasting.config;
 
 public class AppConstants {
-
-    /*
-     * API Constants
-     */
     public static final String BASE_API_URL = "/api/v1";
+
     // Authentication
     public static final String LOGIN_API_URL = BASE_API_URL + "/auth/login";
     public static final String REGISTER_API_URL = BASE_API_URL + "/auth/register";
     public static final String FORGOT_PASS_URL = BASE_API_URL + "/auth/forgot-password";
     public static final String RESET_PASS_URL = BASE_API_URL + "/auth/reset-password";
+
     // Test
     public static final String TEST_API_URL = BASE_API_URL + "/test";
     public static final String TEST_ACTOR_API_URL = TEST_API_URL + "/actor";
     public static final String TEST_CASTINERA_API_URL = TEST_API_URL + "/castinera";
 
+    // Site Metadata
+    public static final String SITE_METADATA_URL = BASE_API_URL + "/sitemetadata";
+
     // Profile
     public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
     public static final String PUBLIC_PROFILE_API_URL = BASE_API_URL + "/profile";
-    /*
-     * Spring Security
-     */
+
+    // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
     public static final long EXPIRATION_TIME = 86400; // 10 days
@@ -30,8 +30,4 @@ public class AppConstants {
     private AppConstants() {
         throw new IllegalStateException("Utility class");
     }
-
-    /*
-     * Spring Security
-     */
 }

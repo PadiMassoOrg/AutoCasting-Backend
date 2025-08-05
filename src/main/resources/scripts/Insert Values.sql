@@ -37,3 +37,13 @@ VALUES
   (gen_random_uuid(), 'FREE', 'plan.free', 'Plan gratuito para todos los usuarios', false, true, NOW(), 'SYSTEM', NOW(), 'SYSTEM'),
   (gen_random_uuid(), 'PREMIUM_ACTOR_1', 'plan.premium_actor_1', 'Permite slug personalizado', true, true, NOW(), 'SYSTEM', NOW(), 'SYSTEM'),
   (gen_random_uuid(), 'PREMIUM_CASTINERA', 'plan.premium_castinera', 'Acceso a búsquedas de actores', true, true, NOW(), 'SYSTEM', NOW(), 'SYSTEM');
+
+
+------------------------------------------------------------------------
+---- Insert Site Metadata
+------------------------------------------------------------------------
+INSERT INTO skills (id, string_code, is_active)
+VALUES
+    (gen_random_uuid(), 'skill.clown', true),
+    (gen_random_uuid(), 'skill.physical_theater', true),
+    (gen_random_uuid(), 'skill.fencing', true);
