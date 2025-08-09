@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public record BasicInfoResponse(
     UUID id,
-    String name,
+    String stageName,
     String gender,
     LocalDate birthDate
 ) {
