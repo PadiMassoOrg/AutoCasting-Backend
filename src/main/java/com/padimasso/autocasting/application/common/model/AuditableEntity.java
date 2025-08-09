@@ -5,6 +5,9 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -17,6 +20,14 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
+@FilterDef(
+    name = "deletedFilter",
+    parameters = @ParamDef(name = "isDeleted", type = Boolean.class)
+)
+@Filter(
+    name = "deletedFilter",
+    condition = "deleted = :isDeleted"
+)
 public abstract class AuditableEntity {
 
     @CreatedDate
@@ -32,4 +43,7 @@ public abstract class AuditableEntity {
 
     @LastModifiedBy
     private String modifiedBy;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

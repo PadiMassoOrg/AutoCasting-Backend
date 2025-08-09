@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
 
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE profile SET deleted = true WHERE id = ?")
 public class ProfileEntity extends AuditableEntity {
 
     @Id

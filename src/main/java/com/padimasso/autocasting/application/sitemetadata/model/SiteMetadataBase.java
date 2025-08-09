@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.sitemetadata.model;
 
+import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class SiteMetadataBase {
+public abstract class SiteMetadataBase extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -21,7 +22,4 @@ public abstract class SiteMetadataBase {
 
     @Column(nullable = false, unique = true)
     protected String stringCode;
-
-    @Column(nullable = false)
-    private boolean isActive;
 }

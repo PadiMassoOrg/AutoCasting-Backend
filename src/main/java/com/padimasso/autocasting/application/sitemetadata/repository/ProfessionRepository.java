@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProfessionRepository extends JpaRepository<ProfessionEntity, UUID> {
-    List<ProfessionEntity> findAllByIsActiveTrue();
+    List<ProfessionEntity> findAllByDeletedFalse();
 }

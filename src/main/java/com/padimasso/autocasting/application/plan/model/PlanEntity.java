@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.plan.model;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
 
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE plans SET deleted = true WHERE id = ?")
 public class PlanEntity extends AuditableEntity {
 
     @Id
@@ -30,7 +32,4 @@ public class PlanEntity extends AuditableEntity {
 
     @Column(nullable = false)
     private boolean allowsCustomSlug;
-
-    @Column(nullable = false)
-    private boolean isActive;
 }

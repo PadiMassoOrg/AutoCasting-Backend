@@ -18,8 +18,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final ProfessionRepository professionRepository;
 
     public SiteMetadataResponse getSiteMetadata() {
-        var foundSkillEntities = skillRepository.findAllByIsActiveTrue();
-        var foundProfessionEntities = professionRepository.findAllByIsActiveTrue();
+        var foundSkillEntities = skillRepository.findAllByDeletedFalse();
+        var foundProfessionEntities = professionRepository.findAllByDeletedFalse();
 
         return new SiteMetadataResponse(
             mapToSiteMetadataObject(foundSkillEntities),

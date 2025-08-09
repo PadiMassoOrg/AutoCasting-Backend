@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SkillRepository extends JpaRepository<SkillEntity, UUID> {
-    List<SkillEntity> findAllByIsActiveTrue();
+    List<SkillEntity> findAllByDeletedFalse();
 }
