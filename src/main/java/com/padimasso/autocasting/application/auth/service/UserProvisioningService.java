@@ -8,6 +8,7 @@ import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
+import com.padimasso.autocasting.application.profile.model.ContactEntity;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,20 @@ class UserProvisioningService {
             if ((profile.getBasicInfo().getStageName() == null || profile.getBasicInfo().getStageName().isBlank())
                 && name != null && !name.isBlank()) {
                 profile.getBasicInfo().setStageName(name);
+                profileRepository.save(profile);
+            }
+        }
+
+        if (profile.getContact() == null) {
+            ContactEntity contact = ContactEntity.builder()
+                .email(email)
+                .profile(profile)
+                .build();
+            profile.setContact(contact);
+            profileRepository.save(profile);
+        } else {
+            if (profile.getContact().getEmail() == null || profile.getContact().getEmail().isBlank()) {
+                profile.getContact().setEmail(email);
                 profileRepository.save(profile);
             }
         }

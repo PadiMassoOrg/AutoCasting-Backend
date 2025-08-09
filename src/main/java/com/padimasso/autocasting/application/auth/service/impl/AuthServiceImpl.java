@@ -17,8 +17,10 @@ import com.padimasso.autocasting.application.auth.service.JwtService;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
+import com.padimasso.autocasting.application.profile.model.ContactEntity;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
 import com.padimasso.autocasting.application.profile.repository.BasicInfoRepository;
+import com.padimasso.autocasting.application.profile.repository.ContactRepository;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
@@ -36,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final PlanRepository planRepository;
     private final ProfileRepository profileRepository;
     private final BasicInfoRepository basicInfoRepository;
+    private final ContactRepository contactRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
@@ -72,6 +75,12 @@ public class AuthServiceImpl implements AuthService {
             .profile(profile)
             .build();
         basicInfoRepository.save(basicInfo);
+
+        var contact = ContactEntity.builder()
+            .email(request.email())
+            .profile(profile)
+            .build();
+        contactRepository.save(contact);
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
         return new AuthResponse(jwt);

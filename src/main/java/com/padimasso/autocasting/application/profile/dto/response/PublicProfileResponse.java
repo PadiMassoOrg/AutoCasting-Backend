@@ -4,10 +4,10 @@ import java.util.UUID;
 
 public record PublicProfileResponse(
     UUID id,
-    String email,
     String roleStringCode,
     String planStringCode,
     String publicSlug,
-    BasicInfoResponse basicInfo
+    BasicInfoResponse basicInfo,
+    ContactResponse contact
 ) {
 }

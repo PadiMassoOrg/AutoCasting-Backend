@@ -34,6 +34,9 @@ public class ProfileEntity extends AuditableEntity {
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     BasicInfoEntity basicInfo;
 
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    ContactEntity contact;
+
     @ManyToOne
     @JoinColumn(name = "plan_id", nullable = false)
     private PlanEntity plan;
