@@ -1,13 +1,11 @@
 package com.padimasso.autocasting.application.profile.mapper;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.profile.dto.response.BasicInfoResponse;
-import com.padimasso.autocasting.application.profile.dto.response.ContactResponse;
-import com.padimasso.autocasting.application.profile.dto.response.ProfileResponse;
-import com.padimasso.autocasting.application.profile.dto.response.PublicProfileResponse;
+import com.padimasso.autocasting.application.profile.dto.response.*;
 import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.profile.model.ContactEntity;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
+import com.padimasso.autocasting.application.profile.model.SocialMediaEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +20,8 @@ public class ProfileMapper {
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
-            toContactResponse(profile.getContact())
+            toContactResponse(profile.getContact()),
+            toSocialMediaResponse(profile.getSocialMedia())
         );
     }
 
@@ -33,7 +32,8 @@ public class ProfileMapper {
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
-            toContactResponse(profile.getContact())
+            toContactResponse(profile.getContact()),
+            toSocialMediaResponse(profile.getSocialMedia())
         );
     }
 
@@ -53,6 +53,15 @@ public class ProfileMapper {
             entity.getId(),
             entity.getEmail(),
             entity.getPhoneNumber()
+        );
+    }
+
+    public SocialMediaResponse toSocialMediaResponse(SocialMediaEntity entity) {
+        if (entity == null) return null;
+        return new SocialMediaResponse(
+            entity.getId(),
+            entity.getInstagramUrl(),
+            entity.getTikTokUrl()
         );
     }
 }

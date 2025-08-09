@@ -8,6 +8,7 @@ public record ProfileResponse(
     String planStringCode,
     String publicSlug,
     BasicInfoResponse basicInfo,
-    ContactResponse contact
+    ContactResponse contact,
+    SocialMediaResponse socialMedia
 ) {
 }

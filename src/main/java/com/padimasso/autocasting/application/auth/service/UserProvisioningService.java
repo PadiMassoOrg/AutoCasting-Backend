@@ -10,7 +10,9 @@ import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.profile.model.ContactEntity;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
+import com.padimasso.autocasting.application.profile.model.SocialMediaEntity;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ class UserProvisioningService {
     private final ProfileRepository profileRepository;
     private final PlanRepository planRepository;
 
+    @Transactional
     void ensureUser(String email, String roleCode, String name) {
         if (email == null) throw new OAuth2AuthenticationException("auth.user_not_found");
         if (roleCode == null) throw new OAuth2AuthenticationException("oauth.role_missing");
@@ -48,12 +51,10 @@ class UserProvisioningService {
                 .profile(profile)
                 .build();
             profile.setBasicInfo(basicInfo);
-            profileRepository.save(profile);
         } else {
             if ((profile.getBasicInfo().getStageName() == null || profile.getBasicInfo().getStageName().isBlank())
                 && name != null && !name.isBlank()) {
                 profile.getBasicInfo().setStageName(name);
-                profileRepository.save(profile);
             }
         }
 
@@ -63,12 +64,19 @@ class UserProvisioningService {
                 .profile(profile)
                 .build();
             profile.setContact(contact);
-            profileRepository.save(profile);
         } else {
             if (profile.getContact().getEmail() == null || profile.getContact().getEmail().isBlank()) {
                 profile.getContact().setEmail(email);
-                profileRepository.save(profile);
             }
         }
+
+        if (profile.getSocialMedia() == null) {
+            SocialMediaEntity socialMedia = SocialMediaEntity.builder()
+                .profile(profile)
+                .build();
+            profile.setSocialMedia(socialMedia);
+        }
+
+        profileRepository.save(profile);
     }
 }

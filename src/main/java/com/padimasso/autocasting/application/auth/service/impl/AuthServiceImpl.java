@@ -19,11 +19,14 @@ import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.profile.model.ContactEntity;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
+import com.padimasso.autocasting.application.profile.model.SocialMediaEntity;
 import com.padimasso.autocasting.application.profile.repository.BasicInfoRepository;
 import com.padimasso.autocasting.application.profile.repository.ContactRepository;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
+import com.padimasso.autocasting.application.profile.repository.SocialMediaRepository;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,12 +42,14 @@ public class AuthServiceImpl implements AuthService {
     private final ProfileRepository profileRepository;
     private final BasicInfoRepository basicInfoRepository;
     private final ContactRepository contactRepository;
+    private final SocialMediaRepository socialMediaRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
     private final AppProperties appProperties;
 
     @Override
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         boolean exists = userRepository.existsByEmail(request.email());
         if (exists) {
@@ -81,6 +86,11 @@ public class AuthServiceImpl implements AuthService {
             .profile(profile)
             .build();
         contactRepository.save(contact);
+
+        var socialMedia = SocialMediaEntity.builder()
+            .profile(profile)
+            .build();
+        socialMediaRepository.save(socialMedia);
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
         return new AuthResponse(jwt);
