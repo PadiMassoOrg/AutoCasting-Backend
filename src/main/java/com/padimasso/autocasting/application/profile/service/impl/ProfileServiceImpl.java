@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.profile.dto.response.ProfileResponse;
 import com.padimasso.autocasting.application.profile.dto.response.PublicProfileResponse;
+import com.padimasso.autocasting.application.profile.mapper.ProfileMapper;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import com.padimasso.autocasting.application.profile.service.ProfileService;
@@ -19,6 +20,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final AuthContext authContext;
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final ProfileMapper profileMapper;
 
     @Override
     public ProfileResponse getMyProfile() {
@@ -27,13 +29,7 @@ public class ProfileServiceImpl implements ProfileService {
         var foundProfile = profileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
 
-        return new ProfileResponse(
-            user.getEmail(),
-            user.getRole().getNameStringCode(),
-            foundProfile.getPlan().getNameStringCode(),
-            foundProfile.getName(),
-            foundProfile.getPublicSlug()
-        );
+        return profileMapper.toProfileResponse(foundProfile, user);
     }
 
     @Override
@@ -43,13 +39,7 @@ public class ProfileServiceImpl implements ProfileService {
             .findByDefaultSlugOrPremiumSlug(slug, slug)
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
 
-        return new PublicProfileResponse(
-            foundProfile.getUser().getEmail(),
-            foundProfile.getUser().getRole().getNameStringCode(),
-            foundProfile.getPlan().getNameStringCode(),
-            foundProfile.getName(),
-            foundProfile.getPublicSlug()
-        );
+        return profileMapper.toPublicProfileResponse(foundProfile);
     }
 
 }

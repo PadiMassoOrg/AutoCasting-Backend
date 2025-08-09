@@ -1,10 +1,13 @@
 package com.padimasso.autocasting.application.profile.dto.response;
 
+import java.util.UUID;
+
 public record ProfileResponse(
+    UUID id,
     String email,
     String roleStringCode,
     String planStringCode,
-    String name,
-    String publicSlug
+    String publicSlug,
+    BasicInfoResponse basicInfo
 ) {
 }

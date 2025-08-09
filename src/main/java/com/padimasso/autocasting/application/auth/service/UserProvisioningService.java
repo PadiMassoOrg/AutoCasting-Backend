@@ -7,6 +7,7 @@ import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
+import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,29 +28,32 @@ class UserProvisioningService {
         if (email == null) throw new OAuth2AuthenticationException("auth.user_not_found");
         if (roleCode == null) throw new OAuth2AuthenticationException("oauth.role_missing");
 
-        final RoleEntity foundRole = roleRepository.findByCode(roleCode.toUpperCase())
-            .orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
-        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
-            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+        final RoleEntity foundRole = roleRepository.findByCode(roleCode.toUpperCase()).orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
+        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE).orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
         UserEntity user = userRepository.findByEmail(email).orElseGet(() -> {
-            UserEntity newUser = UserEntity.builder()
-                .email(email)
-                .password(null)
-                .userAccountProvider(UserAccountProvider.OTHER)
-                .role(foundRole)
-                .build();
+            UserEntity newUser = UserEntity.builder().email(email).password(null).userAccountProvider(UserAccountProvider.OTHER).role(foundRole).build();
             return userRepository.save(newUser);
         });
 
-        boolean profileExists = profileRepository.existsByUserId(user.getId());
-        if (!profileExists) {
-            ProfileEntity profile = ProfileEntity.builder()
-                .name(name)
-                .user(user)
-                .plan(freePlan)
+        ProfileEntity profile = profileRepository.findByUserId(user.getId()).orElseGet(() -> {
+            ProfileEntity p = ProfileEntity.builder().user(user).plan(freePlan).build();
+            return profileRepository.save(p);
+        });
+
+        if (profile.getBasicInfo() == null) {
+            BasicInfoEntity basicInfo = BasicInfoEntity.builder()
+                .stageName(name)
+                .profile(profile)
                 .build();
+            profile.setBasicInfo(basicInfo);
             profileRepository.save(profile);
+        } else {
+            if ((profile.getBasicInfo().getStageName() == null || profile.getBasicInfo().getStageName().isBlank())
+                && name != null && !name.isBlank()) {
+                profile.getBasicInfo().setStageName(name);
+                profileRepository.save(profile);
+            }
         }
     }
 }

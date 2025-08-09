@@ -31,7 +31,7 @@ public class ProfileController {
     }
 
     @Operation(summary = "Ver perfil público", description = "Obtiene información pública del perfil por slug")
-    @GetMapping(AppConstants.PUBLIC_PROFILE_API_URL + "/{slug}")
+    @GetMapping(AppConstants.PROFILE_API_URL + "/{slug}")
     public ResponseEntity<PublicProfileResponse> getPublicProfile(@PathVariable String slug) {
         return ResponseEntity.ok(profileService.getProfileBySlug(slug));
     }

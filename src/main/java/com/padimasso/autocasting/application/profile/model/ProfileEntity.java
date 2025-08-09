@@ -4,7 +4,6 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.UUID;
@@ -17,10 +16,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class ProfileEntity extends AuditableEntity {
-
-    @NotBlank()
-    @Column(nullable = false)
-    String name;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,6 +30,9 @@ public class ProfileEntity extends AuditableEntity {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserEntity user;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    BasicInfoEntity basicInfo;
 
     @ManyToOne
     @JoinColumn(name = "plan_id", nullable = false)
