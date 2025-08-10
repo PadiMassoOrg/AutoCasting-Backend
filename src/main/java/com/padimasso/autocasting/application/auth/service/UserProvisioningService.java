@@ -7,10 +7,7 @@ import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
-import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
-import com.padimasso.autocasting.application.profile.model.ContactEntity;
-import com.padimasso.autocasting.application.profile.model.ProfileEntity;
-import com.padimasso.autocasting.application.profile.model.SocialMediaEntity;
+import com.padimasso.autocasting.application.profile.model.*;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +72,13 @@ class UserProvisioningService {
                 .profile(profile)
                 .build();
             profile.setSocialMedia(socialMedia);
+        }
+
+        if (profile.getCharacteristics() == null) {
+            CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
+                .profile(profile)
+                .build();
+            profile.setCharacteristics(characteristics);
         }
 
         profileRepository.save(profile);

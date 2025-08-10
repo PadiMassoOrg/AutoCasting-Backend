@@ -1,6 +1,8 @@
 package com.padimasso.autocasting.application.profile.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.DietOptionEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -21,23 +23,32 @@ public class CharacteristicsEntity extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column
-    private String height;
+    @OneToOne
+    @JoinColumn(name = "profile_id", nullable = false, unique = true)
+    ProfileEntity profile;
 
     @Column
-    private String weight;
+    private Integer heightCm;
 
     @Column
-    private String hairColor;
+    private Integer weightKg;
+
+    @OneToOne
+    @JoinColumn(name = "hair_color_id")
+    private ColorOptionEntity hairColor;
+
+    @OneToOne
+    @JoinColumn(name = "eye_color_id")
+    private ColorOptionEntity eyeColor;
 
     @Column
-    private String eyes;
+    private Integer chestCm;
 
     @Column
-    private String chestSize;
+    private Integer waistCm;
 
     @Column
-    private String waistSize;
+    private Integer hipCm;
 
     @Column
     private String shirtSize;
@@ -52,15 +63,16 @@ public class CharacteristicsEntity extends AuditableEntity {
     private String shoeSize;
 
     @Column
-    private Boolean tattoo;
+    private boolean tattoo;
 
     @Column
-    private Boolean passport;
+    private boolean passport;
 
     @Column
-    private Boolean drivingLicense;
+    private boolean drivingLicense;
 
-    @Column
-    private String diet;
+    @OneToOne
+    @JoinColumn(name = "diet_option_id")
+    private DietOptionEntity dietOption;
 
 }

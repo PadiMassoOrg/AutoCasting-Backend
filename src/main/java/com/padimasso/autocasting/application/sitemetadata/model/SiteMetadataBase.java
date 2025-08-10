@@ -20,6 +20,6 @@ public abstract class SiteMetadataBase extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     protected String stringCode;
 }

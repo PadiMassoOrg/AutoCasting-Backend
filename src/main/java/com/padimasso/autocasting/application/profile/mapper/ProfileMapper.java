@@ -2,10 +2,10 @@ package com.padimasso.autocasting.application.profile.mapper;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.profile.dto.response.*;
-import com.padimasso.autocasting.application.profile.model.BasicInfoEntity;
-import com.padimasso.autocasting.application.profile.model.ContactEntity;
-import com.padimasso.autocasting.application.profile.model.ProfileEntity;
-import com.padimasso.autocasting.application.profile.model.SocialMediaEntity;
+import com.padimasso.autocasting.application.profile.model.*;
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +21,8 @@ public class ProfileMapper {
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
-            toSocialMediaResponse(profile.getSocialMedia())
+            toSocialMediaResponse(profile.getSocialMedia()),
+            toCharacteristicsResponse(profile.getCharacteristics())
         );
     }
 
@@ -33,7 +34,8 @@ public class ProfileMapper {
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
-            toSocialMediaResponse(profile.getSocialMedia())
+            toSocialMediaResponse(profile.getSocialMedia()),
+            toCharacteristicsResponse(profile.getCharacteristics())
         );
     }
 
@@ -63,5 +65,39 @@ public class ProfileMapper {
             entity.getInstagramUrl(),
             entity.getTikTokUrl()
         );
+    }
+
+    public CharacteristicsResponse toCharacteristicsResponse(CharacteristicsEntity entity) {
+        if (entity == null) return null;
+        return new CharacteristicsResponse(
+            entity.getId(),
+            entity.getHeightCm(),
+            entity.getWeightKg(),
+            mapToSiteMetadataObject(entity.getHairColor()),
+            mapToSiteMetadataObject(entity.getEyeColor()),
+            entity.getChestCm(),
+            entity.getWaistCm(),
+            entity.getHipCm(),
+            entity.getShirtSize(),
+            entity.getPantSize(),
+            entity.getDressSize(),
+            entity.getShoeSize(),
+            entity.isTattoo(),
+            entity.isPassport(),
+            entity.isDrivingLicense(),
+            mapToSiteMetadataObject(entity.getDietOption())
+        );
+    }
+
+    private <T extends SiteMetadataBase> SiteMetadataObject mapToSiteMetadataObject(T entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        String category = null;
+        if (entity instanceof ColorOptionEntity colorEntity) {
+            category = colorEntity.getCategory();
+        }
+        return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
     }
 }

@@ -9,6 +9,7 @@ public record PublicProfileResponse(
     String publicSlug,
     BasicInfoResponse basicInfo,
     ContactResponse contact,
-    SocialMediaResponse socialMedia
+    SocialMediaResponse socialMedia,
+    CharacteristicsResponse characteristics
 ) {
 }

@@ -71,3 +71,55 @@ VALUES
     (gen_random_uuid(), 'profession.dancer', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
     (gen_random_uuid(), 'profession.voice_talent', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
     (gen_random_uuid(), 'profession.comedy_standup', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false);
+
+INSERT INTO color_option (
+  id,
+  string_code,
+  created_at,
+  created_by,
+  modified_at,
+  modified_by,
+  deleted,
+  category)
+VALUES
+    (gen_random_uuid(), 'color.black', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.dark_brown', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.light_brown', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.brown', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.blonde', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.dark_blonde', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.light_blonde', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.red', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.gray', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.white', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.no_hair', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'HAIR'),
+    (gen_random_uuid(), 'color.amber', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.hazel', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.blue', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.light_blue', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.gray', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.brown', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.black', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.green', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE'),
+    (gen_random_uuid(), 'color.heterochromia', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'EYE');
+
+INSERT INTO diet_option (
+  id,
+  string_code,
+  created_at,
+  created_by,
+  modified_at,
+  modified_by,
+  deleted)
+VALUES
+    (gen_random_uuid(), 'diet.omnivore', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.flexitarian', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.vegetarian', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.lacto_ovo_vegetarian', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.vegan', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.pescatarian', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.ketogenic', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.gluten_free', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.lactose_free', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.kosher', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'diet.halal', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false);
