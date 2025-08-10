@@ -9,6 +9,9 @@ import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
 public class ProfileMapper {
@@ -22,7 +25,8 @@ public class ProfileMapper {
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
             toSocialMediaResponse(profile.getSocialMedia()),
-            toCharacteristicsResponse(profile.getCharacteristics())
+            toCharacteristicsResponse(profile.getCharacteristics()),
+            mapToSiteMetadataObjectList(profile.getSkills())
         );
     }
 
@@ -35,7 +39,8 @@ public class ProfileMapper {
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
             toSocialMediaResponse(profile.getSocialMedia()),
-            toCharacteristicsResponse(profile.getCharacteristics())
+            toCharacteristicsResponse(profile.getCharacteristics()),
+            mapToSiteMetadataObjectList(profile.getSkills())
         );
     }
 
@@ -99,5 +104,17 @@ public class ProfileMapper {
             category = colorEntity.getCategory();
         }
         return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
+    }
+
+    private <T extends SiteMetadataBase> List<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
+        return entities.stream()
+            .map(entity -> {
+                String category = null;
+                if (entity instanceof ColorOptionEntity colorEntity) {
+                    category = colorEntity.getCategory();
+                }
+                return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
+            })
+            .toList();
     }
 }

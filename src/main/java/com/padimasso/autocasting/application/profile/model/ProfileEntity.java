@@ -3,10 +3,13 @@ package com.padimasso.autocasting.application.profile.model;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -44,6 +47,15 @@ public class ProfileEntity extends AuditableEntity {
 
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     CharacteristicsEntity characteristics;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "profile_skill",
+        joinColumns = @JoinColumn(name = "profile_id"),
+        inverseJoinColumns = @JoinColumn(name = "skill_id"),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"profile_id", "skill_id"})
+    )
+    private Set<SkillEntity> skills = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "plan_id", nullable = false)
