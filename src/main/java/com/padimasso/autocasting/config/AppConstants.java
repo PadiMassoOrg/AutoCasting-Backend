@@ -20,6 +20,9 @@ public class AppConstants {
     // Profile
     public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
 
+    // Credit
+    public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
+
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";

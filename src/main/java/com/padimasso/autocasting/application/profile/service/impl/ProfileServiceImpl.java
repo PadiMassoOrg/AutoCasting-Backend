@@ -3,14 +3,21 @@ package com.padimasso.autocasting.application.profile.service.impl;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.service.AuthContext;
+import com.padimasso.autocasting.application.profile.dto.request.SkillsPatchRequest;
 import com.padimasso.autocasting.application.profile.dto.response.ProfileResponse;
 import com.padimasso.autocasting.application.profile.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.profile.mapper.ProfileMapper;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import com.padimasso.autocasting.application.profile.service.ProfileService;
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+import com.padimasso.autocasting.application.sitemetadata.repository.SkillRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +27,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final AuthContext authContext;
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final SkillRepository skillRepository;
     private final ProfileMapper profileMapper;
 
     @Override
@@ -40,6 +48,28 @@ public class ProfileServiceImpl implements ProfileService {
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
 
         return profileMapper.toPublicProfileResponse(foundProfile);
+    }
+
+    @Override
+    public Set<SiteMetadataObject> patchMySkills(SkillsPatchRequest request) {
+        UserEntity user = authContext.getCurrentUserOrThrow();
+        var foundProfile = profileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+
+        if (request.skillIds() != null) {
+            Set<UUID> ids = request.skillIds();
+            if (ids.isEmpty()) {
+                foundProfile.getSkills().clear();
+            } else {
+                var found = new HashSet<>(skillRepository.findAllByIdIn(ids));
+                if (found.size() != ids.size()) {
+                    throw new IllegalArgumentException("profile.profession_invalid_ids");
+                }
+                foundProfile.setSkills(found);
+            }
+        }
+
+        return profileMapper.mapToSiteMetadataObjectList(profileRepository.save(foundProfile).getSkills());
     }
 
 }

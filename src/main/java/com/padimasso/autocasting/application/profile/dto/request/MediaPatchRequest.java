@@ -1,10 +1,8 @@
-package com.padimasso.autocasting.application.profile.dto.response;
+package com.padimasso.autocasting.application.profile.dto.request;
 
 import java.util.Set;
-import java.util.UUID;
 
-public record MediaResponse(
-    UUID id,
+public record MediaPatchRequest(
     String headshotImageUrl,
     String fullBodyImageUrl,
     Set<String> otherPicturesUrl,

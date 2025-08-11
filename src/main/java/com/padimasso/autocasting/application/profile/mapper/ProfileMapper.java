@@ -10,8 +10,8 @@ import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -29,9 +29,8 @@ public class ProfileMapper {
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
-            profile.getCredits().stream().map(this::toCreditResponse).toList(),
-            profile.getEducation().stream().map(this::toEducationResponse).toList()
-        );
+            profile.getCredits().stream().map(this::toCreditResponse).collect(Collectors.toSet()),
+            profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet()));
     }
 
     public PublicProfileResponse toPublicProfileResponse(ProfileEntity profile) {
@@ -46,9 +45,8 @@ public class ProfileMapper {
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
-            profile.getCredits().stream().map(this::toCreditResponse).toList(),
-            profile.getEducation().stream().map(this::toEducationResponse).toList()
-        );
+            profile.getCredits().stream().map(this::toCreditResponse).collect(Collectors.toSet()),
+            profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet()));
     }
 
     public BasicInfoResponse toBasicInfoResponse(BasicInfoEntity entity) {
@@ -151,7 +149,7 @@ public class ProfileMapper {
         return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
     }
 
-    public <T extends SiteMetadataBase> List<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
+    public <T extends SiteMetadataBase> Set<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
         return entities.stream()
             .map(entity -> {
                 String category = null;
@@ -163,6 +161,6 @@ public class ProfileMapper {
                 }
                 return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
             })
-            .toList();
+            .collect(Collectors.toSet());
     }
 }

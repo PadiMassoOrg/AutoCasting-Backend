@@ -1,12 +1,10 @@
 package com.padimasso.autocasting.application.profile.controller;
 
 
-import com.padimasso.autocasting.application.profile.dto.request.BasicInfoPatchRequest;
-import com.padimasso.autocasting.application.profile.dto.response.BasicInfoResponse;
-import com.padimasso.autocasting.application.profile.dto.response.ProfileResponse;
-import com.padimasso.autocasting.application.profile.dto.response.PublicProfileResponse;
-import com.padimasso.autocasting.application.profile.service.BasicInfoService;
-import com.padimasso.autocasting.application.profile.service.ProfileService;
+import com.padimasso.autocasting.application.profile.dto.request.*;
+import com.padimasso.autocasting.application.profile.dto.response.*;
+import com.padimasso.autocasting.application.profile.service.*;
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -15,6 +13,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 @RestController
 @RequestMapping
@@ -25,6 +25,10 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final BasicInfoService basicInfoService;
+    private final ContactService contactService;
+    private final SocialMediaService socialMediaService;
+    private final MediaService mediaService;
+    private final CharacteristicsService characteristicsService;
 
     //    Profile
     @Operation(summary = "Obtener mi perfil", security = @SecurityRequirement(name = "bearerAuth"))
@@ -46,11 +50,38 @@ public class ProfileController {
         return ResponseEntity.ok(basicInfoService.patchMyBasicInfo(request));
     }
 
+    //    Contact
+    @PatchMapping(AppConstants.PROFILE_API_URL + "/contact")
+    @Operation(summary = "PATCH Contact (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ContactResponse> patchMyContact(@Valid @RequestBody ContactPatchRequest request) {
+        return ResponseEntity.ok(contactService.patchMyContact(request));
+    }
 
-//    Contact
-//    Social Media
-//    Media
-//    Skills
-//    Credits
-//    Education
+    //    Social Media
+    @PatchMapping(AppConstants.PROFILE_API_URL + "/social-media")
+    @Operation(summary = "PATCH Social Media (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<SocialMediaResponse> patchMySocialMedia(@Valid @RequestBody SocialMediaPatchRequest request) {
+        return ResponseEntity.ok(socialMediaService.patchMySocialMedia(request));
+    }
+
+    //    Media
+    @PatchMapping(AppConstants.PROFILE_API_URL + "/media")
+    @Operation(summary = "PATCH Media (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<MediaResponse> patchMyMedia(@Valid @RequestBody MediaPatchRequest request) {
+        return ResponseEntity.ok(mediaService.patchMyMedia(request));
+    }
+
+    //    Characteristics
+    @PatchMapping(AppConstants.PROFILE_API_URL + "/characteristics")
+    @Operation(summary = "PATCH Characteristics (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<CharacteristicsResponse> patchMyCharacteristics(@Valid @RequestBody CharacteristicsPatchRequest request) {
+        return ResponseEntity.ok(characteristicsService.patchMyCharacteristics(request));
+    }
+
+    //    Skills
+    @PatchMapping(AppConstants.PROFILE_API_URL + "/skills")
+    @Operation(summary = "PATCH Skills (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<Set<SiteMetadataObject>> patchMySkills(@Valid @RequestBody SkillsPatchRequest request) {
+        return ResponseEntity.ok(profileService.patchMySkills(request));
+    }
 }

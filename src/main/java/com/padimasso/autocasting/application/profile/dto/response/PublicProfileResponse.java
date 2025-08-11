@@ -2,7 +2,7 @@ package com.padimasso.autocasting.application.profile.dto.response;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public record PublicProfileResponse(
@@ -15,8 +15,8 @@ public record PublicProfileResponse(
     SocialMediaResponse socialMedia,
     MediaResponse media,
     CharacteristicsResponse characteristics,
-    List<SiteMetadataObject> skills,
-    List<CreditResponse> credits,
-    List<EducationResponse> education
+    Set<SiteMetadataObject> skills,
+    Set<CreditResponse> credits,
+    Set<EducationResponse> education
 ) {
 }

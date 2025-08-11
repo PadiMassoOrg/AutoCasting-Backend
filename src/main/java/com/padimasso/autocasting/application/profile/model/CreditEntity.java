@@ -22,8 +22,8 @@ public class CreditEntity extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne
-    @JoinColumn(name = "production_type_id")
+    @ManyToOne
+    @JoinColumn(name = "production_type_id", nullable = false)
     private ProductionTypeEntity productionType;
 
     @Column

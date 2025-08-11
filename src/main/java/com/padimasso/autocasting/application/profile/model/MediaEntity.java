@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -29,7 +29,7 @@ public class MediaEntity  extends AuditableEntity {
     String fullBodyImageUrl;
 
     @Column
-    List<String> otherPicturesUrl;
+    Set<String> otherPicturesUrl;
 
     @Column
     String introductionVideoUrl;

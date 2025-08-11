@@ -36,10 +36,8 @@ public class BasicInfoServiceImpl implements BasicInfoService {
         UserEntity user = authContext.getCurrentUserOrThrow();
         ProfileEntity profile = profileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
-        BasicInfoEntity basicInfo = basicInfoRepository.findByProfileId(profile.getId()).orElseGet(() -> {
-            BasicInfoEntity created = BasicInfoEntity.builder().profile(profile).build();
-            return basicInfoRepository.save(created);
-        });
+        BasicInfoEntity basicInfo = basicInfoRepository.findByProfileId(profile.getId())
+            .orElseGet(() -> basicInfoRepository.save(BasicInfoEntity.builder().profile(profile).build()));
 
         if (req.stageName() != null) {
             basicInfo.setStageName(req.stageName().trim());
@@ -62,15 +60,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
                 basicInfo.setProfessions(found);
             }
         }
-
-        BasicInfoEntity savedBasicInfo = basicInfoRepository.save(basicInfo);
-
-        return new BasicInfoResponse(
-            savedBasicInfo.getId(),
-            savedBasicInfo.getStageName(),
-            savedBasicInfo.getGender(),
-            savedBasicInfo.getBirthDate(),
-            profileMapper.mapToSiteMetadataObjectList(savedBasicInfo.getProfessions())
-        );
+        
+        return profileMapper.toBasicInfoResponse(basicInfoRepository.save(basicInfo));
     }
 }
