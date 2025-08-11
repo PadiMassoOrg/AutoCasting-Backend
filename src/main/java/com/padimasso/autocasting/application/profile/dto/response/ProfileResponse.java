@@ -16,6 +16,7 @@ public record ProfileResponse(
     CharacteristicsResponse characteristics,
     List<SiteMetadataObject> skills,
     List<SiteMetadataObject> professions,
-    List<CreditResponse> credits
+    List<CreditResponse> credits,
+    List<EducationResponse> education
 ) {
 }

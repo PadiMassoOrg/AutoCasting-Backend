@@ -28,7 +28,8 @@ public class ProfileMapper {
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             mapToSiteMetadataObjectList(profile.getProfessions()),
-            profile.getCredits().stream().map(this::toCreditResponse).toList()
+            profile.getCredits().stream().map(this::toCreditResponse).toList(),
+            profile.getEducation().stream().map(this::toEducationResponse).toList()
         );
     }
 
@@ -44,7 +45,8 @@ public class ProfileMapper {
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             mapToSiteMetadataObjectList(profile.getProfessions()),
-            profile.getCredits().stream().map(this::toCreditResponse).toList()
+            profile.getCredits().stream().map(this::toCreditResponse).toList(),
+            profile.getEducation().stream().map(this::toEducationResponse).toList()
         );
     }
 
@@ -107,6 +109,16 @@ public class ProfileMapper {
             entity.getProducerName(),
             entity.getRole(),
             entity.getYear()
+        );
+    }
+
+    public EducationResponse toEducationResponse(EducationEntity entity) {
+        if (entity == null) return null;
+        return new EducationResponse(
+            entity.getId(),
+            entity.getInstitution(),
+            entity.getCourseName(),
+            entity.getGraduationYear()
         );
     }
 

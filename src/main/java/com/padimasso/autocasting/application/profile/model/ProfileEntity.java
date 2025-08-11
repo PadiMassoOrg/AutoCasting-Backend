@@ -75,6 +75,14 @@ public class ProfileEntity extends AuditableEntity {
     )
     private Set<CreditEntity> credits = new HashSet<>();
 
+    @OneToMany(
+        mappedBy = "profile",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    private Set<EducationEntity> education = new HashSet<>();
+
     @ManyToOne
     @JoinColumn(name = "plan_id", nullable = false)
     private PlanEntity plan;
