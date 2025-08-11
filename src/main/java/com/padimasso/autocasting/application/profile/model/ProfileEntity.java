@@ -3,7 +3,6 @@ package com.padimasso.autocasting.application.profile.model;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
-import com.padimasso.autocasting.application.sitemetadata.model.ProfessionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -60,15 +59,6 @@ public class ProfileEntity extends AuditableEntity {
         uniqueConstraints = @UniqueConstraint(columnNames = {"profile_id", "skill_id"})
     )
     private Set<SkillEntity> skills = new HashSet<>();
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "profile_profession",
-        joinColumns = @JoinColumn(name = "profile_id"),
-        inverseJoinColumns = @JoinColumn(name = "profession_id"),
-        uniqueConstraints = @UniqueConstraint(columnNames = {"profile_id", "profession_id"})
-    )
-    private Set<ProfessionEntity> professions = new HashSet<>();
 
     @OneToMany(
         mappedBy = "profile",

@@ -29,7 +29,6 @@ public class ProfileMapper {
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
-            mapToSiteMetadataObjectList(profile.getProfessions()),
             profile.getCredits().stream().map(this::toCreditResponse).toList(),
             profile.getEducation().stream().map(this::toEducationResponse).toList()
         );
@@ -47,7 +46,6 @@ public class ProfileMapper {
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
-            mapToSiteMetadataObjectList(profile.getProfessions()),
             profile.getCredits().stream().map(this::toCreditResponse).toList(),
             profile.getEducation().stream().map(this::toEducationResponse).toList()
         );
@@ -59,7 +57,8 @@ public class ProfileMapper {
             entity.getId(),
             entity.getStageName(),
             entity.getGender(),
-            entity.getBirthDate()
+            entity.getBirthDate(),
+            entity.getProfessions().stream().map(this::mapToSiteMetadataObject).toList()
         );
     }
 
@@ -137,7 +136,7 @@ public class ProfileMapper {
         );
     }
 
-    private <T extends SiteMetadataBase> SiteMetadataObject mapToSiteMetadataObject(T entity) {
+    public <T extends SiteMetadataBase> SiteMetadataObject mapToSiteMetadataObject(T entity) {
         if (entity == null) {
             return null;
         }
@@ -152,7 +151,7 @@ public class ProfileMapper {
         return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
     }
 
-    private <T extends SiteMetadataBase> List<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
+    public <T extends SiteMetadataBase> List<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
         return entities.stream()
             .map(entity -> {
                 String category = null;

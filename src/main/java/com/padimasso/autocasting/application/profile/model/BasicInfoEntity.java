@@ -1,12 +1,14 @@
 package com.padimasso.autocasting.application.profile.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.ProfessionEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -32,9 +34,15 @@ public class BasicInfoEntity extends AuditableEntity {
     @Column
     LocalDate birthDate;
 
-    @Column
-    ArrayList<String> professions;
-
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "basic_info_profession",
+        joinColumns = @JoinColumn(name = "basic_info_id"),
+        inverseJoinColumns = @JoinColumn(name = "profession_id"),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"basic_info_id", "profession_id"})
+    )
+    Set<ProfessionEntity> professions = new HashSet<>();
+    
     @OneToOne
     @JoinColumn(name = "profile_id", nullable = false, unique = true)
     ProfileEntity profile;

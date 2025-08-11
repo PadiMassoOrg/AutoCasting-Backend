@@ -1,19 +1,20 @@
 package com.padimasso.autocasting.application.profile.controller;
 
 
+import com.padimasso.autocasting.application.profile.dto.request.BasicInfoPatchRequest;
+import com.padimasso.autocasting.application.profile.dto.response.BasicInfoResponse;
 import com.padimasso.autocasting.application.profile.dto.response.ProfileResponse;
 import com.padimasso.autocasting.application.profile.dto.response.PublicProfileResponse;
+import com.padimasso.autocasting.application.profile.service.BasicInfoService;
 import com.padimasso.autocasting.application.profile.service.ProfileService;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping
@@ -23,7 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final BasicInfoService basicInfoService;
 
+    //    Profile
     @Operation(summary = "Obtener mi perfil", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(AppConstants.PROFILE_API_URL)
     public ResponseEntity<ProfileResponse> getMyProfile() {
@@ -35,4 +38,19 @@ public class ProfileController {
     public ResponseEntity<PublicProfileResponse> getPublicProfile(@PathVariable String slug) {
         return ResponseEntity.ok(profileService.getProfileBySlug(slug));
     }
+
+    //    Basic Info
+    @PatchMapping(AppConstants.PROFILE_API_URL + "/basic-info")
+    @Operation(summary = "PATCH BasicInfo (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<BasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody BasicInfoPatchRequest request) {
+        return ResponseEntity.ok(basicInfoService.patchMyBasicInfo(request));
+    }
+
+
+//    Contact
+//    Social Media
+//    Media
+//    Skills
+//    Credits
+//    Education
 }
