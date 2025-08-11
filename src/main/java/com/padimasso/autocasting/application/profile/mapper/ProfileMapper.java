@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.profile.model.*;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
+import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -145,6 +146,9 @@ public class ProfileMapper {
         if (entity instanceof ColorOptionEntity colorEntity) {
             category = colorEntity.getCategory();
         }
+        if (entity instanceof SkillEntity skillEntity) {
+            category = skillEntity.getCategory();
+        }
         return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
     }
 
@@ -154,6 +158,9 @@ public class ProfileMapper {
                 String category = null;
                 if (entity instanceof ColorOptionEntity colorEntity) {
                     category = colorEntity.getCategory();
+                }
+                if (entity instanceof SkillEntity skillEntity) {
+                    category = skillEntity.getCategory();
                 }
                 return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
             })
