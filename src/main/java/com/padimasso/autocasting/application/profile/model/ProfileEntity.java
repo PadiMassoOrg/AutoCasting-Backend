@@ -47,6 +47,9 @@ public class ProfileEntity extends AuditableEntity {
     SocialMediaEntity socialMedia;
 
     @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    MediaEntity media;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     CharacteristicsEntity characteristics;
 
     @ManyToMany(fetch = FetchType.LAZY)

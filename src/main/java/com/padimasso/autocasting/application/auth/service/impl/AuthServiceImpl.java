@@ -37,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final BasicInfoRepository basicInfoRepository;
     private final ContactRepository contactRepository;
     private final SocialMediaRepository socialMediaRepository;
+    private final MediaRepository mediaRepository;
     private final CharacteristicsRepository characteristicsRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -86,6 +87,11 @@ public class AuthServiceImpl implements AuthService {
             .profile(profile)
             .build();
         socialMediaRepository.save(socialMedia);
+
+        var media = MediaEntity.builder()
+            .profile(profile)
+            .build();
+        mediaRepository.save(media);
 
         var characteristics = CharacteristicsEntity.builder()
             .profile(profile)

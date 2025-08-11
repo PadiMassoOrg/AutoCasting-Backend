@@ -25,6 +25,7 @@ public class ProfileMapper {
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
             toSocialMediaResponse(profile.getSocialMedia()),
+            toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             mapToSiteMetadataObjectList(profile.getProfessions()),
@@ -42,6 +43,7 @@ public class ProfileMapper {
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
             toSocialMediaResponse(profile.getSocialMedia()),
+            toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             mapToSiteMetadataObjectList(profile.getProfessions()),
@@ -75,6 +77,18 @@ public class ProfileMapper {
             entity.getId(),
             entity.getInstagramUrl(),
             entity.getTikTokUrl()
+        );
+    }
+
+    public MediaResponse toMediaResponse(MediaEntity entity) {
+        if (entity == null) return null;
+        return new MediaResponse(
+            entity.getId(),
+            entity.getHeadshotImageUrl(),
+            entity.getFullBodyImageUrl(),
+            entity.getOtherPicturesUrl(),
+            entity.getIntroductionVideoUrl(),
+            entity.getShowReelVideoUrl()
         );
     }
 

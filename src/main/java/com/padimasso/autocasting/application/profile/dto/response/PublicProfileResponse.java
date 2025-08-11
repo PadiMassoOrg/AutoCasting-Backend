@@ -13,6 +13,7 @@ public record PublicProfileResponse(
     BasicInfoResponse basicInfo,
     ContactResponse contact,
     SocialMediaResponse socialMedia,
+    MediaResponse media,
     CharacteristicsResponse characteristics,
     List<SiteMetadataObject> skills,
     List<SiteMetadataObject> professions,

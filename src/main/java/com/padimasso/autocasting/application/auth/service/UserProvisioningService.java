@@ -74,6 +74,13 @@ class UserProvisioningService {
             profile.setSocialMedia(socialMedia);
         }
 
+        if (profile.getMedia() == null) {
+            MediaEntity media = MediaEntity.builder()
+                .profile(profile)
+                .build();
+            profile.setMedia(media);
+        }
+
         if (profile.getCharacteristics() == null) {
             CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
                 .profile(profile)
