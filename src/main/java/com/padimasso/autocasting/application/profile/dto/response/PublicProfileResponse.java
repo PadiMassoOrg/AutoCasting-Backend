@@ -14,6 +14,7 @@ public record PublicProfileResponse(
     ContactResponse contact,
     SocialMediaResponse socialMedia,
     CharacteristicsResponse characteristics,
-    List<SiteMetadataObject> skills
+    List<SiteMetadataObject> skills,
+    List<SiteMetadataObject> professions
 ) {
 }

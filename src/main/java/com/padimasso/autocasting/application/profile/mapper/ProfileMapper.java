@@ -26,7 +26,8 @@ public class ProfileMapper {
             toContactResponse(profile.getContact()),
             toSocialMediaResponse(profile.getSocialMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
-            mapToSiteMetadataObjectList(profile.getSkills())
+            mapToSiteMetadataObjectList(profile.getSkills()),
+            mapToSiteMetadataObjectList(profile.getProfessions())
         );
     }
 
@@ -40,7 +41,8 @@ public class ProfileMapper {
             toContactResponse(profile.getContact()),
             toSocialMediaResponse(profile.getSocialMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
-            mapToSiteMetadataObjectList(profile.getSkills())
+            mapToSiteMetadataObjectList(profile.getSkills()),
+            mapToSiteMetadataObjectList(profile.getProfessions())
         );
     }
 
