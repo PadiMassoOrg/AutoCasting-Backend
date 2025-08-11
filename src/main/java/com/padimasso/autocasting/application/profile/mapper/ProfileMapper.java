@@ -27,7 +27,8 @@ public class ProfileMapper {
             toSocialMediaResponse(profile.getSocialMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
-            mapToSiteMetadataObjectList(profile.getProfessions())
+            mapToSiteMetadataObjectList(profile.getProfessions()),
+            profile.getCredits().stream().map(this::toCreditResponse).toList()
         );
     }
 
@@ -42,7 +43,8 @@ public class ProfileMapper {
             toSocialMediaResponse(profile.getSocialMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
-            mapToSiteMetadataObjectList(profile.getProfessions())
+            mapToSiteMetadataObjectList(profile.getProfessions()),
+            profile.getCredits().stream().map(this::toCreditResponse).toList()
         );
     }
 
@@ -93,6 +95,18 @@ public class ProfileMapper {
             entity.isPassport(),
             entity.isDrivingLicense(),
             mapToSiteMetadataObject(entity.getDietOption())
+        );
+    }
+
+    public CreditResponse toCreditResponse(CreditEntity entity) {
+        if (entity == null) return null;
+        return new CreditResponse(
+            entity.getId(),
+            mapToSiteMetadataObject(entity.getProductionType()),
+            entity.getProjectName(),
+            entity.getProducerName(),
+            entity.getRole(),
+            entity.getYear()
         );
     }
 
