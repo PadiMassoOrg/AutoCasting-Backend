@@ -23,6 +23,9 @@ public class AppConstants {
     // Credit
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
 
+    // Credit
+    public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
+
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
