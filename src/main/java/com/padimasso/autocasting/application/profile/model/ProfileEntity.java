@@ -7,6 +7,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -58,6 +59,7 @@ public class ProfileEntity extends AuditableEntity {
         inverseJoinColumns = @JoinColumn(name = "skill_id"),
         uniqueConstraints = @UniqueConstraint(columnNames = {"profile_id", "skill_id"})
     )
+    @SQLRestriction("deleted = false")
     private Set<SkillEntity> skills = new HashSet<>();
 
     @OneToMany(
@@ -66,6 +68,7 @@ public class ProfileEntity extends AuditableEntity {
         orphanRemoval = true,
         fetch = FetchType.LAZY
     )
+    @SQLRestriction("deleted = false")
     private Set<CreditEntity> credits = new HashSet<>();
 
     @OneToMany(
@@ -74,6 +77,7 @@ public class ProfileEntity extends AuditableEntity {
         orphanRemoval = true,
         fetch = FetchType.LAZY
     )
+    @SQLRestriction("deleted = false")
     private Set<EducationEntity> education = new HashSet<>();
 
     @ManyToOne

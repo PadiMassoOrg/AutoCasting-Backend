@@ -55,12 +55,12 @@ public class BasicInfoServiceImpl implements BasicInfoService {
             } else {
                 var found = new HashSet<>(professionRepository.findAllByIdIn(ids));
                 if (found.size() != ids.size()) {
-                    throw new IllegalArgumentException("profile.profession_invalid_ids");
+                    throw new IllegalArgumentException("sitemetadata.profession.invalid_ids");
                 }
                 basicInfo.setProfessions(found);
             }
         }
-        
+
         return profileMapper.toBasicInfoResponse(basicInfoRepository.save(basicInfo));
     }
 }

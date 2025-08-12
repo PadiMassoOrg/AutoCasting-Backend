@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.ProfessionEntity
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -41,8 +42,9 @@ public class BasicInfoEntity extends AuditableEntity {
         inverseJoinColumns = @JoinColumn(name = "profession_id"),
         uniqueConstraints = @UniqueConstraint(columnNames = {"basic_info_id", "profession_id"})
     )
+    @SQLRestriction("deleted = false")
     Set<ProfessionEntity> professions = new HashSet<>();
-    
+
     @OneToOne
     @JoinColumn(name = "profile_id", nullable = false, unique = true)
     ProfileEntity profile;

@@ -1,6 +1,8 @@
 package com.padimasso.autocasting.config.jpa;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Path;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -126,5 +128,45 @@ public class SoftDeleteRepositoryImpl<T, I extends Serializable>
     @Override
     public Page<T> findAllIncludingDeleted(Pageable pageable) {
         return super.findAll(pageable);
+    }
+
+    // -------- helper privado para navegar el path "a.b.c" ----------
+    private static Path<?> getPath(From<?, ?> root, String path) {
+        Path<?> p = root;
+        for (String part : path.split("\\.")) {
+            p = p.get(part);
+        }
+        return p;
+    }
+
+    // -------- nuevos genéricos (filtrados por deleted=false) ----------
+    @Override
+    public List<T> findAllByPropertyEquals(String path, Object value) {
+        return findAll((root, q, cb) -> cb.equal(getPath(root, path), value));
+    }
+
+    @Override
+    public Page<T> findAllByPropertyEquals(String path, Object value, Pageable pageable) {
+        return findAll((root, q, cb) -> cb.equal(getPath(root, path), value), pageable);
+    }
+
+    // -------- variantes “admin” que NO aplican filtro deleted ----------
+    @Override
+    public List<T> findAllIncludingDeletedByPropertyEquals(String path, Object value) {
+        return findAllIncludingDeleted((root, q, cb) -> cb.equal(getPath(root, path), value));
+    }
+
+    @Override
+    public Page<T> findAllIncludingDeletedByPropertyEquals(String path, Object value, Pageable pageable) {
+        return findAllIncludingDeleted((root, q, cb) -> cb.equal(getPath(root, path), value), pageable);
+    }
+
+    // Permite pasar una Specification arbitraria *sin* filtro deleted (admin)
+    public List<T> findAllIncludingDeleted(Specification<T> spec) {
+        return super.findAll(spec); // sin notDeleted()
+    }
+
+    public Page<T> findAllIncludingDeleted(Specification<T> spec, Pageable pageable) {
+        return super.findAll(spec, pageable); // sin notDeleted()
     }
 }

@@ -23,7 +23,7 @@ public class AppConstants {
     // Credit
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
 
-    // Credit
+    // Education
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
 
     // Security

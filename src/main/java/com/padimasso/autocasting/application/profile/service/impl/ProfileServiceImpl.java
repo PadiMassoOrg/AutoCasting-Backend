@@ -8,6 +8,8 @@ import com.padimasso.autocasting.application.profile.dto.response.ProfileRespons
 import com.padimasso.autocasting.application.profile.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.profile.mapper.ProfileMapper;
 import com.padimasso.autocasting.application.profile.model.ProfileEntity;
+import com.padimasso.autocasting.application.profile.repository.CreditRepository;
+import com.padimasso.autocasting.application.profile.repository.EducationRepository;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import com.padimasso.autocasting.application.profile.service.ProfileService;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
@@ -28,14 +30,17 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
+    private static final String PROFILE_NOT_FOUND = "profile.not_found";
+    private final CreditRepository creditRepository;
     private final ProfileMapper profileMapper;
+    private final EducationRepository educationRepository;
 
     @Override
     public ProfileResponse getMyProfile() {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         var foundProfile = profileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         return profileMapper.toProfileResponse(foundProfile, user);
     }
@@ -45,7 +50,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         ProfileEntity foundProfile = profileRepository
             .findByDefaultSlugOrPremiumSlug(slug, slug)
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         return profileMapper.toPublicProfileResponse(foundProfile);
     }
@@ -54,7 +59,7 @@ public class ProfileServiceImpl implements ProfileService {
     public Set<SiteMetadataObject> patchMySkills(SkillsPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         var foundProfile = profileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         if (request.skillIds() != null) {
             Set<UUID> ids = request.skillIds();
@@ -63,7 +68,7 @@ public class ProfileServiceImpl implements ProfileService {
             } else {
                 var found = new HashSet<>(skillRepository.findAllByIdIn(ids));
                 if (found.size() != ids.size()) {
-                    throw new IllegalArgumentException("profile.profession_invalid_ids");
+                    throw new IllegalArgumentException("sitemetadata.skill.invalid_ids");
                 }
                 foundProfile.setSkills(found);
             }

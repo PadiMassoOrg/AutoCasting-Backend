@@ -45,12 +45,12 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
         }
         if (request.hairColorId() != null) {
             ColorOptionEntity color = colorOptionRepository.findById(request.hairColorId())
-                .orElseThrow(() -> new IllegalArgumentException("site_metadata.color.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
             characteristics.setHairColor(color);
         }
         if (request.eyeColorId() != null) {
             ColorOptionEntity color = colorOptionRepository.findById(request.eyeColorId())
-                .orElseThrow(() -> new IllegalArgumentException("site_metadata.color.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
             characteristics.setEyeColor(color);
         }
         if (request.chestCm() != null) {
@@ -79,7 +79,7 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
         characteristics.setDrivingLicense(request.drivingLicense());
         if (request.dietOptionId() != null) {
             DietOptionEntity diet = dietOptionRepository.findById(request.dietOptionId())
-                .orElseThrow(() -> new IllegalArgumentException("site_metadata.diet.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.diet.not_found"));
             characteristics.setDietOption(diet);
         }
 
