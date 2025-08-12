@@ -7,8 +7,9 @@ import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
-import com.padimasso.autocasting.application.profile.model.ProfileEntity;
+import com.padimasso.autocasting.application.profile.model.*;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Component;
@@ -23,33 +24,70 @@ class UserProvisioningService {
     private final ProfileRepository profileRepository;
     private final PlanRepository planRepository;
 
+    @Transactional
     void ensureUser(String email, String roleCode, String name) {
         if (email == null) throw new OAuth2AuthenticationException("auth.user_not_found");
         if (roleCode == null) throw new OAuth2AuthenticationException("oauth.role_missing");
 
-        final RoleEntity foundRole = roleRepository.findByCode(roleCode.toUpperCase())
-            .orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
-        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
-            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+        final RoleEntity foundRole = roleRepository.findByCode(roleCode.toUpperCase()).orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
+        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE).orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
         UserEntity user = userRepository.findByEmail(email).orElseGet(() -> {
-            UserEntity newUser = UserEntity.builder()
-                .email(email)
-                .password(null)
-                .userAccountProvider(UserAccountProvider.OTHER)
-                .role(foundRole)
-                .build();
+            UserEntity newUser = UserEntity.builder().email(email).password(null).userAccountProvider(UserAccountProvider.OTHER).role(foundRole).build();
             return userRepository.save(newUser);
         });
 
-        boolean profileExists = profileRepository.existsByUserId(user.getId());
-        if (!profileExists) {
-            ProfileEntity profile = ProfileEntity.builder()
-                .name(name)
-                .user(user)
-                .plan(freePlan)
+        ProfileEntity profile = profileRepository.findByUserId(user.getId()).orElseGet(() -> {
+            ProfileEntity p = ProfileEntity.builder().user(user).plan(freePlan).build();
+            return profileRepository.save(p);
+        });
+
+        if (profile.getBasicInfo() == null) {
+            BasicInfoEntity basicInfo = BasicInfoEntity.builder()
+                .stageName(name)
+                .profile(profile)
                 .build();
-            profileRepository.save(profile);
+            profile.setBasicInfo(basicInfo);
+        } else {
+            if ((profile.getBasicInfo().getStageName() == null || profile.getBasicInfo().getStageName().isBlank())
+                && name != null && !name.isBlank()) {
+                profile.getBasicInfo().setStageName(name);
+            }
         }
+
+        if (profile.getContact() == null) {
+            ContactEntity contact = ContactEntity.builder()
+                .email(email)
+                .profile(profile)
+                .build();
+            profile.setContact(contact);
+        } else {
+            if (profile.getContact().getEmail() == null || profile.getContact().getEmail().isBlank()) {
+                profile.getContact().setEmail(email);
+            }
+        }
+
+        if (profile.getSocialMedia() == null) {
+            SocialMediaEntity socialMedia = SocialMediaEntity.builder()
+                .profile(profile)
+                .build();
+            profile.setSocialMedia(socialMedia);
+        }
+
+        if (profile.getMedia() == null) {
+            MediaEntity media = MediaEntity.builder()
+                .profile(profile)
+                .build();
+            profile.setMedia(media);
+        }
+
+        if (profile.getCharacteristics() == null) {
+            CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
+                .profile(profile)
+                .build();
+            profile.setCharacteristics(characteristics);
+        }
+
+        profileRepository.save(profile);
     }
 }

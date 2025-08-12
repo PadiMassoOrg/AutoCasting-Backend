@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.auth.model;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
 
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE roles SET deleted = true WHERE id = ?")
 public class RoleEntity extends AuditableEntity {
 
     @Id
@@ -27,8 +29,5 @@ public class RoleEntity extends AuditableEntity {
 
     @Column
     private String description;
-
-    @Column(nullable = false)
-    private boolean isActive;
 }
 

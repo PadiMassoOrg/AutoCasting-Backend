@@ -16,10 +16,11 @@ import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
-import com.padimasso.autocasting.application.profile.model.ProfileEntity;
-import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
+import com.padimasso.autocasting.application.profile.model.*;
+import com.padimasso.autocasting.application.profile.repository.*;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,12 +34,18 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final PlanRepository planRepository;
     private final ProfileRepository profileRepository;
+    private final BasicInfoRepository basicInfoRepository;
+    private final ContactRepository contactRepository;
+    private final SocialMediaRepository socialMediaRepository;
+    private final MediaRepository mediaRepository;
+    private final CharacteristicsRepository characteristicsRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
     private final AppProperties appProperties;
 
     @Override
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         boolean exists = userRepository.existsByEmail(request.email());
         if (exists) {
@@ -59,11 +66,37 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         var profile = ProfileEntity.builder()
-            .name(request.name())
             .user(user)
             .plan(freePlan)
             .build();
         profileRepository.save(profile);
+
+        var basicInfo = BasicInfoEntity.builder()
+            .stageName(request.name())
+            .profile(profile)
+            .build();
+        basicInfoRepository.save(basicInfo);
+
+        var contact = ContactEntity.builder()
+            .email(request.email())
+            .profile(profile)
+            .build();
+        contactRepository.save(contact);
+
+        var socialMedia = SocialMediaEntity.builder()
+            .profile(profile)
+            .build();
+        socialMediaRepository.save(socialMedia);
+
+        var media = MediaEntity.builder()
+            .profile(profile)
+            .build();
+        mediaRepository.save(media);
+
+        var characteristics = CharacteristicsEntity.builder()
+            .profile(profile)
+            .build();
+        characteristicsRepository.save(characteristics);
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
         return new AuthResponse(jwt);

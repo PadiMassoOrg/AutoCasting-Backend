@@ -1,10 +1,22 @@
 package com.padimasso.autocasting.application.profile.dto.response;
 
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+
+import java.util.Set;
+import java.util.UUID;
+
 public record PublicProfileResponse(
-    String email,
+    UUID id,
     String roleStringCode,
     String planStringCode,
-    String name,
-    String publicSlug
+    String publicSlug,
+    BasicInfoResponse basicInfo,
+    ContactResponse contact,
+    SocialMediaResponse socialMedia,
+    MediaResponse media,
+    CharacteristicsResponse characteristics,
+    Set<SiteMetadataObject> skills,
+    Set<CreditResponse> credits,
+    Set<EducationResponse> education
 ) {
 }

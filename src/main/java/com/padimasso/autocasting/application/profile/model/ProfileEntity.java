@@ -3,10 +3,14 @@ package com.padimasso.autocasting.application.profile.model;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -16,11 +20,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE profile SET deleted = true WHERE id = ?")
 public class ProfileEntity extends AuditableEntity {
-
-    @NotBlank()
-    @Column(nullable = false)
-    String name;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -35,6 +36,49 @@ public class ProfileEntity extends AuditableEntity {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private UserEntity user;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    BasicInfoEntity basicInfo;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    ContactEntity contact;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    SocialMediaEntity socialMedia;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    MediaEntity media;
+
+    @OneToOne(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    CharacteristicsEntity characteristics;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "profile_skill",
+        joinColumns = @JoinColumn(name = "profile_id"),
+        inverseJoinColumns = @JoinColumn(name = "skill_id"),
+        uniqueConstraints = @UniqueConstraint(columnNames = {"profile_id", "skill_id"})
+    )
+    @SQLRestriction("deleted = false")
+    private Set<SkillEntity> skills = new HashSet<>();
+
+    @OneToMany(
+        mappedBy = "profile",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    @SQLRestriction("deleted = false")
+    private Set<CreditEntity> credits = new HashSet<>();
+
+    @OneToMany(
+        mappedBy = "profile",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    @SQLRestriction("deleted = false")
+    private Set<EducationEntity> education = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "plan_id", nullable = false)

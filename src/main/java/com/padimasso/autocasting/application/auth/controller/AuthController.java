@@ -22,7 +22,7 @@ import static com.padimasso.autocasting.config.AppConstants.*;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "1. Autenticación", description = "Registro, inicio de sesión y recuperación de contraseña")
+@Tag(name = "Autenticación", description = "Registro, inicio de sesión y recuperación de contraseña")
 @SuppressWarnings("unused")
 public class AuthController {
 
