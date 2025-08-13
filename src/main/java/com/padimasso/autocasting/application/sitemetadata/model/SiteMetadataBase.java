@@ -22,4 +22,7 @@ public abstract class SiteMetadataBase extends AuditableEntity {
 
     @Column(nullable = false)
     protected String stringCode;
+
+    @Column
+    private String categoryStringCode;
 }

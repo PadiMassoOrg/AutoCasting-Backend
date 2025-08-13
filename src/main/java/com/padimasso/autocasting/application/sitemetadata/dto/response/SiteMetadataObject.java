@@ -9,5 +9,5 @@ import java.util.UUID;
 public record SiteMetadataObject(
     UUID id,
     String stringCode,
-    String category
+    String categoryStringCode
 ) {}

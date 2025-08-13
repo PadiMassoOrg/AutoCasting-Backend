@@ -4,9 +4,7 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.profile.dto.response.*;
 import com.padimasso.autocasting.application.profile.model.*;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
-import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
-import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -138,29 +136,12 @@ public class ProfileMapper {
         if (entity == null) {
             return null;
         }
-
-        String category = null;
-        if (entity instanceof ColorOptionEntity colorEntity) {
-            category = colorEntity.getCategory();
-        }
-        if (entity instanceof SkillEntity skillEntity) {
-            category = skillEntity.getCategory();
-        }
-        return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
+        return new SiteMetadataObject(entity.getId(), entity.getStringCode(), entity.getCategoryStringCode());
     }
 
     public <T extends SiteMetadataBase> Set<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
         return entities.stream()
-            .map(entity -> {
-                String category = null;
-                if (entity instanceof ColorOptionEntity colorEntity) {
-                    category = colorEntity.getCategory();
-                }
-                if (entity instanceof SkillEntity skillEntity) {
-                    category = skillEntity.getCategory();
-                }
-                return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
-            })
+            .map(this::mapToSiteMetadataObject)
             .collect(Collectors.toSet());
     }
 }

@@ -2,7 +2,6 @@ package com.padimasso.autocasting.application.sitemetadata.service.impl;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataResponse;
-import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
 import com.padimasso.autocasting.application.sitemetadata.repository.ColorOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.DietOptionRepository;
@@ -38,13 +37,11 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
 
     private <T extends SiteMetadataBase> List<SiteMetadataObject> mapToSiteMetadataObject(List<T> entities) {
         return entities.stream()
-            .map(entity -> {
-                String category = null;
-                if (entity instanceof ColorOptionEntity colorEntity) {
-                    category = colorEntity.getCategory();
-                }
-                return new SiteMetadataObject(entity.getId(), entity.getStringCode(), category);
-            })
+            .map(entity -> new SiteMetadataObject(
+                entity.getId(),
+                entity.getStringCode(),
+                entity.getCategoryStringCode()
+            ))
             .toList();
     }
 }
