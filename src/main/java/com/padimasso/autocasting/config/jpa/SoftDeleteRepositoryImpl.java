@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.lang.Nullable;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -148,6 +149,35 @@ public class SoftDeleteRepositoryImpl<T, I extends Serializable>
     @Override
     public Page<T> findAllByPropertyEquals(String path, Object value, Pageable pageable) {
         return findAll((root, q, cb) -> cb.equal(getPath(root, path), value), pageable);
+    }
+
+    @Override
+    public Instant findMaxModifiedAt() {
+        var cb = em.getCriteriaBuilder();
+
+        // No fijamos el tipo de retorno a Instant para evitar conflictos con LocalDateTime
+        var cq = cb.createQuery(Object.class);
+
+        @SuppressWarnings("unchecked")
+        var root = cq.from(entityInformation.getJavaType());
+
+        // select modifiedAt where deleted=false order by modifiedAt desc limit 1
+        var mod = root.get("modifiedAt");                 // Path<?> tipado en runtime
+        cq.select(mod);
+        cq.where(cb.isFalse(root.get("deleted")));
+        cq.orderBy(cb.desc(mod));
+
+        var list = em.createQuery(cq).setMaxResults(1).getResultList();
+        if (list.isEmpty() || list.getFirst() == null) return null;
+
+        Object v = list.getFirst();
+        if (v instanceof java.time.Instant inst) return inst;
+        if (v instanceof java.time.LocalDateTime ldt) return ldt.atZone(java.time.ZoneOffset.UTC).toInstant();
+        if (v instanceof java.time.OffsetDateTime odt) return odt.toInstant();
+        if (v instanceof java.time.ZonedDateTime zdt) return zdt.toInstant();
+        if (v instanceof java.sql.Timestamp ts) return ts.toInstant();
+
+        throw new IllegalStateException("Unsupported modifiedAt type: " + v.getClass());
     }
 
     // -------- variantes “admin” que NO aplican filtro deleted ----------

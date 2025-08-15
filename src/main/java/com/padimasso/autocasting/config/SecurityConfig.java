@@ -51,8 +51,6 @@ public class SecurityConfig {
                     // Test Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(ROLE_CASTINERA)
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(ROLE_ACTOR)
-                    // Site Metadata
-                    .requestMatchers(HttpMethod.GET, AppConstants.SITE_METADATA_URL).authenticated()
                     // Profile
                     .requestMatchers(HttpMethod.GET, AppConstants.PROFILE_API_URL).authenticated()
                     // Any
@@ -105,7 +103,7 @@ public class SecurityConfig {
         );
 
         // Allow all HTTP methods
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // Allow credentials (important for authentication)
         configuration.setAllowCredentials(true);

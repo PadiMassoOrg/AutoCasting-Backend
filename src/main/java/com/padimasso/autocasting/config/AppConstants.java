@@ -16,6 +16,7 @@ public class AppConstants {
 
     // Site Metadata
     public static final String SITE_METADATA_URL = BASE_API_URL + "/sitemetadata";
+    public static final String SITE_METADATA_VERSION_URL = SITE_METADATA_URL + "/version";
 
     // Profile
     public static final String PROFILE_API_URL = BASE_API_URL + "/profile";

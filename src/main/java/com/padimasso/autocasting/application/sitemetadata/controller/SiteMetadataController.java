@@ -1,14 +1,18 @@
 package com.padimasso.autocasting.application.sitemetadata.controller;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataResponse;
+import com.padimasso.autocasting.application.sitemetadata.dto.response.VersionResponse;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataService;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,8 +27,32 @@ public class SiteMetadataController {
 
     @Operation(summary = "Site Metadata", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(AppConstants.SITE_METADATA_URL)
-    public ResponseEntity<SiteMetadataResponse> getMetadata() {
-        return ResponseEntity.ok(siteMetadataService.getSiteMetadata());
+    public ResponseEntity<SiteMetadataResponse> getMetadata(
+        @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch
+    ) {
+        // Revalidación por ETag (versión)
+        VersionResponse version = siteMetadataService.getVersionOnly();
+        String etag = "\"" + version.version() + "\"";
+
+        if (etag.equals(ifNoneMatch)) {
+            // El cliente ya tiene esta versión → 304 Not Modified
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                .eTag(etag)
+                .cacheControl(CacheControl.noCache()) // fuerza revalidación por ETag
+                .build();
+        }
+
+        SiteMetadataResponse body = siteMetadataService.getSiteMetadata();
+        return ResponseEntity.ok()
+            .eTag(etag)
+            .cacheControl(CacheControl.noCache())
+            .body(body);
+    }
+
+    @Operation(summary = "Versión de Site Metadata", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping(AppConstants.SITE_METADATA_VERSION_URL)
+    public VersionResponse getVersion() {
+        return siteMetadataService.getVersionOnly();
     }
 
 }

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,10 +32,12 @@ public interface SoftDeleteRepository<T, I extends Serializable>
     void restoreById(I id);
 
 
-    // -------- nuevos genéricos (filtrados por deleted=false) ----------
+    // -------- (filtrados por deleted=false) ----------
     List<T> findAllByPropertyEquals(String path, Object value);
 
     Page<T> findAllByPropertyEquals(String path, Object value, Pageable pageable);
+
+    Instant findMaxModifiedAt();
 
     // -------- variantes “admin” que NO aplican filtro deleted ----------
     List<T> findAllIncludingDeletedByPropertyEquals(String path, Object value);
