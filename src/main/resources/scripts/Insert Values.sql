@@ -118,7 +118,7 @@ VALUES
     (gen_random_uuid(), 'sitemetadata.profession.influencer', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic'),
     (gen_random_uuid(), 'sitemetadata.profession.model', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic'),
     (gen_random_uuid(), 'sitemetadata.profession.musician', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic'),
-    (gen_random_uuid(), 'sitemetadata.profession.comedy_standup', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic'),
+    (gen_random_uuid(), 'sitemetadata.profession.standup', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic'),
     (gen_random_uuid(), 'sitemetadata.profession.voice_talent', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic');
 
 INSERT INTO color_option (
