@@ -14,9 +14,9 @@ public record CharacteristicsPatchRequest(
     String pantSize,
     String dressSize,
     String shoeSize,
-    boolean tattoo,
-    boolean passport,
-    boolean drivingLicense,
+    Boolean tattoo,
+    Boolean passport,
+    Boolean drivingLicense,
     UUID dietOptionId
 ) {
 }

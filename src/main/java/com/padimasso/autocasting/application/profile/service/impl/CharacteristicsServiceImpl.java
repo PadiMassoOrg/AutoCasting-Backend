@@ -74,9 +74,9 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
         if (request.shoeSize() != null) {
             characteristics.setShoeSize(request.shoeSize());
         }
-        characteristics.setTattoo(request.tattoo());
-        characteristics.setPassport(request.passport());
-        characteristics.setDrivingLicense(request.drivingLicense());
+        if (request.tattoo() != null) characteristics.setTattoo(request.tattoo());
+        if (request.passport() != null) characteristics.setPassport(request.passport());
+        if (request.drivingLicense() != null) characteristics.setDrivingLicense(request.drivingLicense());
         if (request.dietOptionId() != null) {
             DietOptionEntity diet = dietOptionRepository.findById(request.dietOptionId())
                 .orElseThrow(() -> new IllegalArgumentException("sitemetadata.diet.not_found"));
