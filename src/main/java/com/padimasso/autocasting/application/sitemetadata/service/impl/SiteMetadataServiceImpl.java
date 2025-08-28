@@ -4,10 +4,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.VersionResponse;
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
-import com.padimasso.autocasting.application.sitemetadata.repository.ColorOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.DietOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.ProfessionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.SkillRepository;
+import com.padimasso.autocasting.application.sitemetadata.repository.*;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +22,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final ProfessionRepository professionRepository;
     private final ColorOptionRepository colorOptionRepository;
     private final DietOptionRepository dietOptionRepository;
+    private final ProductionTypeRepository productionTypeRepository;
 
     public SiteMetadataResponse getSiteMetadata() {
         var version = computeVersion();
@@ -32,13 +30,15 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var foundProfessionEntities = professionRepository.findAll();
         var foundColorOptionEntities = colorOptionRepository.findAll();
         var foundDietOptionEntities = dietOptionRepository.findAll();
+        var foundProductionTypeOptionEntities = productionTypeRepository.findAll();
 
         return new SiteMetadataResponse(
             version,
             mapToSiteMetadataObject(foundSkillEntities),
             mapToSiteMetadataObject(foundProfessionEntities),
             mapToSiteMetadataObject(foundColorOptionEntities),
-            mapToSiteMetadataObject(foundDietOptionEntities)
+            mapToSiteMetadataObject(foundDietOptionEntities),
+            mapToSiteMetadataObject(foundProductionTypeOptionEntities)
         );
     }
 
@@ -62,7 +62,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             "skills:" + skillRepository.count() + ":" + ts(skillRepository.findMaxModifiedAt()),
             "professions:" + professionRepository.count() + ":" + ts(professionRepository.findMaxModifiedAt()),
             "colors:" + colorOptionRepository.count() + ":" + ts(colorOptionRepository.findMaxModifiedAt()),
-            "diet:" + dietOptionRepository.count() + ":" + ts(dietOptionRepository.findMaxModifiedAt())
+            "diet:" + dietOptionRepository.count() + ":" + ts(dietOptionRepository.findMaxModifiedAt()),
+            "productionType:" + productionTypeRepository.count() + ":" + ts(productionTypeRepository.findMaxModifiedAt())
         );
         return sha256(parts);
     }
