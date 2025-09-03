@@ -7,6 +7,7 @@ public record SiteMetadataResponse(
     String version,
     List<SiteMetadataObject> skills,
     List<SiteMetadataObject> professions,
+    List<SiteMetadataObject> genderOptions,
     List<SiteMetadataObject> colorOptions,
     List<SiteMetadataObject> dietOptions,
     List<SiteMetadataObject> productionTypeOptions

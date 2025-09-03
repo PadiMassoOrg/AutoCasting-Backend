@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.profile.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.ProfessionEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,8 +30,9 @@ public class BasicInfoEntity extends AuditableEntity {
     @Column(nullable = false)
     String stageName;
 
-    @Column
-    String gender;
+    @OneToOne
+    @JoinColumn(name = "gender_id")
+    GenderOptionEntity gender;
 
     @Column
     LocalDate birthDate;

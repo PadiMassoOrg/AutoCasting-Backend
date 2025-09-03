@@ -10,6 +10,8 @@ import com.padimasso.autocasting.application.profile.model.ProfileEntity;
 import com.padimasso.autocasting.application.profile.repository.BasicInfoRepository;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
 import com.padimasso.autocasting.application.profile.service.BasicInfoService;
+import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.repository.GenderOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.ProfessionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
     private final ProfileRepository profileRepository;
     private final BasicInfoRepository basicInfoRepository;
     private final ProfessionRepository professionRepository;
+    private final GenderOptionRepository genderOptionRepository;
     private final ProfileMapper profileMapper;
 
     @Transactional
@@ -42,8 +45,10 @@ public class BasicInfoServiceImpl implements BasicInfoService {
         if (req.stageName() != null) {
             basicInfo.setStageName(req.stageName().trim());
         }
-        if (req.gender() != null) {
-            basicInfo.setGender(req.gender().trim());
+        if (req.genderId() != null) {
+            GenderOptionEntity gender = genderOptionRepository.findById(req.genderId())
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+            basicInfo.setGender(gender);
         }
         if (req.birthDate() != null) {
             basicInfo.setBirthDate(req.birthDate());

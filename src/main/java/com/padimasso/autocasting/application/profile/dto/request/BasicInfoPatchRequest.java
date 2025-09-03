@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record BasicInfoPatchRequest(
     String stageName,
-    String gender,
+    UUID genderId,
     LocalDate birthDate,
     Set<UUID> professionIds
 ) {

@@ -20,6 +20,7 @@ import java.util.List;
 public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final SkillRepository skillRepository;
     private final ProfessionRepository professionRepository;
+    private final GenderOptionRepository genderOptionRepository;
     private final ColorOptionRepository colorOptionRepository;
     private final DietOptionRepository dietOptionRepository;
     private final ProductionTypeRepository productionTypeRepository;
@@ -28,6 +29,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var version = computeVersion();
         var foundSkillEntities = skillRepository.findAll();
         var foundProfessionEntities = professionRepository.findAll();
+        var foundGenderOptionEntities = genderOptionRepository.findAll();
         var foundColorOptionEntities = colorOptionRepository.findAll();
         var foundDietOptionEntities = dietOptionRepository.findAll();
         var foundProductionTypeOptionEntities = productionTypeRepository.findAll();
@@ -36,6 +38,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             version,
             mapToSiteMetadataObject(foundSkillEntities),
             mapToSiteMetadataObject(foundProfessionEntities),
+            mapToSiteMetadataObject(foundGenderOptionEntities),
             mapToSiteMetadataObject(foundColorOptionEntities),
             mapToSiteMetadataObject(foundDietOptionEntities),
             mapToSiteMetadataObject(foundProductionTypeOptionEntities)
@@ -61,6 +64,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         String parts = String.join("|",
             "skills:" + skillRepository.count() + ":" + ts(skillRepository.findMaxModifiedAt()),
             "professions:" + professionRepository.count() + ":" + ts(professionRepository.findMaxModifiedAt()),
+            "gender:" + genderOptionRepository.count() + ":" + ts(genderOptionRepository.findMaxModifiedAt()),
             "colors:" + colorOptionRepository.count() + ":" + ts(colorOptionRepository.findMaxModifiedAt()),
             "diet:" + dietOptionRepository.count() + ":" + ts(dietOptionRepository.findMaxModifiedAt()),
             "productionType:" + productionTypeRepository.count() + ":" + ts(productionTypeRepository.findMaxModifiedAt())
