@@ -121,6 +121,19 @@ VALUES
     (gen_random_uuid(), 'sitemetadata.profession.standup', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic'),
     (gen_random_uuid(), 'sitemetadata.profession.voice_talent', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false, 'sitemetadata.category.scenic');
 
+INSERT INTO gender_option (
+  id,
+  string_code,
+  created_at,
+  created_by,
+  modified_at,
+  modified_by,
+  deleted)
+VALUES
+    (gen_random_uuid(), 'sitemetadata.gender.male', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'sitemetadata.gender.female', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false),
+    (gen_random_uuid(), 'sitemetadata.gender.other', NOW(), 'SYSTEM', NOW(), 'SYSTEM', false);
+
 INSERT INTO color_option (
   id,
   string_code,
