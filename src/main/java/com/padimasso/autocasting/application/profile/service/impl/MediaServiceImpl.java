@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.profile.service.impl;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.profile.dto.request.MediaPatchRequest;
+import com.padimasso.autocasting.application.profile.dto.request.OtherPicturePatch;
 import com.padimasso.autocasting.application.profile.dto.response.MediaResponse;
 import com.padimasso.autocasting.application.profile.mapper.ProfileMapper;
 import com.padimasso.autocasting.application.profile.model.MediaEntity;
@@ -14,7 +15,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -41,13 +43,16 @@ public class MediaServiceImpl implements MediaService {
         if (request.fullBodyImageUrl() != null){
             media.setFullBodyImageUrl(request.fullBodyImageUrl());
         }
-        if (request.otherPicturesUrl() != null) {
-            Set<String> urls = request.otherPicturesUrl();
-            if (urls.isEmpty()) {
-                media.getOtherPicturesUrl().clear();
-            } else {
-                media.setOtherPicturesUrl(urls);
+        if (request.otherPictures() != null) {
+            List<String> list = media.getOtherPicturesUrl();
+            if (list == null) list = new ArrayList<>();
+            for (OtherPicturePatch op : request.otherPictures()) {
+                int idx = op.index();
+                // expandir con nulls si hace falta
+                while (list.size() <= idx) list.add(null);
+                list.set(idx, op.url());
             }
+            media.setOtherPicturesUrl(list);
         }
         if (request.introductionVideoUrl() != null){
             media.setIntroductionVideoUrl(request.introductionVideoUrl());

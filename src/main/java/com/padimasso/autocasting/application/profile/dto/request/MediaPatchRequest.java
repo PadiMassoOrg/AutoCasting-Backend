@@ -1,11 +1,11 @@
 package com.padimasso.autocasting.application.profile.dto.request;
 
-import java.util.Set;
+import java.util.List;
 
 public record MediaPatchRequest(
     String headshotImageUrl,
     String fullBodyImageUrl,
-    Set<String> otherPicturesUrl,
+    List<OtherPicturePatch> otherPictures,
     String introductionVideoUrl,
     String showReelVideoUrl
 ) {
