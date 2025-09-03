@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.config;
 
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
@@ -25,5 +26,10 @@ public class WebConfig {
         source.setBasename("messages");
         source.setDefaultEncoding("UTF-8");
         return source;
+    }
+
+    @Bean
+    public JsonNullableModule jsonNullableModule() {
+        return new org.openapitools.jackson.nullable.JsonNullableModule();
     }
 }

@@ -37,11 +37,11 @@ public class MediaServiceImpl implements MediaService {
         MediaEntity media = mediaRepository.findByProfileId(profile.getId())
             .orElseGet(() -> mediaRepository.save(MediaEntity.builder().profile(profile).build()));
 
-        if (request.headshotImageUrl() != null){
-            media.setHeadshotImageUrl(request.headshotImageUrl());
+        if (request.headshotImageUrl().isPresent()) {
+            media.setHeadshotImageUrl(request.headshotImageUrl().orElse(null));
         }
-        if (request.fullBodyImageUrl() != null){
-            media.setFullBodyImageUrl(request.fullBodyImageUrl());
+        if (request.fullBodyImageUrl().isPresent()) {
+            media.setFullBodyImageUrl(request.fullBodyImageUrl().orElse(null));
         }
         if (request.otherPictures() != null) {
             List<String> list = media.getOtherPicturesUrl();
