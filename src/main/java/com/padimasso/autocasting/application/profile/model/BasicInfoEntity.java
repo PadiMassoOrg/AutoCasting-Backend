@@ -30,9 +30,9 @@ public class BasicInfoEntity extends AuditableEntity {
     @Column(nullable = false)
     String stageName;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "gender_id")
-    GenderOptionEntity gender;
+    private GenderOptionEntity gender;
 
     @Column
     LocalDate birthDate;
