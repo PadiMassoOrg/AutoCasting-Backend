@@ -49,4 +49,24 @@ public interface ProfileRepository extends SoftDeleteRepository<ProfileEntity, U
         where p.id in :profileIds
         """)
     List<ProfessionRow> findProfessionsForProfiles(@Param("profileIds") Collection<UUID> profileIds);
+
+    @Query("""
+        select
+          p.id as id,
+          p.defaultSlug as defaultSlug,
+          p.premiumSlug as premiumSlug,
+          p.plan.allowsCustomSlug as allowsCustomSlug,
+          bi.stageName as stageName,
+          c.email as email,
+          c.phoneNumber as phoneNumber,
+          m.headshotImageUrl as headshotImageUrl,
+          p.modifiedAt as modifiedAt
+        from #{#entityName} p
+          join p.basicInfo bi
+          join p.contact c
+          left join p.media m
+        where p.id in :ids
+        """)
+    List<ProfileCardRow> findCardRowsByIds(@Param("ids") Collection<UUID> ids);
+
 }
