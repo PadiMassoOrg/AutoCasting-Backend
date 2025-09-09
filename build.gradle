@@ -13,6 +13,10 @@ java {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor

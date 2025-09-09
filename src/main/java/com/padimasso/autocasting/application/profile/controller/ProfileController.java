@@ -4,6 +4,7 @@ package com.padimasso.autocasting.application.profile.controller;
 import com.padimasso.autocasting.application.profile.dto.request.*;
 import com.padimasso.autocasting.application.profile.dto.response.*;
 import com.padimasso.autocasting.application.profile.service.*;
+import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,7 @@ public class ProfileController {
     private final SocialMediaService socialMediaService;
     private final MediaService mediaService;
     private final CharacteristicsService characteristicsService;
+    private final TalentSearchService talentSearchService;
 
     //    Profile
     @Operation(summary = "Obtener mi perfil", security = @SecurityRequirement(name = "bearerAuth"))
@@ -41,6 +43,15 @@ public class ProfileController {
     @GetMapping(AppConstants.PROFILE_API_URL + "/{slug}")
     public ResponseEntity<PublicProfileResponse> getPublicProfile(@PathVariable String slug) {
         return ResponseEntity.ok(profileService.getProfileBySlug(slug));
+    }
+
+    //    Talent Database
+    @GetMapping(AppConstants.TALENT_DATABASE_API_URL)
+    public SliceResponse<ProfileCardResponse> list(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        return talentSearchService.listCards(page, size);
     }
 
     //    Basic Info

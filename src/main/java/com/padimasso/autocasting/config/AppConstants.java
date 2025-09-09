@@ -20,6 +20,7 @@ public class AppConstants {
 
     // Profile
     public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
+    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/profile/talent-database";
 
     // Credit
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
