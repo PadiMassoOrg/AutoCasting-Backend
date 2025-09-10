@@ -1,9 +1,12 @@
 package com.padimasso.autocasting.application.profile.controller;
 
 
+import com.padimasso.autocasting.application.common.dto.MatchMode;
+import com.padimasso.autocasting.application.profile.dto.TalentFilter;
 import com.padimasso.autocasting.application.profile.dto.request.*;
 import com.padimasso.autocasting.application.profile.dto.response.*;
 import com.padimasso.autocasting.application.profile.service.*;
+import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping
@@ -29,6 +34,7 @@ public class ProfileController {
     private final SocialMediaService socialMediaService;
     private final MediaService mediaService;
     private final CharacteristicsService characteristicsService;
+    private final TalentSearchService talentSearchService;
 
     //    Profile
     @Operation(summary = "Obtener mi perfil", security = @SecurityRequirement(name = "bearerAuth"))
@@ -42,6 +48,39 @@ public class ProfileController {
     public ResponseEntity<PublicProfileResponse> getPublicProfile(@PathVariable String slug) {
         return ResponseEntity.ok(profileService.getProfileBySlug(slug));
     }
+
+    //    Talent Database
+    @GetMapping(AppConstants.TALENT_DATABASE_API_URL)
+    public SliceResponse<ProfileCardResponse> search(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) String stageName,
+        @RequestParam(required = false) Integer ageMin,
+        @RequestParam(required = false) Integer ageMax,
+        @RequestParam(required = false) UUID genderId,
+        @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
+        @RequestParam(required = false) Integer heightMinCm,
+        @RequestParam(required = false) Integer heightMaxCm,
+        @RequestParam(required = false) UUID hairColorId,
+        @RequestParam(required = false) UUID eyeColorId,
+        @RequestParam(required = false) Boolean tattoo,
+        @RequestParam(required = false) Boolean passport,
+        @RequestParam(required = false) Boolean drivingLicense,
+        @RequestParam(required = false, name = "skillId") List<UUID> skillIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode
+    ) {
+        var filter = new TalentFilter(
+            stageName, ageMin, ageMax, genderId,
+            professionIds, professionsMode,
+            heightMinCm, heightMaxCm,
+            hairColorId, eyeColorId,
+            tattoo, passport, drivingLicense,
+            skillIds, skillsMode
+        );
+        return talentSearchService.search(filter, page, size);
+    }
+
 
     //    Basic Info
     @PatchMapping(AppConstants.PROFILE_API_URL + "/basic-info")
