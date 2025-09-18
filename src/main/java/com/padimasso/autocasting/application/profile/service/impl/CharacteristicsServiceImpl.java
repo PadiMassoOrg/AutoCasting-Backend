@@ -37,12 +37,8 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
         CharacteristicsEntity characteristics = characteristicsRepository.findByProfileId(profile.getId())
             .orElseGet(() -> characteristicsRepository.save(CharacteristicsEntity.builder().profile(profile).build()));
 
-        if (request.heightCm() != null) {
-            characteristics.setHeightCm(request.heightCm());
-        }
-        if (request.weightKg() != null) {
-            characteristics.setWeightKg(request.weightKg());
-        }
+        if (request.heightCm().isPresent()) characteristics.setHeightCm(request.heightCm().orElse(null));
+        if (request.weightKg().isPresent()) characteristics.setWeightKg(request.weightKg().orElse(null));
         if (request.hairColorId() != null) {
             ColorOptionEntity color = colorOptionRepository.findById(request.hairColorId())
                 .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
@@ -53,27 +49,13 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
                 .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
             characteristics.setEyeColor(color);
         }
-        if (request.chestCm() != null) {
-            characteristics.setChestCm(request.chestCm());
-        }
-        if (request.waistCm() != null) {
-            characteristics.setWaistCm(request.waistCm());
-        }
-        if (request.hipCm() != null) {
-            characteristics.setHipCm(request.hipCm());
-        }
-        if (request.shirtSize() != null) {
-            characteristics.setShirtSize(request.shirtSize());
-        }
-        if (request.pantSize() != null) {
-            characteristics.setPantSize(request.pantSize());
-        }
-        if (request.dressSize() != null) {
-            characteristics.setDressSize(request.dressSize());
-        }
-        if (request.shoeSize() != null) {
-            characteristics.setShoeSize(request.shoeSize());
-        }
+        if (request.chestCm().isPresent()) characteristics.setChestCm(request.chestCm().orElse(null));
+        if (request.waistCm().isPresent()) characteristics.setWaistCm(request.waistCm().orElse(null));
+        if (request.hipCm().isPresent()) characteristics.setHipCm(request.hipCm().orElse(null));
+        if (request.shirtSize().isPresent()) characteristics.setShirtSize(request.shirtSize().orElse(null));
+        if (request.pantSize().isPresent()) characteristics.setPantSize(request.pantSize().orElse(null));
+        if (request.dressSize().isPresent()) characteristics.setDressSize(request.dressSize().orElse(null));
+        if (request.shoeSize().isPresent()) characteristics.setShoeSize(request.shoeSize().orElse(null));
         if (request.tattoo() != null) characteristics.setTattoo(request.tattoo());
         if (request.passport() != null) characteristics.setPassport(request.passport());
         if (request.drivingLicense() != null) characteristics.setDrivingLicense(request.drivingLicense());

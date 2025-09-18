@@ -1,19 +1,21 @@
 package com.padimasso.autocasting.application.profile.dto.request;
 
+import org.openapitools.jackson.nullable.JsonNullable;
+
 import java.util.UUID;
 
 public record CharacteristicsPatchRequest(
-    Integer heightCm,
-    Integer weightKg,
+    JsonNullable<Integer> heightCm,
+    JsonNullable<Integer> weightKg,
     UUID hairColorId,
     UUID eyeColorId,
-    Integer chestCm,
-    Integer waistCm,
-    Integer hipCm,
-    String shirtSize,
-    String pantSize,
-    String dressSize,
-    String shoeSize,
+    JsonNullable<String> chestCm,
+    JsonNullable<String> waistCm,
+    JsonNullable<String> hipCm,
+    JsonNullable<String> shirtSize,
+    JsonNullable<String> pantSize,
+    JsonNullable<String> dressSize,
+    JsonNullable<String> shoeSize,
     Boolean tattoo,
     Boolean passport,
     Boolean drivingLicense,

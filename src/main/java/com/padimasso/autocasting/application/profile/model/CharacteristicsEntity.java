@@ -42,13 +42,13 @@ public class CharacteristicsEntity extends AuditableEntity {
     private ColorOptionEntity eyeColor;
 
     @Column
-    private Integer chestCm;
+    private String chestCm;
 
     @Column
-    private Integer waistCm;
+    private String waistCm;
 
     @Column
-    private Integer hipCm;
+    private String hipCm;
 
     @Column
     private String shirtSize;
