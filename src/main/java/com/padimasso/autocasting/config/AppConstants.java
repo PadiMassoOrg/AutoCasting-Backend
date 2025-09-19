@@ -33,6 +33,12 @@ public class AppConstants {
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
     public static final long EXPIRATION_TIME = 86400; // 10 days
     public static final long RESET_PASSWORD_EXPIRATION_TIME = 900; // 15min
+    public static final long RESET_PASSWORD_EXPIRATION_TIME_MIN = 15; // 15min
+
+    // Company
+    public static final String SUPPORT_EMAIL = "support@autocasting.com";
+    public static final String INSTA_URL = "instagram.com";
+    public static final String LINKEDIN_URL = "linkedin.com";
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");

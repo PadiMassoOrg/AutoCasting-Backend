@@ -11,5 +11,6 @@ import org.springframework.stereotype.Component;
 @Setter
 public class AppProperties {
     private String frontendUrl;
+    private String backendUrl;
     private String oauthSuccessUrl;
 }

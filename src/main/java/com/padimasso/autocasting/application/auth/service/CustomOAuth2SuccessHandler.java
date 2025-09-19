@@ -22,7 +22,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws IOException {
         OAuth2User principal = (OAuth2User) auth.getPrincipal();
-        String email = principal.getAttribute("email");
+        String email = principal.getAttribute("static/email");
 
         UserEntity user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("oauth.google.user_missing_email"));
 

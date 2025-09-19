@@ -53,6 +53,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(ROLE_ACTOR)
                     // Profile
                     .requestMatchers(HttpMethod.GET, AppConstants.PROFILE_API_URL).authenticated()
+                    // Serve
+                    .requestMatchers("/email/**", "/css/**", "/js/**", "/images/**").permitAll()
                     // Any
                     .anyRequest().permitAll())
             .httpBasic(AbstractHttpConfigurer::disable)
@@ -122,5 +124,4 @@ public class SecurityConfig {
 
         return source;
     }
-
 }

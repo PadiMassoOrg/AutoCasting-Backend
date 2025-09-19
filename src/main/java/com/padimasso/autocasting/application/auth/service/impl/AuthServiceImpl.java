@@ -22,14 +22,19 @@ import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class AuthServiceImpl implements AuthService {
 
+    private final SpringTemplateEngine templateEngine;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PlanRepository planRepository;
@@ -43,6 +48,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final EmailService emailService;
     private final AppProperties appProperties;
+    private final MessageSource messageSource;
 
     @Override
     @Transactional
@@ -124,17 +130,28 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("auth.password_reset_external");
         }
 
-        String token = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.RESET_PASSWORD_EXPIRATION_TIME); // Expires in 15min
+        String token = jwtService.generateTokenWithCustomExpirationTime(
+            user, AppConstants.RESET_PASSWORD_EXPIRATION_TIME
+        );
+
         String resetUrl = appProperties.getFrontendUrl() + "/reset-password?token=" + token;
+        var locale = LocaleContextHolder.getLocale();
 
-        String htmlBody = """
-            <h2>Recuperación de Contraseña</h2>
-            <p>Hacé clic en el siguiente botón para cambiar tu contraseña:</p>
-            <a href="%s" style="background-color:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Restablecer contraseña</a>
-            <p>Este link expira en 15 minutos.</p>
-            """.formatted(resetUrl);
+        Context ctx = new Context(locale);
 
-        emailService.sendHtmlEmail(user.getEmail(), "Restablece tu contraseña", htmlBody);
+        String assetsBase = appProperties.getBackendUrl() + "/email";  // ✅ correcto
+        ctx.setVariable("logoPngUrl", assetsBase + "/autocasting_logo.png");
+        ctx.setVariable("instagramPngUrl", assetsBase + "/insta_icon.png");
+        ctx.setVariable("linkedinPngUrl", assetsBase + "/linkedin_icon.png");
+        ctx.setVariable("resetUrl", resetUrl);
+        ctx.setVariable("minutes", AppConstants.RESET_PASSWORD_EXPIRATION_TIME_MIN);
+        ctx.setVariable("supportEmail", AppConstants.SUPPORT_EMAIL);
+        ctx.setVariable("instagramUrl", AppConstants.INSTA_URL);
+        ctx.setVariable("linkedinUrl", AppConstants.LINKEDIN_URL);
+
+        String htmlBody = templateEngine.process("email/reset_password_email", ctx);
+        String subject = messageSource.getMessage("mail.reset.subject", null, locale);
+        emailService.sendHtmlEmail(user.getEmail(), subject, htmlBody);
 
         return new ForgotPasswordResponse(true, "Enviado");
     }
