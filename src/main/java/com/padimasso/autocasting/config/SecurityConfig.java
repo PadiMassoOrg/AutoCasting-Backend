@@ -101,7 +101,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",
             "http://localhost:8080",
-            "https://autocasting.app")
+            "https://autocasting.app",
+            "https://app-autocasting.vercel.app")
         );
 
         // Allow all HTTP methods
