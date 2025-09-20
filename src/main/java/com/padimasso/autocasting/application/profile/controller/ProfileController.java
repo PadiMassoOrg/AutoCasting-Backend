@@ -57,7 +57,7 @@ public class ProfileController {
         @RequestParam(required = false) String stageName,
         @RequestParam(required = false) Integer ageMin,
         @RequestParam(required = false) Integer ageMax,
-        @RequestParam(required = false) UUID genderId,
+        @RequestParam(required = false, name = "genderId") List<String> genderIdTokens,
         @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
         @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
         @RequestParam(required = false) Integer heightMinCm,
@@ -71,7 +71,7 @@ public class ProfileController {
         @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode
     ) {
         var filter = new TalentFilter(
-            stageName, ageMin, ageMax, genderId,
+            stageName, ageMin, ageMax, genderIdTokens,
             professionIds, professionsMode,
             heightMinCm, heightMaxCm,
             hairColorId, eyeColorId,

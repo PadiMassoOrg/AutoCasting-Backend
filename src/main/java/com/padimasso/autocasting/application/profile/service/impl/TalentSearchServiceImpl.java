@@ -34,10 +34,8 @@ public class TalentSearchServiceImpl implements TalentSearchService {
         var ids = idSlice.ids();
         if (ids.isEmpty()) return new SliceResponse<>(List.of(), false, page, size);
 
-        // detalles mínimos de la card
         var rows = profileRepository.findCardRowsByIds(ids);
 
-        // profesiones
         var profRows = profileRepository.findProfessionsForProfiles(ids);
         var profByProfile = profRows.stream().collect(
             Collectors.groupingBy(

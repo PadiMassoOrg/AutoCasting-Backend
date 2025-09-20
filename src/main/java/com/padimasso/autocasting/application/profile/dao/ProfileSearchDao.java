@@ -32,7 +32,6 @@ public class ProfileSearchDao {
 
         Root<ProfileEntity> p = cq.from(ProfileEntity.class);
         Join<ProfileEntity, BasicInfoEntity> bi = p.join("basicInfo", JoinType.INNER);
-
         List<Predicate> preds = new ArrayList<>();
 
         // stageName contains
@@ -54,8 +53,9 @@ public class ProfileSearchDao {
         }
 
         // gender (ManyToOne)
-        if (f.genderId() != null) {
-            preds.add(cb.equal(bi.get("gender").get("id"), f.genderId()));
+        Predicate genderPredicate = buildGenderPredicate(cb, bi, f.genderIdTokens());
+        if (genderPredicate != null) {
+            preds.add(genderPredicate);
         }
 
         // characteristics (opcionales)
@@ -176,5 +176,34 @@ public class ProfileSearchDao {
             .having(cb.equal(cb.countDistinct(relId), (long) targetIds.size()));
 
         return cb.exists(sq);
+    }
+
+    private Predicate buildGenderPredicate(
+        CriteriaBuilder cb,
+        Join<ProfileEntity, BasicInfoEntity> bi,
+        List<String> tokens
+    ) {
+        if (tokens == null || tokens.isEmpty()) {
+            return null; // ALL
+        }
+        // Si contiene "NULL" => ALL (no filtro)
+        boolean containsNullLiteral = tokens.stream()
+            .anyMatch(s -> s != null && s.equalsIgnoreCase("NULL"));
+        if (containsNullLiteral) {
+            return null; // ALL
+        }
+
+        // Convertir a UUID y aplicar IN
+        List<UUID> ids = new ArrayList<>();
+        for (String s : tokens) {
+            if (s == null || s.isBlank()) continue;
+            ids.add(UUID.fromString(s));
+        }
+        if (ids.isEmpty()) return null;
+
+        Path<UUID> genderIdPath = bi.get("gender").get("id");
+        CriteriaBuilder.In<UUID> in = cb.in(genderIdPath);
+        ids.forEach(in::value);
+        return in;
     }
 }

@@ -9,7 +9,7 @@ public record TalentFilter(
     String stageName,                 // contains, case-insensitive
     Integer ageMin,                   // años (incl.)
     Integer ageMax,                   // años (incl.)
-    UUID genderId,
+    List<String> genderIdTokens,
     List<UUID> professionIds,       // SiteMetadata ids
     MatchMode professionsMode,        // ANY (default) | ALL
     Integer heightMinCm,
