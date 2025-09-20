@@ -30,7 +30,7 @@ public class GoogleOidcUserService implements OAuth2UserService<OidcUserRequest,
 
             // Perform:
             provision.ensureUser(
-                oidc.getAttribute("static/email"),
+                oidc.getAttribute("email"),
                 role,
                 oidc.getGivenName() + " " + oidc.getFamilyName());
 
