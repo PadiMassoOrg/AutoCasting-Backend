@@ -1,7 +1,15 @@
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        classpath "org.flywaydb:flyway-database-postgresql:11.13.2"
+    }
+}
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.0'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.flywaydb.flyway' version '11.13.2'   // plugin Gradle de Flyway
 }
 
 group = 'com.padimasso'
@@ -25,7 +33,6 @@ configurations {
 
 repositories {
     mavenCentral()
-    maven { url 'https://repo1.maven.org/maven2/' }
 }
 
 dependencies {
@@ -39,6 +46,8 @@ dependencies {
     implementation 'org.openapitools:jackson-databind-nullable:0.2.7'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+    implementation 'org.flywaydb:flyway-core:11.13.2'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.13.2'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
@@ -51,4 +60,9 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+flyway {
+    locations = ['filesystem:src/main/resources/db/migration']
+    configurations = ['runtimeClasspath']
 }
