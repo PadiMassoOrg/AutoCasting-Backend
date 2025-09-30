@@ -24,10 +24,23 @@ public interface ProfileRepository extends SoftDeleteRepository<ProfileEntity, U
         "media",
         "characteristics",
         "skills",
+        "credits",
         "education"
     })
     Optional<ProfileEntity> findByUserId(UUID id);
 
+    @EntityGraph(attributePaths = {
+        "plan",
+        "basicInfo",
+        "basicInfo.professions",
+        "contact",
+        "socialMedia",
+        "media",
+        "characteristics",
+        "skills",
+        "credits",
+        "education"
+    })
     Optional<ProfileEntity> findByDefaultSlugOrPremiumSlug(String slug, String slug1);
 
     @Query("""

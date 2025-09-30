@@ -48,6 +48,7 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PublicProfileResponse getProfileBySlug(String slug) {
 
         ProfileEntity foundProfile = profileRepository
