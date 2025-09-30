@@ -1,31 +1,36 @@
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        // 👇 Hace que la task del plugin tenga el soporte de PostgreSQL
+        classpath "org.flywaydb:flyway-database-postgresql:11.13.2"
+    }
+}
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.0'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.flywaydb.flyway' version '11.13.2'   // plugin Gradle de Flyway
 }
 
 group = 'com.padimasso'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
 }
+tasks.withType(JavaCompile).configureEach { options.release = 21 }
 
 tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
 
 configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
+    compileOnly { extendsFrom annotationProcessor }
 }
 
 repositories {
     mavenCentral()
-    maven { url 'https://repo1.maven.org/maven2/' }
 }
 
 dependencies {
@@ -39,16 +44,28 @@ dependencies {
     implementation 'org.openapitools:jackson-databind-nullable:0.2.7'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+
+    // Flyway en runtime de la app (opcional para Gradle, útil si migras al arrancar)
+    implementation 'org.flywaydb:flyway-core:11.13.2'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.13.2'
+
     compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'org.postgresql:postgresql:42.7.4'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
     annotationProcessor 'org.projectlombok:lombok'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+tasks.named('test') { useJUnitPlatform() }
+
+flyway {
+    // Tus migraciones (filesystem para la task de Gradle)
+    locations = ['filesystem:src/main/resources/db/migration']
+
+    // 👇 Hace que la task incluya también dependencias del proyecto (driver JDBC, etc.)
+    configurations = ['runtimeClasspath']
 }
