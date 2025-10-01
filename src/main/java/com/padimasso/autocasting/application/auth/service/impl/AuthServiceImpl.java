@@ -1,9 +1,6 @@
 package com.padimasso.autocasting.application.auth.service.impl;
 
-import com.padimasso.autocasting.application.auth.dto.request.ForgotPasswordRequest;
-import com.padimasso.autocasting.application.auth.dto.request.LoginRequest;
-import com.padimasso.autocasting.application.auth.dto.request.RegisterRequest;
-import com.padimasso.autocasting.application.auth.dto.request.ResetPasswordRequest;
+import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
@@ -11,6 +8,7 @@ import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
@@ -49,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final AppProperties appProperties;
     private final MessageSource messageSource;
+    private final AuthContext authContext;
 
     @Override
     @Transactional
@@ -167,6 +166,17 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("auth.invalid_token");
         }
 
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        UserEntity user = authContext.getCurrentUserOrThrow();
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("auth.invalid_credentials");
+        }
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
     }
