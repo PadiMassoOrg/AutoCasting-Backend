@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record ProfileResponse(
     UUID id,
+    String userAccountProvider,
     String roleStringCode,
     String planStringCode,
     String publicSlug,
