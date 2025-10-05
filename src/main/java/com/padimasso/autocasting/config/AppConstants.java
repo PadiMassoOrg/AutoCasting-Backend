@@ -29,6 +29,10 @@ public class AppConstants {
     // Education
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
 
+    // Legal
+    public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
+    public static final String LEGAL_ACCEPT_DOCUMENT_API_URL = BASE_API_URL + "/legal/accept";
+
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
