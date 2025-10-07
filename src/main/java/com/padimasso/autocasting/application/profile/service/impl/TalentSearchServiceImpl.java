@@ -4,19 +4,15 @@ import com.padimasso.autocasting.application.profile.dao.ProfileSearchDao;
 import com.padimasso.autocasting.application.profile.dto.TalentFilter;
 import com.padimasso.autocasting.application.profile.dto.response.ProfileCardResponse;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
-import com.padimasso.autocasting.application.profile.repository.projection.ProfessionRow;
-import com.padimasso.autocasting.application.profile.repository.projection.ProfileCardRow;
+import com.padimasso.autocasting.application.profile.repository.specification.ProfileSpecs;
 import com.padimasso.autocasting.application.profile.service.TalentSearchService;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,34 +26,31 @@ public class TalentSearchServiceImpl implements TalentSearchService {
     @Override
     @Transactional
     public SliceResponse<ProfileCardResponse> search(TalentFilter f, int page, int size) {
-        var idSlice = profileSearchDao.searchIds(f, page, size);
-        var ids = idSlice.ids();
-        if (ids.isEmpty()) return new SliceResponse<>(List.of(), false, page, size);
+        int ps = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        var pageable = PageRequest.of(page, ps, Sort.by(Sort.Direction.DESC, "modifiedAt", "id"));
 
-        var rows = profileRepository.findCardRowsByIds(ids);
+        var spec = ProfileSpecs.fromFilter(f);
 
-        var profRows = profileRepository.findProfessionsForProfiles(ids);
-        var profByProfile = profRows.stream().collect(
-            Collectors.groupingBy(
-                ProfessionRow::getProfileId,
-                Collectors.mapping(r -> new SiteMetadataObject(r.getId(), r.getStringCode(), null), Collectors.toList())
-            )
-        );
+        var result = profileRepository.findAll(spec, pageable); // @EntityGraph evita N+1
+        var items = result.getContent().stream().map(p -> {
+            String slug = p.getPlan().isAllowsCustomSlug()
+                && p.getPremiumSlug() != null && !p.getPremiumSlug().isBlank()
+                ? p.getPremiumSlug() : p.getDefaultSlug();
 
-        var byId = rows.stream().collect(Collectors.toMap(ProfileCardRow::getId, r -> r));
-        var items = new ArrayList<ProfileCardResponse>(ids.size());
-        for (UUID id : ids) {
-            var r = byId.get(id);
-            if (r == null) continue;
-            String publicSlug = r.getAllowsCustomSlug() != null && r.getAllowsCustomSlug()
-                && r.getPremiumSlug() != null && !r.getPremiumSlug().isBlank()
-                ? r.getPremiumSlug() : r.getDefaultSlug();
-            items.add(new ProfileCardResponse(
-                r.getId(), publicSlug, r.getStageName(), r.getEmail(), r.getPhoneNumber(), r.getHeadshotImageUrl(),
-                profByProfile.getOrDefault(r.getId(), List.of())
-            ));
-        }
+            var profs = p.getBasicInfo().getProfessions().stream()
+                .map(sm -> new SiteMetadataObject(sm.getId(), sm.getStringCode(), null))
+                .toList();
 
-        return new SliceResponse<>(items, idSlice.hasNext(), page, size);
+            return new ProfileCardResponse(
+                p.getId(), slug,
+                p.getBasicInfo().getStageName(),
+                p.getContact().getEmail(),
+                p.getContact().getPhoneNumber(),
+                p.getMedia() != null ? p.getMedia().getHeadshotImageUrl() : null,
+                profs
+            );
+        }).toList();
+
+        return new SliceResponse<>(items, result.hasNext(), page, ps);
     }
 }
