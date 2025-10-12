@@ -62,21 +62,25 @@ public class ProfileController {
         @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
         @RequestParam(required = false) Integer heightMinCm,
         @RequestParam(required = false) Integer heightMaxCm,
-        @RequestParam(required = false) UUID hairColorId,
-        @RequestParam(required = false) UUID eyeColorId,
+        @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode,
+        @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode,
         @RequestParam(required = false) Boolean tattoo,
         @RequestParam(required = false) Boolean passport,
         @RequestParam(required = false) Boolean drivingLicense,
         @RequestParam(required = false, name = "skillId") List<UUID> skillIds,
-        @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode,
+        @RequestParam(required = false, defaultValue = "false") boolean includeNoHeadshot
     ) {
         var filter = new TalentFilter(
             stageName, ageMin, ageMax, genderIdTokens,
             professionIds, professionsMode,
             heightMinCm, heightMaxCm,
-            hairColorId, eyeColorId,
+            hairColorIds, hairColorIdsMode, eyeColorIds, eyeColorIdsMode,
             tattoo, passport, drivingLicense,
-            skillIds, skillsMode
+            skillIds, skillsMode,
+            includeNoHeadshot
         );
         return talentSearchService.search(filter, page, size);
     }

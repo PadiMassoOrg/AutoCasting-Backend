@@ -63,10 +63,11 @@ public final class ProfileSpecs {
         };
     }
 
-    // Characteristics (todos opcionales: LEFT JOIN solo si se usa alguno)
+    // Characteristics
     public static Specification<ProfileEntity> characteristics(TalentFilter f) {
         boolean any = f.heightMinCm() != null || f.heightMaxCm() != null
-            || f.hairColorId() != null || f.eyeColorId() != null
+            || (f.hairColorIds() != null && !f.hairColorIds().isEmpty())
+            || (f.eyeColorIds() != null && !f.eyeColorIds().isEmpty())
             || f.tattoo() != null || f.passport() != null || f.drivingLicense() != null;
 
         if (!any) return null;
@@ -76,14 +77,21 @@ public final class ProfileSpecs {
             List<Predicate> ps = new ArrayList<>();
             if (f.heightMinCm() != null) ps.add(cb.greaterThanOrEqualTo(ch.get("heightCm"), f.heightMinCm()));
             if (f.heightMaxCm() != null) ps.add(cb.lessThanOrEqualTo(ch.get("heightCm"), f.heightMaxCm()));
-            if (f.hairColorId() != null) ps.add(cb.equal(ch.get("hairColor").get("id"), f.hairColorId()));
-            if (f.eyeColorId() != null) ps.add(cb.equal(ch.get("eyeColor").get("id"), f.eyeColorId()));
+
+            if (f.hairColorIds() != null && !f.hairColorIds().isEmpty()) {
+                ps.add(ch.get("hairColor").get("id").in(f.hairColorIds()));
+            }
+            if (f.eyeColorIds() != null && !f.eyeColorIds().isEmpty()) {
+                ps.add(ch.get("eyeColor").get("id").in(f.eyeColorIds()));
+            }
+
             if (f.tattoo() != null) ps.add(cb.equal(ch.get("tattoo"), f.tattoo()));
             if (f.passport() != null) ps.add(cb.equal(ch.get("passport"), f.passport()));
             if (f.drivingLicense() != null) ps.add(cb.equal(ch.get("drivingLicense"), f.drivingLicense()));
             return cb.and(ps.toArray(Predicate[]::new));
         };
     }
+
 
     // ManyToMany: ANY
     public static Specification<ProfileEntity> anyOf(String relationPath, List<UUID> ids) {
@@ -115,7 +123,8 @@ public final class ProfileSpecs {
     }
 
     public static Specification<ProfileEntity> fromFilter(TalentFilter f) {
-        Specification<ProfileEntity> spec = Specification.where(hasHeadshot())
+        Specification<ProfileEntity> spec = Specification
+            .where(f.includeNoHeadshot() != Boolean.TRUE ? hasHeadshot() : null)
             .and(stageNameContains(f.stageName()))
             .and(ageBetween(f.ageMin(), f.ageMax()))
             .and(genderInTokens(f.genderIdTokens()))

@@ -1,6 +1,5 @@
 package com.padimasso.autocasting.application.profile.service.impl;
 
-import com.padimasso.autocasting.application.profile.dao.ProfileSearchDao;
 import com.padimasso.autocasting.application.profile.dto.TalentFilter;
 import com.padimasso.autocasting.application.profile.dto.response.ProfileCardResponse;
 import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
@@ -21,7 +20,6 @@ public class TalentSearchServiceImpl implements TalentSearchService {
     private static final int MAX_PAGE_SIZE = 50;
 
     private final ProfileRepository profileRepository;
-    private final ProfileSearchDao profileSearchDao;
 
     @Override
     @Transactional

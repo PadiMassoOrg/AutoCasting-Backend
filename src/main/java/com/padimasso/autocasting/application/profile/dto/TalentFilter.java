@@ -7,18 +7,21 @@ import java.util.UUID;
 
 public record TalentFilter(
     String stageName,                 // contains, case-insensitive
-    Integer ageMin,                   // años (incl.)
-    Integer ageMax,                   // años (incl.)
+    Integer ageMin,                   // (incl.)
+    Integer ageMax,                   // (incl.)
     List<String> genderIdTokens,
-    List<UUID> professionIds,       // SiteMetadata ids
+    List<UUID> professionIds,
     MatchMode professionsMode,        // ANY (default) | ALL
     Integer heightMinCm,
     Integer heightMaxCm,
-    UUID hairColorId,
-    UUID eyeColorId,
+    List<UUID> hairColorIds,
+    MatchMode hairColorIdsMode,
+    List<UUID> eyeColorIds,
+    MatchMode eyeColorIdsMode,
     Boolean tattoo,
     Boolean passport,
     Boolean drivingLicense,
-    List<UUID> skillIds,            // SiteMetadata ids
-    MatchMode skillsMode              // ANY (default) | ALL
+    List<UUID> skillIds,
+    MatchMode skillsMode,             // ANY (default) | ALL
+    Boolean includeNoHeadshot
 ) {}
