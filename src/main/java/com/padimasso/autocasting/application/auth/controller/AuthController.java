@@ -1,9 +1,6 @@
 package com.padimasso.autocasting.application.auth.controller;
 
-import com.padimasso.autocasting.application.auth.dto.request.ForgotPasswordRequest;
-import com.padimasso.autocasting.application.auth.dto.request.LoginRequest;
-import com.padimasso.autocasting.application.auth.dto.request.RegisterRequest;
-import com.padimasso.autocasting.application.auth.dto.request.ResetPasswordRequest;
+import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
 import com.padimasso.autocasting.application.auth.service.AuthService;
@@ -62,6 +59,16 @@ public class AuthController {
     @PostMapping(RESET_PASS_URL)
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+        summary = "Cambia contraseña",
+        description = "Permite al usuario establecer una nueva contraseña usando el token recibido por email"
+    )
+    @PostMapping(CHANGE_PASS_URL)
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(request);
         return ResponseEntity.ok().build();
     }
 }

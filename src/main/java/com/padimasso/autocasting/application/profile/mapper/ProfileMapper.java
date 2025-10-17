@@ -18,6 +18,7 @@ public class ProfileMapper {
     public ProfileResponse toProfileResponse(ProfileEntity profile, UserEntity user) {
         return new ProfileResponse(
             profile.getId(),
+            user.getUserAccountProvider().toString(),
             user.getRole().getNameStringCode(),
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),

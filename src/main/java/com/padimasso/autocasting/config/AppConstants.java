@@ -8,6 +8,7 @@ public class AppConstants {
     public static final String REGISTER_API_URL = BASE_API_URL + "/auth/register";
     public static final String FORGOT_PASS_URL = BASE_API_URL + "/auth/forgot-password";
     public static final String RESET_PASS_URL = BASE_API_URL + "/auth/reset-password";
+    public static final String CHANGE_PASS_URL = BASE_API_URL + "/auth/change-password";
 
     // Test
     public static final String TEST_API_URL = BASE_API_URL + "/test";
@@ -27,6 +28,10 @@ public class AppConstants {
 
     // Education
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
+
+    // Legal
+    public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
+    public static final String LEGAL_ACCEPT_DOCUMENT_API_URL = BASE_API_URL + "/legal/accept";
 
     // Security
     public static final String ISSUER = "Auto-Casting";

@@ -3,6 +3,7 @@ package com.padimasso.autocasting.config;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.application.auth.service.*;
+import com.padimasso.autocasting.exception.JwtAuthEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,7 +46,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    ClientRegistrationRepository clientRegistrationRepository,
                                                    GoogleOidcUserService oidcSrv,
-                                                   GoogleOauth2UserService oauthSrv) throws Exception {
+                                                   GoogleOauth2UserService oauthSrv,
+                                                   JwtAuthEntryPoint jwtAuthEntryPoint) throws Exception {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
@@ -70,8 +72,8 @@ public class SecurityConfig {
                 .successHandler(customOAuth2SuccessHandler()))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthEntryPoint))
             .authenticationProvider(authenticationProvider)
-
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
