@@ -7,8 +7,8 @@ import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
-import com.padimasso.autocasting.application.profile.model.*;
-import com.padimasso.autocasting.application.profile.repository.ProfileRepository;
+import com.padimasso.autocasting.application.talent.model.*;
+import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -21,7 +21,7 @@ class UserProvisioningService {
     public static final String PLAN_FREE = "FREE";
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
-    private final ProfileRepository profileRepository;
+    private final TalentProfileRepository talentProfileRepository;
     private final PlanRepository planRepository;
 
     @Transactional
@@ -37,15 +37,15 @@ class UserProvisioningService {
             return userRepository.save(newUser);
         });
 
-        ProfileEntity profile = profileRepository.findByUserId(user.getId()).orElseGet(() -> {
-            ProfileEntity p = ProfileEntity.builder().user(user).plan(freePlan).build();
-            return profileRepository.save(p);
+        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId()).orElseGet(() -> {
+            TalentProfileEntity p = TalentProfileEntity.builder().user(user).plan(freePlan).build();
+            return talentProfileRepository.save(p);
         });
 
         if (profile.getBasicInfo() == null) {
             BasicInfoEntity basicInfo = BasicInfoEntity.builder()
                 .stageName(name)
-                .profile(profile)
+                .talentProfile(profile)
                 .build();
             profile.setBasicInfo(basicInfo);
         } else {
@@ -58,7 +58,7 @@ class UserProvisioningService {
         if (profile.getContact() == null) {
             ContactEntity contact = ContactEntity.builder()
                 .email(email)
-                .profile(profile)
+                .talentProfile(profile)
                 .build();
             profile.setContact(contact);
         } else {
@@ -69,25 +69,25 @@ class UserProvisioningService {
 
         if (profile.getSocialMedia() == null) {
             SocialMediaEntity socialMedia = SocialMediaEntity.builder()
-                .profile(profile)
+                .talentProfile(profile)
                 .build();
             profile.setSocialMedia(socialMedia);
         }
 
         if (profile.getMedia() == null) {
             MediaEntity media = MediaEntity.builder()
-                .profile(profile)
+                .talentProfile(profile)
                 .build();
             profile.setMedia(media);
         }
 
         if (profile.getCharacteristics() == null) {
             CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
-                .profile(profile)
+                .talentProfile(profile)
                 .build();
             profile.setCharacteristics(characteristics);
         }
 
-        profileRepository.save(profile);
+        talentProfileRepository.save(profile);
     }
 }

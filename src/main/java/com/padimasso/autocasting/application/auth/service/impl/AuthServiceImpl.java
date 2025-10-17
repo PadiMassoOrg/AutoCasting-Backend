@@ -14,8 +14,8 @@ import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
-import com.padimasso.autocasting.application.profile.model.*;
-import com.padimasso.autocasting.application.profile.repository.*;
+import com.padimasso.autocasting.application.talent.model.*;
+import com.padimasso.autocasting.application.talent.repository.*;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
 import jakarta.transaction.Transactional;
@@ -36,7 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PlanRepository planRepository;
-    private final ProfileRepository profileRepository;
+    private final TalentProfileRepository talentProfileRepository;
     private final BasicInfoRepository basicInfoRepository;
     private final ContactRepository contactRepository;
     private final SocialMediaRepository socialMediaRepository;
@@ -70,36 +70,36 @@ public class AuthServiceImpl implements AuthService {
             .build();
         userRepository.save(user);
 
-        var profile = ProfileEntity.builder()
+        var profile = TalentProfileEntity.builder()
             .user(user)
             .plan(freePlan)
             .build();
-        profileRepository.save(profile);
+        talentProfileRepository.save(profile);
 
         var basicInfo = BasicInfoEntity.builder()
             .stageName(request.name())
-            .profile(profile)
+            .talentProfile(profile)
             .build();
         basicInfoRepository.save(basicInfo);
 
         var contact = ContactEntity.builder()
             .email(request.email())
-            .profile(profile)
+            .talentProfile(profile)
             .build();
         contactRepository.save(contact);
 
         var socialMedia = SocialMediaEntity.builder()
-            .profile(profile)
+            .talentProfile(profile)
             .build();
         socialMediaRepository.save(socialMedia);
 
         var media = MediaEntity.builder()
-            .profile(profile)
+            .talentProfile(profile)
             .build();
         mediaRepository.save(media);
 
         var characteristics = CharacteristicsEntity.builder()
-            .profile(profile)
+            .talentProfile(profile)
             .build();
         characteristicsRepository.save(characteristics);
 
