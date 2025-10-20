@@ -54,7 +54,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(ROLE_CASTINERA)
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(ROLE_ACTOR)
                     // Profile
-                    .requestMatchers(HttpMethod.GET, AppConstants.PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL).authenticated()
                     // Serve
                     .requestMatchers("/email/**", "/css/**", "/js/**", "/images/**").permitAll()
                     // Any

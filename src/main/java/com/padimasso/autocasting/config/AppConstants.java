@@ -20,8 +20,8 @@ public class AppConstants {
     public static final String SITE_METADATA_VERSION_URL = SITE_METADATA_URL + "/version";
 
     // Profile
-    public static final String PROFILE_API_URL = BASE_API_URL + "/profile";
-    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/profile/talent-database";
+    public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
+    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent/talent-database";
 
     // Credit
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
