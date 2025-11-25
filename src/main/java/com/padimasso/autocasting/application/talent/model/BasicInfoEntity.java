@@ -27,7 +27,7 @@ public class BasicInfoEntity extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column
     String stageName;
 
     @ManyToOne

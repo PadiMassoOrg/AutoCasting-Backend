@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("auth.user_exists");
         }
 
-        final RoleEntity foundRole = roleRepository.findByCode(request.role())
+        final RoleEntity foundRole = roleRepository.findById(request.role())
             .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"));
         final PlanEntity freePlan = planRepository.findByCode("FREE")
             .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
@@ -77,7 +77,6 @@ public class AuthServiceImpl implements AuthService {
         talentProfileRepository.save(profile);
 
         var basicInfo = BasicInfoEntity.builder()
-            .stageName(request.name())
             .talentProfile(profile)
             .build();
         basicInfoRepository.save(basicInfo);
