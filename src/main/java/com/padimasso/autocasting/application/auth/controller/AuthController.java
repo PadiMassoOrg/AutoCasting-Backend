@@ -55,6 +55,18 @@ public class AuthController {
     }
 
     @Operation(
+        summary = "Actualiza el estado de onboarding del usuario autenticado",
+        description = "Permite settear el modo activo (TALENT/EMPLOYER) y los estados de onboarding de talento y empleador"
+    )
+    @PatchMapping(ONBOARDING_API_URL)
+    public ResponseEntity<MeResponse> updateOnboarding(
+        @Valid @RequestBody UserOnboardingRequest request
+    ) {
+        MeResponse response = authService.updateOnboarding(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
         summary = "Solicitud de recuperación de contraseña",
         description = "Envía un email con un enlace para restablecer la contraseña"
     )

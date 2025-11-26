@@ -7,6 +7,7 @@ public class AppConstants {
     public static final String REGISTER_API_URL = BASE_API_URL + "/auth/register";
     public static final String LOGIN_API_URL = BASE_API_URL + "/auth/login";
     public static final String ME_API_URL = BASE_API_URL + "/auth/me";
+    public static final String ONBOARDING_API_URL = BASE_API_URL + "/auth/onboarding";
     public static final String FORGOT_PASS_URL = BASE_API_URL + "/auth/forgot-password";
     public static final String RESET_PASS_URL = BASE_API_URL + "/auth/reset-password";
     public static final String CHANGE_PASS_URL = BASE_API_URL + "/auth/change-password";

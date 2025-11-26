@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.auth.service.impl;
 import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
+import com.padimasso.autocasting.application.auth.dto.response.MeResponse;
 import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
@@ -217,6 +218,20 @@ public class AuthServiceImpl implements AuthService {
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
         return new AuthResponse(jwt);
+    }
+
+    @Transactional
+    @Override
+    public MeResponse updateOnboarding(UserOnboardingRequest request) {
+        UserEntity user = authContext.getCurrentUserOrThrow();
+
+        user.setActiveMode(request.activeMode());
+        user.setTalentOnboardingStatus(request.talentOnboardingStatus());
+        user.setEmployerOnboardingStatus(request.employerOnboardingStatus());
+
+        userRepository.save(user);
+
+        return MeResponse.from(user);
     }
 
 }
