@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.auth.service.impl;
 import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
+import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
@@ -27,6 +28,13 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
+import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -49,61 +57,24 @@ public class AuthServiceImpl implements AuthService {
     private final MessageSource messageSource;
     private final AuthContext authContext;
 
-    @Override
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        boolean exists = userRepository.existsByEmail(request.email());
-        if (exists) {
-            throw new IllegalArgumentException("auth.user_exists");
+    /**
+     * Normaliza un usuario "legacy" o recién creado:
+     * - Assert roles: TALENT & EMPLOYER.
+     * - Assert onboarding status not null (NOT_STARTED).
+     */
+    public static void normalizeUser(UserEntity user, Set<RoleEntity> baseRoles) {
+        if (user.getUserAccountProvider() == null) {
+            user.setUserAccountProvider(UserAccountProvider.OTHER);
         }
 
-        final RoleEntity foundRole = roleRepository.findById(request.role())
-            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"));
-        final PlanEntity freePlan = planRepository.findByCode("FREE")
-            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
-
-        UserEntity user = UserEntity.builder()
-            .email(request.email())
-            .password(passwordEncoder.encode(request.password()))
-            .userAccountProvider(UserAccountProvider.LOCAL)
-            .role(foundRole)
-            .build();
-        userRepository.save(user);
-
-        var profile = TalentProfileEntity.builder()
-            .user(user)
-            .plan(freePlan)
-            .build();
-        talentProfileRepository.save(profile);
-
-        var basicInfo = BasicInfoEntity.builder()
-            .talentProfile(profile)
-            .build();
-        basicInfoRepository.save(basicInfo);
-
-        var contact = ContactEntity.builder()
-            .email(request.email())
-            .talentProfile(profile)
-            .build();
-        contactRepository.save(contact);
-
-        var socialMedia = SocialMediaEntity.builder()
-            .talentProfile(profile)
-            .build();
-        socialMediaRepository.save(socialMedia);
-
-        var media = MediaEntity.builder()
-            .talentProfile(profile)
-            .build();
-        mediaRepository.save(media);
-
-        var characteristics = CharacteristicsEntity.builder()
-            .talentProfile(profile)
-            .build();
-        characteristicsRepository.save(characteristics);
-
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
-        return new AuthResponse(jwt);
+        Set<RoleEntity> currentRoles = user.getRoles();
+        if (currentRoles == null || currentRoles.isEmpty()) {
+            user.setRoles(new HashSet<>(baseRoles));
+        } else {
+            Set<RoleEntity> merged = new HashSet<>(currentRoles);
+            merged.addAll(baseRoles);
+            user.setRoles(merged);
+        }
     }
 
     @Override
@@ -114,6 +85,12 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException("auth.invalid_credentials");
         }
+
+        Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
+            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role")));
+
+        normalizeUser(user, roles);
+        userRepository.save(user);
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
         return new AuthResponse(jwt);
@@ -178,6 +155,68 @@ public class AuthServiceImpl implements AuthService {
         }
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+        boolean exists = userRepository.existsByEmail(request.email());
+
+        if (exists) {
+            throw new IllegalArgumentException("auth.user_exists");
+        }
+
+        Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
+            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role")));
+
+        final PlanEntity freePlan = planRepository.findByCode("FREE")
+            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+
+        UserEntity user = UserEntity.builder()
+            .email(request.email())
+            .password(passwordEncoder.encode(request.password()))
+            .userAccountProvider(UserAccountProvider.LOCAL)
+            .roles(roles)
+            .activeMode(null)
+            .talentOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .employerOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .build();
+        userRepository.save(user);
+
+        var profile = TalentProfileEntity.builder()
+            .user(user)
+            .plan(freePlan)
+            .build();
+        talentProfileRepository.save(profile);
+
+        var basicInfo = BasicInfoEntity.builder()
+            .talentProfile(profile)
+            .build();
+        basicInfoRepository.save(basicInfo);
+
+        var contact = ContactEntity.builder()
+            .email(request.email())
+            .talentProfile(profile)
+            .build();
+        contactRepository.save(contact);
+
+        var socialMedia = SocialMediaEntity.builder()
+            .talentProfile(profile)
+            .build();
+        socialMediaRepository.save(socialMedia);
+
+        var media = MediaEntity.builder()
+            .talentProfile(profile)
+            .build();
+        mediaRepository.save(media);
+
+        var characteristics = CharacteristicsEntity.builder()
+            .talentProfile(profile)
+            .build();
+        characteristicsRepository.save(characteristics);
+
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
+        return new AuthResponse(jwt);
     }
 
 }

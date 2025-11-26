@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.auth.service;
 
+import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
@@ -14,6 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
+import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+import static com.padimasso.autocasting.application.auth.service.impl.AuthServiceImpl.normalizeUser;
+
 @Component
 @RequiredArgsConstructor
 class UserProvisioningService {
@@ -25,20 +34,32 @@ class UserProvisioningService {
     private final PlanRepository planRepository;
 
     @Transactional
-    void ensureUser(String email, String roleCode, String name) {
+    void ensureUser(String email, String name) {
         if (email == null) throw new OAuth2AuthenticationException("auth.user_not_found");
-        if (roleCode == null) throw new OAuth2AuthenticationException("oauth.role_missing");
 
-        final RoleEntity foundRole = roleRepository.findByCode(roleCode.toUpperCase()).orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
+        Set<RoleEntity> baseRoles = new HashSet<>(
+            roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
+                .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"))
+        );
+
         final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE).orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
-        UserEntity user = userRepository.findByEmail(email).orElseGet(() -> {
-            UserEntity newUser = UserEntity.builder().email(email).password(null).userAccountProvider(UserAccountProvider.OTHER).role(foundRole).build();
-            return userRepository.save(newUser);
-        });
+        UserEntity user = userRepository.findByEmail(email).orElseGet(() -> UserEntity.builder()
+            .email(email)
+            .password(null)
+            .userAccountProvider(UserAccountProvider.OTHER)
+            .activeMode(null)
+            .talentOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .employerOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .build());
+
+        normalizeUser(user, baseRoles);
+        user = userRepository.save(user);
+
+        UserEntity finalUser = user;
 
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId()).orElseGet(() -> {
-            TalentProfileEntity p = TalentProfileEntity.builder().user(user).plan(freePlan).build();
+            TalentProfileEntity p = TalentProfileEntity.builder().user(finalUser).plan(freePlan).build();
             return talentProfileRepository.save(p);
         });
 

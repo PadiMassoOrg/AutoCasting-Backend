@@ -19,7 +19,6 @@ public class TalentProfileMapper {
         return new TalentProfileResponse(
             profile.getId(),
             user.getUserAccountProvider().toString(),
-            user.getRole().getNameStringCode(),
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
@@ -35,7 +34,6 @@ public class TalentProfileMapper {
     public PublicProfileResponse toPublicProfileResponse(TalentProfileEntity profile) {
         return new PublicProfileResponse(
             profile.getId(),
-            profile.getUser().getRole().getNameStringCode(),
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),

@@ -8,7 +8,6 @@ import java.util.UUID;
 public record TalentProfileResponse(
     UUID id,
     String userAccountProvider,
-    String roleStringCode,
     String planStringCode,
     String publicSlug,
     BasicInfoResponse basicInfo,

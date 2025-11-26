@@ -28,14 +28,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
+import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class SecurityConfig {
 
-    private static final String ROLE_EMPLOYER = "EMPLOYER";
-    private static final String ROLE_TALENT = "TALENT";
     private final AppProperties appProperties;
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -51,8 +52,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(ROLE_EMPLOYER)
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(ROLE_TALENT)
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(EMPLOYER.name())
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(TALENT.name())
                     // Profile
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL).authenticated()
                     // Serve

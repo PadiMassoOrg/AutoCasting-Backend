@@ -6,7 +6,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -26,7 +25,7 @@ public class AuthenticatedOAuthUser implements OAuth2User {
     }
 
     public RoleEntity getRole() {
-        return user.getRole();
+        return user.getRoles().stream().findFirst().orElse(null);
     }
 
     public UserEntity getUserEntity() {
@@ -35,7 +34,9 @@ public class AuthenticatedOAuthUser implements OAuth2User {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().getCode()));
+        return user.getRoles().stream()
+            .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getCode()))
+            .toList();
     }
 
     @Override

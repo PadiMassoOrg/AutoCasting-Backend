@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.auth.service.impl;
 
+import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.JwtService;
 import io.jsonwebtoken.Claims;
@@ -32,7 +33,16 @@ public class JwtServiceImpl implements JwtService {
 
     public String generateTokenWithCustomExpirationTime(UserEntity user, Long customExpirationTime) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", user.getRole().getCode());
+
+        var roleCodes = user.getRoles().stream()
+            .map(RoleEntity::getCode)
+            .toList();
+        
+        claims.put("roles", roleCodes);
+
+        if (!roleCodes.isEmpty()) {
+            claims.put("role", roleCodes.getFirst());
+        }
 
         return Jwts.builder()
             .claims(claims)
