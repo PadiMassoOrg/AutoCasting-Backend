@@ -4,8 +4,10 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.DietOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.EthnicityOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.repository.ColorOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.DietOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.repository.EthnicityOptionRepository;
 import com.padimasso.autocasting.application.talent.dto.request.CharacteristicsPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
@@ -26,6 +28,7 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
     private final TalentProfileRepository talentProfileRepository;
     private final CharacteristicsRepository characteristicsRepository;
     private final ColorOptionRepository colorOptionRepository;
+    private final EthnicityOptionRepository ethnicityOptionRepository;
     private final DietOptionRepository dietOptionRepository;
     private final TalentProfileMapper talentProfileMapper;
 
@@ -38,6 +41,11 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
             .orElseGet(() -> characteristicsRepository.save(CharacteristicsEntity.builder().talentProfile(profile).build()));
 
         if (request.heightCm().isPresent()) characteristics.setHeightCm(request.heightCm().orElse(null));
+        if (request.ethnicityId() != null) {
+            EthnicityOptionEntity ethnicityOption = ethnicityOptionRepository.findById(request.ethnicityId())
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.ethnicity.not_found"));
+            characteristics.setEthnicity(ethnicityOption);
+        }
         if (request.weightKg().isPresent()) characteristics.setWeightKg(request.weightKg().orElse(null));
         if (request.hairColorId() != null) {
             ColorOptionEntity color = colorOptionRepository.findById(request.hairColorId())

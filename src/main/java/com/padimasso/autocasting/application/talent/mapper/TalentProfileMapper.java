@@ -51,7 +51,7 @@ public class TalentProfileMapper {
         return new BasicInfoResponse(
             entity.getId(),
             entity.getStageName(),
-            entity.getGender(),
+            mapToSiteMetadataObject(entity.getGender()),
             entity.getBirthDate(),
             entity.getProfessions().stream().map(this::mapToSiteMetadataObject).toList()
         );
@@ -71,7 +71,12 @@ public class TalentProfileMapper {
         return new SocialMediaResponse(
             entity.getId(),
             entity.getInstagramUrl(),
-            entity.getTikTokUrl()
+            entity.getTikTokUrl(),
+            entity.getLinkedinUrl(),
+            entity.getXUrl(),
+            entity.getVimeoUrl(),
+            entity.getImdbUrl(),
+            entity.getBehanceUrl()
         );
     }
 
@@ -92,6 +97,7 @@ public class TalentProfileMapper {
         return new CharacteristicsResponse(
             entity.getId(),
             entity.getHeightCm(),
+            mapToSiteMetadataObject(entity.getEthnicity()),
             entity.getWeightKg(),
             mapToSiteMetadataObject(entity.getHairColor()),
             mapToSiteMetadataObject(entity.getEyeColor()),

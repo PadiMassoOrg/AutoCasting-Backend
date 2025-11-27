@@ -16,6 +16,9 @@ import java.util.*;
 @Component
 public final class TalentProfileSpecs {
 
+    private TalentProfileSpecs() {
+    }
+
     public static Specification<TalentProfileEntity> hasHeadshot() {
         return (root, q, cb) -> {
             var m = root.join("media", JoinType.LEFT);
@@ -35,10 +38,16 @@ public final class TalentProfileSpecs {
 
     public static Specification<TalentProfileEntity> genderInTokens(List<String> tokens) {
         if (tokens == null || tokens.isEmpty()) return null;
+
         boolean all = tokens.stream().anyMatch("NULL"::equalsIgnoreCase);
         if (all) return null;
-        var ids = tokens.stream().filter(Objects::nonNull).map(UUID::fromString).toList();
+
+        var ids = tokens.stream()
+            .filter(Objects::nonNull)
+            .map(UUID::fromString)
+            .toList();
         if (ids.isEmpty()) return null;
+
         return (root, q, cb) -> {
             var bi = root.join("basicInfo");
             return bi.get("gender").get("id").in(ids);
@@ -47,51 +56,92 @@ public final class TalentProfileSpecs {
 
     public static Specification<TalentProfileEntity> ageBetween(Integer min, Integer max) {
         if (min == null && max == null) return null;
+
         return (root, q, cb) -> {
             var bi = root.join("basicInfo");
             var today = LocalDate.now(ZoneOffset.UTC);
+
             LocalDate minBirth = (min != null) ? today.minusYears(min) : null;
             LocalDate maxBirth = (max != null) ? today.minusYears(max + 1L).plusDays(1) : null;
 
             if (minBirth != null && maxBirth != null) {
                 return cb.between(bi.get("birthDate"), maxBirth, minBirth);
             } else if (minBirth != null) {
+                // edad >= min  => fecha_nac <= hoy - min
                 return cb.lessThanOrEqualTo(bi.get("birthDate"), minBirth);
             } else {
+                // edad <= max  => fecha_nac >= hoy - (max+1) + 1 día
                 return cb.greaterThanOrEqualTo(bi.get("birthDate"), maxBirth);
             }
         };
     }
 
-    // Characteristics
+    // =========================
+    // Characteristics (height, hair, eye, ETHNICITY, tattoo, passport, drivingLicense)
+    // =========================
     public static Specification<TalentProfileEntity> characteristics(TalentFilter f) {
-        boolean any = f.heightMinCm() != null || f.heightMaxCm() != null
-            || (f.hairColorIds() != null && !f.hairColorIds().isEmpty())
-            || (f.eyeColorIds() != null && !f.eyeColorIds().isEmpty())
-            || f.tattoo() != null || f.passport() != null || f.drivingLicense() != null;
+        boolean any =
+            f.heightMinCm() != null ||
+                f.heightMaxCm() != null ||
+                (f.hairColorIds() != null && !f.hairColorIds().isEmpty()) ||
+                (f.eyeColorIds() != null && !f.eyeColorIds().isEmpty()) ||
+                (f.ethnicityIdTokens() != null && !f.ethnicityIdTokens().isEmpty()) ||  // 👈 IMPORTANTE
+                f.tattoo() != null ||
+                f.passport() != null ||
+                f.drivingLicense() != null;
 
         if (!any) return null;
 
         return (root, q, cb) -> {
             var ch = root.join("characteristics", JoinType.LEFT);
             List<Predicate> ps = new ArrayList<>();
-            if (f.heightMinCm() != null) ps.add(cb.greaterThanOrEqualTo(ch.get("heightCm"), f.heightMinCm()));
-            if (f.heightMaxCm() != null) ps.add(cb.lessThanOrEqualTo(ch.get("heightCm"), f.heightMaxCm()));
 
+            // Height
+            if (f.heightMinCm() != null) {
+                ps.add(cb.greaterThanOrEqualTo(ch.get("heightCm"), f.heightMinCm()));
+            }
+            if (f.heightMaxCm() != null) {
+                ps.add(cb.lessThanOrEqualTo(ch.get("heightCm"), f.heightMaxCm()));
+            }
+
+            // Hair color
             if (f.hairColorIds() != null && !f.hairColorIds().isEmpty()) {
                 ps.add(ch.get("hairColor").get("id").in(f.hairColorIds()));
             }
+
+            // Eye color
             if (f.eyeColorIds() != null && !f.eyeColorIds().isEmpty()) {
                 ps.add(ch.get("eyeColor").get("id").in(f.eyeColorIds()));
             }
 
-            if (f.tattoo() != null) ps.add(cb.equal(ch.get("tattoo"), f.tattoo()));
-            if (f.passport() != null) ps.add(cb.equal(ch.get("passport"), f.passport()));
-            if (f.drivingLicense() != null) ps.add(cb.equal(ch.get("drivingLicense"), f.drivingLicense()));
-            return cb.and(ps.toArray(Predicate[]::new));
+            // Ethnicity
+            if (f.ethnicityIdTokens() != null && !f.ethnicityIdTokens().isEmpty()) {
+                boolean all = f.ethnicityIdTokens().stream().anyMatch("NULL"::equalsIgnoreCase);
+                if (!all) {
+                    var ids = f.ethnicityIdTokens().stream()
+                        .filter(Objects::nonNull)
+                        .map(UUID::fromString)
+                        .toList();
+                    if (!ids.isEmpty()) {
+                        ps.add(ch.get("ethnicity").get("id").in(ids));
+                    }
+                }
+            }
+
+            // Tattoo / passport / drivingLicense
+            if (f.tattoo() != null) {
+                ps.add(cb.equal(ch.get("tattoo"), f.tattoo()));
+            }
+            if (f.passport() != null) {
+                ps.add(cb.equal(ch.get("passport"), f.passport()));
+            }
+            if (f.drivingLicense() != null) {
+                ps.add(cb.equal(ch.get("drivingLicense"), f.drivingLicense()));
+            }
+
+            return ps.isEmpty() ? cb.conjunction() : cb.and(ps.toArray(Predicate[]::new));
         };
     }
-
 
     // ManyToMany: ANY
     public static Specification<TalentProfileEntity> anyOf(String relationPath, List<UUID> ids) {
@@ -117,7 +167,10 @@ public final class TalentProfileSpecs {
                 from = from.join(part, JoinType.INNER);
             }
             sq.select(cb.countDistinct(from.get("id")))
-                .where(cb.equal(p2.get("id"), root.get("id")), from.get("id").in(ids));
+                .where(
+                    cb.equal(p2.get("id"), root.get("id")),
+                    from.get("id").in(ids)
+                );
             return cb.equal(sq, (long) ids.size());
         };
     }
@@ -128,8 +181,10 @@ public final class TalentProfileSpecs {
             .and(stageNameContains(f.stageName()))
             .and(ageBetween(f.ageMin(), f.ageMax()))
             .and(genderInTokens(f.genderIdTokens()))
+            // 👇 Ethnicity ya viene dentro de `characteristics(f)`
             .and(characteristics(f));
 
+        // Professions
         if (f.professionIds() != null && !f.professionIds().isEmpty()) {
             var ids = f.professionIds();
             spec = spec.and(
@@ -139,6 +194,7 @@ public final class TalentProfileSpecs {
             );
         }
 
+        // Skills
         if (f.skillIds() != null && !f.skillIds().isEmpty()) {
             var ids = f.skillIds();
             spec = spec.and(

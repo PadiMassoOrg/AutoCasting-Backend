@@ -21,10 +21,25 @@ public class SocialMediaEntity extends AuditableEntity {
     private UUID id;
 
     @Column
-    String instagramUrl;
+    private String instagramUrl;
 
     @Column
-    String tikTokUrl;
+    private String tikTokUrl;
+
+    @Column
+    private String linkedinUrl;
+
+    @Column
+    private String xUrl;
+
+    @Column
+    private String vimeoUrl;
+
+    @Column
+    private String imdbUrl;
+
+    @Column
+    private String behanceUrl;
 
     @OneToOne
     @JoinColumn(name = "talent_profile_id", nullable = false, unique = true)

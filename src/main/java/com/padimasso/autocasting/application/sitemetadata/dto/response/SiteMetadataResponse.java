@@ -13,6 +13,7 @@ public record SiteMetadataResponse(
     List<SiteMetadataObject> skills,
     List<SiteMetadataObject> professions,
     List<SiteMetadataObject> genderOptions,
+    List<SiteMetadataObject> ethnicityOptions,
     List<SiteMetadataObject> colorOptions,
     List<SiteMetadataObject> dietOptions,
     List<SiteMetadataObject> productionTypeOptions

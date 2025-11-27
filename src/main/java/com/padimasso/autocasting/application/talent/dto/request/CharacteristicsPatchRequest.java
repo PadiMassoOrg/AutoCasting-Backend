@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record CharacteristicsPatchRequest(
     JsonNullable<Integer> heightCm,
+    UUID ethnicityId,
     JsonNullable<Integer> weightKg,
     UUID hairColorId,
     UUID eyeColorId,
