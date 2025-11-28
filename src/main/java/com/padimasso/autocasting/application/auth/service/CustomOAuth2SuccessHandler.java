@@ -2,6 +2,8 @@ package com.padimasso.autocasting.application.auth.service;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,9 +17,11 @@ import java.io.IOException;
 
 @RequiredArgsConstructor
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
+
     private final AppProperties appProperties;
     private final JwtService jwtService;
     private final UserRepository userRepo;
+    private final TalentProfileRepository talentProfileRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws IOException {
@@ -25,8 +29,10 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String email = principal.getAttribute("email");
 
         UserEntity user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("oauth.google.user_missing_email"));
+        var profileOpt = talentProfileRepository.findByUserId(user.getId());
+        String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
 
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug);
 
         // Redirigir con el token como query param
         String redirectUrl = appProperties.getOauthSuccessUrl() + "?token=" + jwt;

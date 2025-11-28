@@ -31,17 +31,21 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateTokenWithCustomExpirationTime(UserEntity user, Long customExpirationTime) {
+    public String generateTokenWithCustomExpirationTime(UserEntity user, Long customExpirationTime, String publicSlug) {
         Map<String, Object> claims = new HashMap<>();
 
         var roleCodes = user.getRoles().stream()
             .map(RoleEntity::getCode)
             .toList();
-        
+
         claims.put("roles", roleCodes);
 
         if (!roleCodes.isEmpty()) {
             claims.put("role", roleCodes.getFirst());
+        }
+
+        if (publicSlug != null && !publicSlug.isBlank()) {
+            claims.put("publicSlug", publicSlug);
         }
 
         return Jwts.builder()

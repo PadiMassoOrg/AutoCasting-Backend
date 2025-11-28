@@ -92,7 +92,10 @@ public class AuthServiceImpl implements AuthService {
         normalizeUser(user, roles);
         userRepository.save(user);
 
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
+        var profileOpt = talentProfileRepository.findByUserId(user.getId());
+        String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug);
         return new AuthResponse(jwt);
     }
 
@@ -105,9 +108,12 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("auth.password_reset_external");
         }
 
+        var profileOpt = talentProfileRepository.findByUserId(user.getId());
+        String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+
         String token = jwtService.generateTokenWithCustomExpirationTime(
-            user, AppConstants.RESET_PASSWORD_EXPIRATION_TIME
-        );
+            user, AppConstants.RESET_PASSWORD_EXPIRATION_TIME,
+            publicSlug);
 
         String resetUrl = appProperties.getFrontendUrl() + "/reset-password?token=" + token;
         var locale = LocaleContextHolder.getLocale();
@@ -150,9 +156,11 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void changePassword(ChangePasswordRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
+
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
             throw new IllegalArgumentException("auth.invalid_credentials");
         }
+
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
     }
@@ -216,7 +224,10 @@ public class AuthServiceImpl implements AuthService {
             .build();
         characteristicsRepository.save(characteristics);
 
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME);
+        var profileOpt = talentProfileRepository.findByUserId(user.getId());
+        String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+        
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug);
         return new AuthResponse(jwt);
     }
 
