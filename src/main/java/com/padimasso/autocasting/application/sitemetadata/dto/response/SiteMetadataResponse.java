@@ -16,5 +16,6 @@ public record SiteMetadataResponse(
     List<SiteMetadataObject> ethnicityOptions,
     List<SiteMetadataObject> colorOptions,
     List<SiteMetadataObject> dietOptions,
-    List<SiteMetadataObject> productionTypeOptions
+    List<SiteMetadataObject> productionTypeOptions,
+    List<SiteMetadataObject> socialMediaOptions
 ) {}

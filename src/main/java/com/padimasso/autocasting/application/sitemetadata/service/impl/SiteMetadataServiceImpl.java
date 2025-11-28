@@ -33,6 +33,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final ColorOptionRepository colorOptionRepository;
     private final DietOptionRepository dietOptionRepository;
     private final ProductionTypeRepository productionTypeRepository;
+    private final SocialMediaOptionRepository socialMediaOptionRepository;
 
     public SiteMetadataResponse getSiteMetadata() {
         var version = computeVersion();
@@ -45,6 +46,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var foundColorOptionEntities = colorOptionRepository.findAll();
         var foundDietOptionEntities = dietOptionRepository.findAll();
         var foundProductionTypeOptionEntities = productionTypeRepository.findAll();
+        var foundSocialMediaOptionEntities = socialMediaOptionRepository.findAll();
 
         return new SiteMetadataResponse(
             version,
@@ -56,7 +58,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             mapToSiteMetadataObject(foundEthnicityOptionsEntities),
             mapToSiteMetadataObject(foundColorOptionEntities),
             mapToSiteMetadataObject(foundDietOptionEntities),
-            mapToSiteMetadataObject(foundProductionTypeOptionEntities)
+            mapToSiteMetadataObject(foundProductionTypeOptionEntities),
+            mapToSiteMetadataObject(foundSocialMediaOptionEntities)
         );
     }
 
@@ -108,7 +111,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             "diet:" + dietOptionRepository.count() + ":" + ts(dietOptionRepository.findMaxModifiedAt()),
             "productionType:" + productionTypeRepository.count() + ":" + ts(productionTypeRepository.findMaxModifiedAt()),
             "roles:" + roleRepository.count() + ":" + ts(roleRepository.findMaxModifiedAt()),
-            "plans:" + planRepository.count() + ":" + ts(planRepository.findMaxModifiedAt())
+            "plans:" + planRepository.count() + ":" + ts(planRepository.findMaxModifiedAt()),
+            "socialMedia:" + socialMediaOptionRepository.count() + ":" + ts(socialMediaOptionRepository.findMaxModifiedAt())
         );
         return sha256(parts);
     }

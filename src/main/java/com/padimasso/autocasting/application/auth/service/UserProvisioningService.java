@@ -28,6 +28,7 @@ import static com.padimasso.autocasting.application.auth.service.impl.AuthServic
 class UserProvisioningService {
 
     public static final String PLAN_FREE = "FREE";
+
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
@@ -35,15 +36,20 @@ class UserProvisioningService {
 
     @Transactional
     void ensureUser(String email, String name) {
-        if (email == null) throw new OAuth2AuthenticationException("auth.user_not_found");
+        if (email == null) {
+            throw new OAuth2AuthenticationException("auth.user_not_found");
+        }
 
+        // Roles base: TALENT + EMPLOYER
         Set<RoleEntity> baseRoles = new HashSet<>(
             roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
                 .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"))
         );
 
-        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE).orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
+            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
+        // User (nuevo o existente)
         UserEntity user = userRepository.findByEmail(email).orElseGet(() -> UserEntity.builder()
             .email(email)
             .password(null)
@@ -51,21 +57,28 @@ class UserProvisioningService {
             .activeMode(null)
             .talentOnboardingStatus(OnboardingStatus.NOT_STARTED)
             .employerOnboardingStatus(OnboardingStatus.NOT_STARTED)
-            .build());
+            .build()
+        );
 
         normalizeUser(user, baseRoles);
         user = userRepository.save(user);
 
         UserEntity finalUser = user;
 
-        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId()).orElseGet(() -> {
-            TalentProfileEntity p = TalentProfileEntity.builder().user(finalUser).plan(freePlan).build();
-            return talentProfileRepository.save(p);
-        });
+        // Perfil de talento
+        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
+            .orElseGet(() -> {
+                TalentProfileEntity p = TalentProfileEntity.builder()
+                    .user(finalUser)
+                    .plan(freePlan)
+                    .build();
+                return talentProfileRepository.save(p);
+            });
 
+        // BASIC INFO
         if (profile.getBasicInfo() == null) {
             BasicInfoEntity basicInfo = BasicInfoEntity.builder()
-                .stageName(name)
+                .stageName(name) // podemos usar el nombre de OAuth como nombre artístico inicial
                 .talentProfile(profile)
                 .build();
             profile.setBasicInfo(basicInfo);
@@ -76,6 +89,7 @@ class UserProvisioningService {
             }
         }
 
+        // CONTACT
         if (profile.getContact() == null) {
             ContactEntity contact = ContactEntity.builder()
                 .email(email)
@@ -88,13 +102,7 @@ class UserProvisioningService {
             }
         }
 
-        if (profile.getSocialMedia() == null) {
-            SocialMediaEntity socialMedia = SocialMediaEntity.builder()
-                .talentProfile(profile)
-                .build();
-            profile.setSocialMedia(socialMedia);
-        }
-
+        // MEDIA
         if (profile.getMedia() == null) {
             MediaEntity media = MediaEntity.builder()
                 .talentProfile(profile)
@@ -102,6 +110,7 @@ class UserProvisioningService {
             profile.setMedia(media);
         }
 
+        // CHARACTERISTICS
         if (profile.getCharacteristics() == null) {
             CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
                 .talentProfile(profile)

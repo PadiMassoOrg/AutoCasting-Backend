@@ -1,12 +1,8 @@
 package com.padimasso.autocasting.application.talent.dto.request;
 
+import java.util.List;
+
 public record SocialMediaPatchRequest(
-    String instagramUrl,
-    String tikTokUrl,
-    String linkedinUrl,
-    String xUrl,
-    String vimeoUrl,
-    String imdbUrl,
-    String behanceUrl
+    List<SocialMediaLinkDto> links
 ) {
 }

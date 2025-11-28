@@ -104,7 +104,9 @@ public class TalentProfileController {
     //    Social Media
     @PatchMapping(AppConstants.TALENT_PROFILE_API_URL + "/social-media")
     @Operation(summary = "PATCH Social Media (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<SocialMediaResponse> patchMySocialMedia(@Valid @RequestBody SocialMediaPatchRequest request) {
+    public ResponseEntity<SocialMediaResponse> patchMySocialMedia(
+        @Valid @RequestBody SocialMediaPatchRequest request
+    ) {
         return ResponseEntity.ok(socialMediaService.patchMySocialMedia(request));
     }
 

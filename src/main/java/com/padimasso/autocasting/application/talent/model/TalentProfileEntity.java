@@ -43,8 +43,12 @@ public class TalentProfileEntity extends AuditableEntity {
     @OneToOne(mappedBy = "talentProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     ContactEntity contact;
 
-    @OneToOne(mappedBy = "talentProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    SocialMediaEntity socialMedia;
+    @OneToMany(
+        mappedBy = "talentProfile",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
+    private java.util.Set<TalentSocialMediaLinkEntity> socialMediaLinks = new java.util.HashSet<>();
 
     @OneToOne(mappedBy = "talentProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     MediaEntity media;

@@ -48,7 +48,6 @@ public class AuthServiceImpl implements AuthService {
     private final TalentProfileRepository talentProfileRepository;
     private final BasicInfoRepository basicInfoRepository;
     private final ContactRepository contactRepository;
-    private final SocialMediaRepository socialMediaRepository;
     private final MediaRepository mediaRepository;
     private final CharacteristicsRepository characteristicsRepository;
     private final PasswordEncoder passwordEncoder;
@@ -115,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
 
         Context ctx = new Context(locale);
 
-        String assetsBase = appProperties.getBackendUrl() + "/email";  // ✅ correcto
+        String assetsBase = appProperties.getBackendUrl() + "/email";
         ctx.setVariable("logoPngUrl", assetsBase + "/autocasting_logo.png");
         ctx.setVariable("instagramPngUrl", assetsBase + "/insta_icon.png");
         ctx.setVariable("linkedinPngUrl", assetsBase + "/linkedin_icon.png");
@@ -173,6 +172,7 @@ public class AuthServiceImpl implements AuthService {
         final PlanEntity freePlan = planRepository.findByCode("FREE")
             .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
+        // 1) User
         UserEntity user = UserEntity.builder()
             .email(request.email())
             .password(passwordEncoder.encode(request.password()))
@@ -184,33 +184,33 @@ public class AuthServiceImpl implements AuthService {
             .build();
         userRepository.save(user);
 
+        // 2) Perfil
         var profile = TalentProfileEntity.builder()
             .user(user)
             .plan(freePlan)
             .build();
         talentProfileRepository.save(profile);
 
+        // 3) Basic Info
         var basicInfo = BasicInfoEntity.builder()
             .talentProfile(profile)
             .build();
         basicInfoRepository.save(basicInfo);
 
+        // 4) Contact
         var contact = ContactEntity.builder()
             .email(request.email())
             .talentProfile(profile)
             .build();
         contactRepository.save(contact);
 
-        var socialMedia = SocialMediaEntity.builder()
-            .talentProfile(profile)
-            .build();
-        socialMediaRepository.save(socialMedia);
-
+        // 5) Media
         var media = MediaEntity.builder()
             .talentProfile(profile)
             .build();
         mediaRepository.save(media);
 
+        // 6) Characteristics
         var characteristics = CharacteristicsEntity.builder()
             .talentProfile(profile)
             .build();
@@ -235,4 +235,3 @@ public class AuthServiceImpl implements AuthService {
     }
 
 }
-
