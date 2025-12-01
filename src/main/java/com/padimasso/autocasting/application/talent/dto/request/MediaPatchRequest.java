@@ -8,7 +8,7 @@ public record MediaPatchRequest(
     JsonNullable<String> headshotImageUrl,
     JsonNullable<String> fullBodyImageUrl,
     List<OtherPicturePatch> otherPictures,
-    String introductionVideoUrl,
-    String showReelVideoUrl
+    JsonNullable<String> introductionVideoUrl,
+    JsonNullable<String> showReelVideoUrl
 ) {
 }

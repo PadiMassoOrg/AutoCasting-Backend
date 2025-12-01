@@ -54,11 +54,11 @@ public class MediaServiceImpl implements MediaService {
             }
             media.setOtherPicturesUrl(list);
         }
-        if (request.introductionVideoUrl() != null){
-            media.setIntroductionVideoUrl(request.introductionVideoUrl());
+        if (request.introductionVideoUrl().isPresent()) {
+            media.setIntroductionVideoUrl(request.introductionVideoUrl().orElse(null));
         }
-        if (request.showReelVideoUrl() != null){
-            media.setShowReelVideoUrl(request.showReelVideoUrl());
+        if (request.showReelVideoUrl().isPresent()) {
+            media.setShowReelVideoUrl(request.showReelVideoUrl().orElse(null));
         }
 
         return talentProfileMapper.toMediaResponse(mediaRepository.save(media));
