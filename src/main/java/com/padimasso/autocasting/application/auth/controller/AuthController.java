@@ -3,16 +3,16 @@ package com.padimasso.autocasting.application.auth.controller;
 import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
+import com.padimasso.autocasting.application.auth.dto.response.MeResponse;
+import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
 
@@ -24,6 +24,7 @@ import static com.padimasso.autocasting.config.AppConstants.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthContext authContext;
 
     @Operation(
         summary = "Registro de nuevo usuario",
@@ -41,6 +42,28 @@ public class AuthController {
     @PostMapping(LOGIN_API_URL)
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @Operation(
+        summary = "Datos del Usuario autenticado",
+        description = "Devuelve información básica del usuario y el estado del onboarding"
+    )
+    @GetMapping(ME_API_URL)
+    public ResponseEntity<MeResponse> me() {
+        UserEntity user = authContext.getCurrentUserOrThrow();
+        return ResponseEntity.ok(MeResponse.from(user));
+    }
+
+    @Operation(
+        summary = "Actualiza el estado de onboarding del usuario autenticado",
+        description = "Permite settear el modo activo (TALENT/EMPLOYER) y los estados de onboarding de talento y empleador"
+    )
+    @PatchMapping(ONBOARDING_API_URL)
+    public ResponseEntity<MeResponse> updateOnboarding(
+        @Valid @RequestBody UserOnboardingRequest request
+    ) {
+        MeResponse response = authService.updateOnboarding(request);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(

@@ -58,6 +58,7 @@ public class TalentProfileController {
         @RequestParam(required = false) Integer ageMin,
         @RequestParam(required = false) Integer ageMax,
         @RequestParam(required = false, name = "genderId") List<String> genderIdTokens,
+        @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens,
         @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
         @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
         @RequestParam(required = false) Integer heightMinCm,
@@ -74,7 +75,7 @@ public class TalentProfileController {
         @RequestParam(required = false, defaultValue = "false") boolean includeNoHeadshot
     ) {
         var filter = new TalentFilter(
-            stageName, ageMin, ageMax, genderIdTokens,
+            stageName, ageMin, ageMax, genderIdTokens, ethnicityIdTokens,
             professionIds, professionsMode,
             heightMinCm, heightMaxCm,
             hairColorIds, hairColorIdsMode, eyeColorIds, eyeColorIdsMode,
@@ -103,7 +104,9 @@ public class TalentProfileController {
     //    Social Media
     @PatchMapping(AppConstants.TALENT_PROFILE_API_URL + "/social-media")
     @Operation(summary = "PATCH Social Media (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<SocialMediaResponse> patchMySocialMedia(@Valid @RequestBody SocialMediaPatchRequest request) {
+    public ResponseEntity<SocialMediaResponse> patchMySocialMedia(
+        @Valid @RequestBody SocialMediaPatchRequest request
+    ) {
         return ResponseEntity.ok(socialMediaService.patchMySocialMedia(request));
     }
 

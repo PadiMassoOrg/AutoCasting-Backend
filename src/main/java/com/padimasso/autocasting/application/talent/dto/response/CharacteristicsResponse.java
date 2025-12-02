@@ -7,6 +7,7 @@ import java.util.UUID;
 public record CharacteristicsResponse(
     UUID id,
     Integer heightCm,
+    SiteMetadataObject ethnicity,
     Integer weightKg,
     SiteMetadataObject hairColor,
     SiteMetadataObject eyeColor,

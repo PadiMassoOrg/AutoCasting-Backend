@@ -8,9 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -36,13 +34,49 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(nullable = false)
     private UserAccountProvider userAccountProvider;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "role_id", nullable = false)
-    private RoleEntity role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Builder.Default
+    private Set<RoleEntity> roles = Set.of();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "active_mode")
+    private UserMode activeMode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "talent_onboarding_status", nullable = false)
+    private OnboardingStatus talentOnboardingStatus = OnboardingStatus.NOT_STARTED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "employer_onboarding_status", nullable = false)
+    private OnboardingStatus employerOnboardingStatus = OnboardingStatus.NOT_STARTED;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getCode()));
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        if (activeMode != null) {
+            switch (activeMode) {
+                case TALENT -> {
+                    boolean hasTalent = roles.stream().anyMatch(r -> r.getCode().equals("TALENT"));
+                    if (hasTalent) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_TALENT"));
+                    }
+                }
+                case EMPLOYER -> {
+                    boolean hasEmployer = roles.stream().anyMatch(r -> r.getCode().equals("EMPLOYER"));
+                    if (hasEmployer) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_EMPLOYER"));
+                    }
+                }
+            }
+        }
+
+        return authorities;
     }
 
     @Override

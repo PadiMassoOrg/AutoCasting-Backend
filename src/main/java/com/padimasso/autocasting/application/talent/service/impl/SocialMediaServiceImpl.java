@@ -2,13 +2,16 @@ package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.AuthContext;
+import com.padimasso.autocasting.application.sitemetadata.model.SocialMediaOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.repository.SocialMediaOptionRepository;
+import com.padimasso.autocasting.application.talent.dto.request.SocialMediaLinkDto;
 import com.padimasso.autocasting.application.talent.dto.request.SocialMediaPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.SocialMediaResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
-import com.padimasso.autocasting.application.talent.model.SocialMediaEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
-import com.padimasso.autocasting.application.talent.repository.SocialMediaRepository;
+import com.padimasso.autocasting.application.talent.model.TalentSocialMediaLinkEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
+import com.padimasso.autocasting.application.talent.repository.TalentSocialMediaLinkRepository;
 import com.padimasso.autocasting.application.talent.service.SocialMediaService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,25 +24,62 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
-    private final SocialMediaRepository socialMediaRepository;
+    private final TalentSocialMediaLinkRepository linkRepository;
+    private final SocialMediaOptionRepository optionRepository;
     private final TalentProfileMapper talentProfileMapper;
 
     @Transactional
     @Override
     public SocialMediaResponse patchMySocialMedia(SocialMediaPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
+
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
-        SocialMediaEntity socialMedia = socialMediaRepository.findByTalentProfileId(profile.getId())
-            .orElseGet(() -> socialMediaRepository.save(SocialMediaEntity.builder().talentProfile(profile).build()));
 
-        if (request.instagramUrl() != null) {
-            socialMedia.setInstagramUrl(request.instagramUrl());
-        }
-        if (request.tikTokUrl() != null) {
-            socialMedia.setTikTokUrl(request.tikTokUrl());
+        if (request.links() != null) {
+            for (SocialMediaLinkDto rawDto : request.links()) {
+                if (rawDto == null || rawDto.optionId() == null) {
+                    continue;
+                }
+
+                String normalizedUrl = normalizeUrl(rawDto.url());
+
+                // 👇 OJO: buscamos incluyendo deleted
+                var existingIncl = linkRepository.findIncludingDeletedByTalentProfileIdAndOptionId(
+                    profile.getId(),
+                    rawDto.optionId()
+                );
+
+                if (normalizedUrl == null) {
+                    // "delete": marcamos deleted=true si existe y está activa
+                    existingIncl.ifPresent(linkRepository::softDelete);
+                } else {
+                    // "upsert": reusamos si existe, incluso si estaba deleted
+                    TalentSocialMediaLinkEntity entity = existingIncl.orElseGet(() -> {
+                        SocialMediaOptionEntity option = optionRepository.findById(rawDto.optionId())
+                            .orElseThrow(() -> new IllegalArgumentException("social_media_option.not_found"));
+                        return TalentSocialMediaLinkEntity.builder()
+                            .talentProfile(profile)
+                            .option(option)
+                            .build();
+                    });
+
+                    // Si estaba borrada, la restauramos
+                    entity.setDeleted(false);
+                    entity.setUrl(normalizedUrl);
+                    linkRepository.save(entity);
+                }
+            }
         }
 
-        return talentProfileMapper.toSocialMediaResponse(socialMediaRepository.save(socialMedia));
+        // 👇 aquí usamos SOLO activos (deleted = false)
+        var allLinks = linkRepository.findAllByTalentProfileId(profile.getId());
+        return talentProfileMapper.toSocialMediaResponse(allLinks.stream().toList());
+    }
+
+    private String normalizeUrl(String value) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

@@ -5,9 +5,11 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
 import com.padimasso.autocasting.application.talent.dto.response.*;
 import com.padimasso.autocasting.application.talent.model.*;
+import com.padimasso.autocasting.application.talent.repository.TalentSocialMediaLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,45 +17,69 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TalentProfileMapper {
 
+    private final TalentSocialMediaLinkRepository socialMediaLinkRepository; // 👈 INYECTAMOS EL REPO
+
     public TalentProfileResponse toProfileResponse(TalentProfileEntity profile, UserEntity user) {
+        // 👇 CARGAMOS LOS LINKS DESDE EL REPO (respeta deleted=false)
+        var links = socialMediaLinkRepository.findAllByTalentProfileId(profile.getId())
+            .stream()
+            .toList();
+
         return new TalentProfileResponse(
             profile.getId(),
             user.getUserAccountProvider().toString(),
-            user.getRole().getNameStringCode(),
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
-            toSocialMediaResponse(profile.getSocialMedia()),
+            toSocialMediaResponse(links),         // 👈 YA NO profile.getSocialMedia()
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             profile.getCredits().stream().map(this::toCreditResponse).collect(Collectors.toSet()),
-            profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet()));
+            profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet())
+        );
     }
 
     public PublicProfileResponse toPublicProfileResponse(TalentProfileEntity profile) {
+        var links = socialMediaLinkRepository.findAllByTalentProfileId(profile.getId())
+            .stream()
+            .toList();
+
         return new PublicProfileResponse(
             profile.getId(),
-            profile.getUser().getRole().getNameStringCode(),
             profile.getPlan().getNameStringCode(),
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
-            toSocialMediaResponse(profile.getSocialMedia()),
+            toSocialMediaResponse(links),        // 👈 idem
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             profile.getCredits().stream().map(this::toCreditResponse).collect(Collectors.toSet()),
-            profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet()));
+            profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet())
+        );
     }
+
+    public SocialMediaResponse toSocialMediaResponse(List<TalentSocialMediaLinkEntity> links) {
+        var items = links.stream()
+            .map(l -> new SocialMediaLinkResponse(
+                l.getOption().getId(),
+                l.getOption().getStringCode(),
+                l.getUrl()
+            ))
+            .toList();
+        return new SocialMediaResponse(items);
+    }
+
+    // ===== resto de métodos como ya los tenías =====
 
     public BasicInfoResponse toBasicInfoResponse(BasicInfoEntity entity) {
         if (entity == null) return null;
         return new BasicInfoResponse(
             entity.getId(),
             entity.getStageName(),
-            entity.getGender(),
+            mapToSiteMetadataObject(entity.getGender()),
             entity.getBirthDate(),
             entity.getProfessions().stream().map(this::mapToSiteMetadataObject).toList()
         );
@@ -65,15 +91,6 @@ public class TalentProfileMapper {
             entity.getId(),
             entity.getEmail(),
             entity.getPhoneNumber()
-        );
-    }
-
-    public SocialMediaResponse toSocialMediaResponse(SocialMediaEntity entity) {
-        if (entity == null) return null;
-        return new SocialMediaResponse(
-            entity.getId(),
-            entity.getInstagramUrl(),
-            entity.getTikTokUrl()
         );
     }
 
@@ -94,6 +111,7 @@ public class TalentProfileMapper {
         return new CharacteristicsResponse(
             entity.getId(),
             entity.getHeightCm(),
+            mapToSiteMetadataObject(entity.getEthnicity()),
             entity.getWeightKg(),
             mapToSiteMetadataObject(entity.getHairColor()),
             mapToSiteMetadataObject(entity.getEyeColor()),

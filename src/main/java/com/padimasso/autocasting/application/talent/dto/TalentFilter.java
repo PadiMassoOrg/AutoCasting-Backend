@@ -10,6 +10,7 @@ public record TalentFilter(
     Integer ageMin,                   // (incl.)
     Integer ageMax,                   // (incl.)
     List<String> genderIdTokens,
+    List<String> ethnicityIdTokens,
     List<UUID> professionIds,
     MatchMode professionsMode,        // ANY (default) | ALL
     Integer heightMinCm,

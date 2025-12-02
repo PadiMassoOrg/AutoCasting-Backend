@@ -3,6 +3,7 @@ package com.padimasso.autocasting.config;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.application.auth.service.*;
+import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.exception.JwtAuthEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -28,19 +29,21 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
+import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class SecurityConfig {
 
-    private static final String ROLE_CASTINERA = "CASTINERA";
-    private static final String ROLE_ACTOR = "ACTOR";
     private final AppProperties appProperties;
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final TalentProfileRepository talentProfileRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -51,8 +54,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(ROLE_CASTINERA)
-                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(ROLE_ACTOR)
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(EMPLOYER.name())
+                    .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(TALENT.name())
                     // Profile
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL).authenticated()
                     // Serve
@@ -92,7 +95,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler customOAuth2SuccessHandler() {
-        return new CustomOAuth2SuccessHandler(appProperties, jwtService, userRepository);
+        return new CustomOAuth2SuccessHandler(appProperties, jwtService, userRepository, talentProfileRepository);
     }
 
     @Bean

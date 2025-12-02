@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.talent.model;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.DietOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.EthnicityOptionEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -29,6 +30,10 @@ public class CharacteristicsEntity extends AuditableEntity {
 
     @Column
     private Integer heightCm;
+
+    @ManyToOne
+    @JoinColumn(name = "ethnicity_id")
+    private EthnicityOptionEntity ethnicity;
 
     @Column
     private Integer weightKg;

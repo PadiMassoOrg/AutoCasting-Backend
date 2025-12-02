@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.auth.service;
 
+import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
@@ -14,37 +15,70 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
+import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+import static com.padimasso.autocasting.application.auth.service.impl.AuthServiceImpl.normalizeUser;
+
 @Component
 @RequiredArgsConstructor
 class UserProvisioningService {
 
     public static final String PLAN_FREE = "FREE";
+
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
     private final PlanRepository planRepository;
 
     @Transactional
-    void ensureUser(String email, String roleCode, String name) {
-        if (email == null) throw new OAuth2AuthenticationException("auth.user_not_found");
-        if (roleCode == null) throw new OAuth2AuthenticationException("oauth.role_missing");
+    void ensureUser(String email, String name) {
+        if (email == null) {
+            throw new OAuth2AuthenticationException("auth.user_not_found");
+        }
 
-        final RoleEntity foundRole = roleRepository.findByCode(roleCode.toUpperCase()).orElseThrow(() -> new IllegalArgumentException("oauth.role_missing"));
-        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE).orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+        // Roles base: TALENT + EMPLOYER
+        Set<RoleEntity> baseRoles = new HashSet<>(
+            roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
+                .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"))
+        );
 
-        UserEntity user = userRepository.findByEmail(email).orElseGet(() -> {
-            UserEntity newUser = UserEntity.builder().email(email).password(null).userAccountProvider(UserAccountProvider.OTHER).role(foundRole).build();
-            return userRepository.save(newUser);
-        });
+        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
+            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
 
-        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId()).orElseGet(() -> {
-            TalentProfileEntity p = TalentProfileEntity.builder().user(user).plan(freePlan).build();
-            return talentProfileRepository.save(p);
-        });
+        // User (nuevo o existente)
+        UserEntity user = userRepository.findByEmail(email).orElseGet(() -> UserEntity.builder()
+            .email(email)
+            .password(null)
+            .userAccountProvider(UserAccountProvider.OTHER)
+            .activeMode(null)
+            .talentOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .employerOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .build()
+        );
 
+        normalizeUser(user, baseRoles);
+        user = userRepository.save(user);
+
+        UserEntity finalUser = user;
+
+        // Perfil de talento
+        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
+            .orElseGet(() -> {
+                TalentProfileEntity p = TalentProfileEntity.builder()
+                    .user(finalUser)
+                    .plan(freePlan)
+                    .build();
+                return talentProfileRepository.save(p);
+            });
+
+        // BASIC INFO
         if (profile.getBasicInfo() == null) {
             BasicInfoEntity basicInfo = BasicInfoEntity.builder()
-                .stageName(name)
+                .stageName(name) // podemos usar el nombre de OAuth como nombre artístico inicial
                 .talentProfile(profile)
                 .build();
             profile.setBasicInfo(basicInfo);
@@ -55,6 +89,7 @@ class UserProvisioningService {
             }
         }
 
+        // CONTACT
         if (profile.getContact() == null) {
             ContactEntity contact = ContactEntity.builder()
                 .email(email)
@@ -67,13 +102,7 @@ class UserProvisioningService {
             }
         }
 
-        if (profile.getSocialMedia() == null) {
-            SocialMediaEntity socialMedia = SocialMediaEntity.builder()
-                .talentProfile(profile)
-                .build();
-            profile.setSocialMedia(socialMedia);
-        }
-
+        // MEDIA
         if (profile.getMedia() == null) {
             MediaEntity media = MediaEntity.builder()
                 .talentProfile(profile)
@@ -81,6 +110,7 @@ class UserProvisioningService {
             profile.setMedia(media);
         }
 
+        // CHARACTERISTICS
         if (profile.getCharacteristics() == null) {
             CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
                 .talentProfile(profile)
