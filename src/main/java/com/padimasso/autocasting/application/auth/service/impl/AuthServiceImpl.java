@@ -14,6 +14,10 @@ import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
+import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
+import com.padimasso.autocasting.application.employer.repository.EmployerBasicInfoRepository;
+import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.talent.model.*;
@@ -46,7 +50,9 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final PlanRepository planRepository;
     private final TalentProfileRepository talentProfileRepository;
+    private final EmployerProfileRepository employerProfileRepository;
     private final BasicInfoRepository basicInfoRepository;
+    private final EmployerBasicInfoRepository employerBasicInfoRepository;
     private final ContactRepository contactRepository;
     private final MediaRepository mediaRepository;
     private final CharacteristicsRepository characteristicsRepository;
@@ -92,10 +98,19 @@ public class AuthServiceImpl implements AuthService {
         normalizeUser(user, roles);
         userRepository.save(user);
 
-        var profileOpt = talentProfileRepository.findByUserId(user.getId());
-        String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+        var talentProfileOpt = talentProfileRepository.findByUserId(user.getId());
+        String talentProfileSlug = talentProfileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
 
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug);
+        var employerProfileOpt = employerProfileRepository.findByUserId(user.getId());
+        String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
+
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(
+            user,
+            AppConstants.EXPIRATION_TIME,
+            talentProfileSlug,
+            employerProfileSlug
+        );
+
         return new AuthResponse(jwt);
     }
 
@@ -109,11 +124,17 @@ public class AuthServiceImpl implements AuthService {
         }
 
         var profileOpt = talentProfileRepository.findByUserId(user.getId());
-        String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+        String talentProfileSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+
+        var employerProfileOpt = employerProfileRepository.findByUserId(user.getId());
+        String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
 
         String token = jwtService.generateTokenWithCustomExpirationTime(
-            user, AppConstants.RESET_PASSWORD_EXPIRATION_TIME,
-            publicSlug);
+            user,
+            AppConstants.RESET_PASSWORD_EXPIRATION_TIME,
+            talentProfileSlug,
+            employerProfileSlug
+        );
 
         String resetUrl = appProperties.getFrontendUrl() + "/reset-password?token=" + token;
         var locale = LocaleContextHolder.getLocale();
@@ -192,42 +213,56 @@ public class AuthServiceImpl implements AuthService {
             .build();
         userRepository.save(user);
 
-        // 2) Perfil
-        var profile = TalentProfileEntity.builder()
+        // 2) Profiles
+        var talentProfile = TalentProfileEntity.builder()
             .user(user)
             .plan(freePlan)
             .build();
-        talentProfileRepository.save(profile);
+        talentProfileRepository.save(talentProfile);
+
+        var employerProfile = EmployerProfileEntity.builder()
+            .user(user)
+            .plan(freePlan)
+            .build();
+        employerProfileRepository.save(employerProfile);
 
         // 3) Basic Info
         var basicInfo = BasicInfoEntity.builder()
-            .talentProfile(profile)
+            .talentProfile(talentProfile)
             .build();
         basicInfoRepository.save(basicInfo);
+
+        var employerBasicInfo = EmployerBasicInfoEntity.builder()
+            .employerProfile(employerProfile)
+            .build();
+        employerBasicInfoRepository.save(employerBasicInfo);
 
         // 4) Contact
         var contact = ContactEntity.builder()
             .email(request.email())
-            .talentProfile(profile)
+            .talentProfile(talentProfile)
             .build();
         contactRepository.save(contact);
 
         // 5) Media
         var media = MediaEntity.builder()
-            .talentProfile(profile)
+            .talentProfile(talentProfile)
             .build();
         mediaRepository.save(media);
 
         // 6) Characteristics
         var characteristics = CharacteristicsEntity.builder()
-            .talentProfile(profile)
+            .talentProfile(talentProfile)
             .build();
         characteristicsRepository.save(characteristics);
 
         var profileOpt = talentProfileRepository.findByUserId(user.getId());
         String publicSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
-        
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug);
+
+        var employerProfileOpt = employerProfileRepository.findByUserId(user.getId());
+        String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
+
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug, employerProfileSlug);
         return new AuthResponse(jwt);
     }
 

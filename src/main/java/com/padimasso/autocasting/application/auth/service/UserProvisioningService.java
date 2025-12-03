@@ -6,6 +6,9 @@ import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
+import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.talent.model.*;
@@ -32,6 +35,7 @@ class UserProvisioningService {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
+    private final EmployerProfileRepository employerProfileRepository;
     private final PlanRepository planRepository;
 
     @Transactional
@@ -65,8 +69,8 @@ class UserProvisioningService {
 
         UserEntity finalUser = user;
 
-        // Perfil de talento
-        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
+        // Profiles
+        TalentProfileEntity talentProfile = talentProfileRepository.findByUserId(user.getId())
             .orElseGet(() -> {
                 TalentProfileEntity p = TalentProfileEntity.builder()
                     .user(finalUser)
@@ -75,49 +79,73 @@ class UserProvisioningService {
                 return talentProfileRepository.save(p);
             });
 
-        // BASIC INFO
-        if (profile.getBasicInfo() == null) {
+        EmployerProfileEntity employerProfile = employerProfileRepository.findByUserId(user.getId())
+            .orElseGet(() -> {
+                EmployerProfileEntity p = EmployerProfileEntity.builder()
+                    .user(finalUser)
+                    .plan(freePlan)
+                    .build();
+                return employerProfileRepository.save(p);
+            });
+
+
+        // Basic Info
+        if (talentProfile.getBasicInfo() == null) {
             BasicInfoEntity basicInfo = BasicInfoEntity.builder()
                 .stageName(name) // podemos usar el nombre de OAuth como nombre artístico inicial
-                .talentProfile(profile)
+                .talentProfile(talentProfile)
                 .build();
-            profile.setBasicInfo(basicInfo);
+            talentProfile.setBasicInfo(basicInfo);
         } else {
-            if ((profile.getBasicInfo().getStageName() == null || profile.getBasicInfo().getStageName().isBlank())
+            if ((talentProfile.getBasicInfo().getStageName() == null || talentProfile.getBasicInfo().getStageName().isBlank())
                 && name != null && !name.isBlank()) {
-                profile.getBasicInfo().setStageName(name);
+                talentProfile.getBasicInfo().setStageName(name);
             }
         }
 
-        // CONTACT
-        if (profile.getContact() == null) {
+        if (employerProfile.getBasicInfo() == null) {
+            EmployerBasicInfoEntity employerBasicInfo = EmployerBasicInfoEntity.builder()
+                .userName(name) // podemos usar el nombre de OAuth como nombre artístico inicial
+                .employerProfile(employerProfile)
+                .build();
+            employerProfile.setBasicInfo(employerBasicInfo);
+        } else {
+            if ((employerProfile.getBasicInfo().getUserName() == null || employerProfile.getBasicInfo().getUserName().isBlank())
+                && name != null && !name.isBlank()) {
+                employerProfile.getBasicInfo().setUserName(name);
+            }
+        }
+
+        // Contact
+        if (talentProfile.getContact() == null) {
             ContactEntity contact = ContactEntity.builder()
                 .email(email)
-                .talentProfile(profile)
+                .talentProfile(talentProfile)
                 .build();
-            profile.setContact(contact);
+            talentProfile.setContact(contact);
         } else {
-            if (profile.getContact().getEmail() == null || profile.getContact().getEmail().isBlank()) {
-                profile.getContact().setEmail(email);
+            if (talentProfile.getContact().getEmail() == null || talentProfile.getContact().getEmail().isBlank()) {
+                talentProfile.getContact().setEmail(email);
             }
         }
 
-        // MEDIA
-        if (profile.getMedia() == null) {
+        // Media
+        if (talentProfile.getMedia() == null) {
             MediaEntity media = MediaEntity.builder()
-                .talentProfile(profile)
+                .talentProfile(talentProfile)
                 .build();
-            profile.setMedia(media);
+            talentProfile.setMedia(media);
         }
 
-        // CHARACTERISTICS
-        if (profile.getCharacteristics() == null) {
+        // Characteristics
+        if (talentProfile.getCharacteristics() == null) {
             CharacteristicsEntity characteristics = CharacteristicsEntity.builder()
-                .talentProfile(profile)
+                .talentProfile(talentProfile)
                 .build();
-            profile.setCharacteristics(characteristics);
+            talentProfile.setCharacteristics(characteristics);
         }
 
-        talentProfileRepository.save(profile);
+        talentProfileRepository.save(talentProfile);
+        employerProfileRepository.save(employerProfile);
     }
 }
