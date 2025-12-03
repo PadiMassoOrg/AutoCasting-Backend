@@ -2,6 +2,9 @@ package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.AuthContext;
+import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
+import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.sitemetadata.model.SocialMediaOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.repository.SocialMediaOptionRepository;
 import com.padimasso.autocasting.application.talent.dto.request.SocialMediaLinkDto;
@@ -24,9 +27,9 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
+    private final EmployerProfileRepository employerProfileRepository;
     private final ProfileSocialMediaLinkRepository linkRepository;
     private final SocialMediaOptionRepository optionRepository;
-    private final TalentProfileMapper talentProfileMapper;
 
     @Transactional
     @Override
@@ -44,7 +47,6 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
                 String normalizedUrl = normalizeUrl(rawDto.url());
 
-                // 👇 OJO: buscamos incluyendo deleted
                 var existingIncl = linkRepository.findIncludingDeletedByTalentProfileIdAndOptionId(
                     profile.getId(),
                     rawDto.optionId()
@@ -74,7 +76,56 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
         // 👇 aquí usamos SOLO activos (deleted = false)
         var allLinks = linkRepository.findAllByTalentProfileId(profile.getId());
-        return talentProfileMapper.toSocialMediaResponse(allLinks.stream().toList());
+        return TalentProfileMapper.toSocialMediaResponse(allLinks.stream().toList());
+    }
+
+    @Override
+    public SocialMediaResponse patchMyEmployerSocialMedia(SocialMediaPatchRequest request) {
+        UserEntity user = authContext.getCurrentUserOrThrow();
+
+        EmployerProfileEntity profile = employerProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+
+        EmployerBasicInfoEntity basicInfo = profile.getBasicInfo();
+
+        if (request.links() != null) {
+            for (SocialMediaLinkDto rawDto : request.links()) {
+                if (rawDto == null || rawDto.optionId() == null) {
+                    continue;
+                }
+
+                String normalizedUrl = normalizeUrl(rawDto.url());
+
+                var existingIncl = linkRepository.findIncludingDeletedByEmployerBasicInfoIdAndOptionId(
+                    basicInfo.getId(),
+                    rawDto.optionId()
+                );
+
+                if (normalizedUrl == null) {
+                    // "delete": marcamos deleted=true si existe y está activa
+                    existingIncl.ifPresent(linkRepository::softDelete);
+                } else {
+                    // "upsert": reusamos si existe, incluso si estaba deleted
+                    ProfileSocialMediaLinkEntity entity = existingIncl.orElseGet(() -> {
+                        SocialMediaOptionEntity option = optionRepository.findById(rawDto.optionId())
+                            .orElseThrow(() -> new IllegalArgumentException("social_media_option.not_found"));
+                        return ProfileSocialMediaLinkEntity.builder()
+                            .employerBasicInfo(basicInfo)
+                            .option(option)
+                            .build();
+                    });
+
+                    // Si estaba borrada, la restauramos
+                    entity.setDeleted(false);
+                    entity.setUrl(normalizedUrl);
+                    linkRepository.save(entity);
+                }
+            }
+        }
+
+        // 👇 aquí usamos SOLO activos (deleted = false)
+        var allLinks = linkRepository.findAllByEmployerBasicInfoId(basicInfo.getId());
+        return TalentProfileMapper.toSocialMediaResponse(allLinks.stream().toList());
     }
 
     private String normalizeUrl(String value) {

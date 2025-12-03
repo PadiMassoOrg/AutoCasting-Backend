@@ -5,6 +5,9 @@ import com.padimasso.autocasting.application.employer.dto.response.EmployerBasic
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.employer.service.EmployerBasicInfoService;
 import com.padimasso.autocasting.application.employer.service.EmployerProfileService;
+import com.padimasso.autocasting.application.talent.dto.request.SocialMediaPatchRequest;
+import com.padimasso.autocasting.application.talent.dto.response.SocialMediaResponse;
+import com.padimasso.autocasting.application.talent.service.SocialMediaService;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,6 +26,7 @@ public class EmployerProfileController {
 
     private final EmployerProfileService employerProfileService;
     private final EmployerBasicInfoService employerBasicInfoService;
+    private final SocialMediaService socialMediaService;
 
     //    Profile
     @Operation(summary = "Obtener mi perfil", security = @SecurityRequirement(name = "bearerAuth"))
@@ -37,5 +41,13 @@ public class EmployerProfileController {
     public ResponseEntity<EmployerBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody EmployerBasicInfoPatchRequest request) {
         return ResponseEntity.ok(employerBasicInfoService.patchMyBasicInfo(request));
     }
-    
+
+    //    Social Media
+    @PatchMapping(AppConstants.EMPLOYER_PROFILE_API_URL + "/social-media")
+    @Operation(summary = "PATCH Social Media (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<SocialMediaResponse> patchMySocialMedia(
+        @Valid @RequestBody SocialMediaPatchRequest request
+    ) {
+        return ResponseEntity.ok(socialMediaService.patchMyEmployerSocialMedia(request));
+    }
 }

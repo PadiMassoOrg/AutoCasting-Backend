@@ -35,4 +35,16 @@ public interface ProfileSocialMediaLinkRepository
         List<ProfileSocialMediaLinkEntity> all = findAllIncludingDeleted(spec);
         return all.stream().findFirst();
     }
+
+    default Optional<ProfileSocialMediaLinkEntity> findIncludingDeletedByEmployerBasicInfoIdAndOptionId(
+        UUID employerBasicInfoId,
+        UUID optionId
+    ) {
+        Specification<ProfileSocialMediaLinkEntity> spec = (root, q, cb) -> cb.and(
+            cb.equal(root.get("employerBasicInfo").get("id"), employerBasicInfoId),
+            cb.equal(root.get("option").get("id"), optionId)
+        );
+        List<ProfileSocialMediaLinkEntity> all = findAllIncludingDeleted(spec);
+        return all.stream().findFirst();
+    }
 }
