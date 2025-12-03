@@ -18,6 +18,12 @@ public interface ProfileSocialMediaLinkRepository
         );
     }
 
+    default Set<ProfileSocialMediaLinkEntity> findAllByEmployerBasicInfoId(UUID employerBasicInfoId) {
+        return Set.copyOf(
+            findAllByPropertyEquals("employerBasicInfo.id", employerBasicInfoId)
+        );
+    }
+
     default Optional<ProfileSocialMediaLinkEntity> findIncludingDeletedByTalentProfileIdAndOptionId(
         UUID talentProfileId,
         UUID optionId

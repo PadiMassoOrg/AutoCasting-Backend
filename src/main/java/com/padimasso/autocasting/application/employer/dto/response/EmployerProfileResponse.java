@@ -1,4 +1,12 @@
 package com.padimasso.autocasting.application.employer.dto.response;
 
-public record EmployerProfileResponse() {
+import java.util.UUID;
+
+public record EmployerProfileResponse(
+    UUID id,
+    String userAccountProvider,
+    String publicSlug,
+    String planStringCode,
+    EmployerBasicInfoResponse basicInfo
+) {
 }
