@@ -8,10 +8,10 @@ import com.padimasso.autocasting.application.talent.dto.request.SocialMediaLinkD
 import com.padimasso.autocasting.application.talent.dto.request.SocialMediaPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.SocialMediaResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
+import com.padimasso.autocasting.application.talent.model.ProfileSocialMediaLinkEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
-import com.padimasso.autocasting.application.talent.model.TalentSocialMediaLinkEntity;
+import com.padimasso.autocasting.application.talent.repository.ProfileSocialMediaLinkRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
-import com.padimasso.autocasting.application.talent.repository.TalentSocialMediaLinkRepository;
 import com.padimasso.autocasting.application.talent.service.SocialMediaService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
-    private final TalentSocialMediaLinkRepository linkRepository;
+    private final ProfileSocialMediaLinkRepository linkRepository;
     private final SocialMediaOptionRepository optionRepository;
     private final TalentProfileMapper talentProfileMapper;
 
@@ -55,10 +55,10 @@ public class SocialMediaServiceImpl implements SocialMediaService {
                     existingIncl.ifPresent(linkRepository::softDelete);
                 } else {
                     // "upsert": reusamos si existe, incluso si estaba deleted
-                    TalentSocialMediaLinkEntity entity = existingIncl.orElseGet(() -> {
+                    ProfileSocialMediaLinkEntity entity = existingIncl.orElseGet(() -> {
                         SocialMediaOptionEntity option = optionRepository.findById(rawDto.optionId())
                             .orElseThrow(() -> new IllegalArgumentException("social_media_option.not_found"));
-                        return TalentSocialMediaLinkEntity.builder()
+                        return ProfileSocialMediaLinkEntity.builder()
                             .talentProfile(profile)
                             .option(option)
                             .build();

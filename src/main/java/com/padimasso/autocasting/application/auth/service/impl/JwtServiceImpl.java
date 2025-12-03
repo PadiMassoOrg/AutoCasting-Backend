@@ -31,7 +31,12 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateTokenWithCustomExpirationTime(UserEntity user, Long customExpirationTime, String publicSlug) {
+    public String generateTokenWithCustomExpirationTime(
+        UserEntity user,
+        Long customExpirationTime,
+        String talentProfileSlug,
+        String employerProfileSlug
+    ) {
         Map<String, Object> claims = new HashMap<>();
 
         var roleCodes = user.getRoles().stream()
@@ -44,8 +49,12 @@ public class JwtServiceImpl implements JwtService {
             claims.put("role", roleCodes.getFirst());
         }
 
-        if (publicSlug != null && !publicSlug.isBlank()) {
-            claims.put("publicSlug", publicSlug);
+        if (talentProfileSlug != null && !talentProfileSlug.isBlank()) {
+            claims.put("talentProfileSlug", talentProfileSlug);
+        }
+
+        if (employerProfileSlug != null && !employerProfileSlug.isBlank()) {
+            claims.put("employerProfileSlug", employerProfileSlug);
         }
 
         return Jwts.builder()
@@ -57,6 +66,7 @@ public class JwtServiceImpl implements JwtService {
             .signWith(getSignInKey())
             .compact();
     }
+
 
     public String extractEmail(String token) {
         return getClaims(token).getPayload().getSubject();

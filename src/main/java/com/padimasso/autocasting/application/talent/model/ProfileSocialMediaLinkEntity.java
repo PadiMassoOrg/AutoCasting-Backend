@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.talent.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
+import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.SocialMediaOptionEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,15 +17,19 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @SQLDelete(sql = "UPDATE talent_social_media_link SET deleted = true WHERE id = ?")
-public class TalentSocialMediaLinkEntity extends AuditableEntity {
+public class ProfileSocialMediaLinkEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "talent_profile_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "talent_profile_id")
     private TalentProfileEntity talentProfile;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employer_basic_info_id")
+    private EmployerBasicInfoEntity employerBasicInfo;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "social_media_option_id", nullable = false)

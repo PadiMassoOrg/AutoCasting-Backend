@@ -3,6 +3,7 @@ package com.padimasso.autocasting.config;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.application.auth.service.*;
+import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.exception.JwtAuthEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
+    private final EmployerProfileRepository employerProfileRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -95,7 +97,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationSuccessHandler customOAuth2SuccessHandler() {
-        return new CustomOAuth2SuccessHandler(appProperties, jwtService, userRepository, talentProfileRepository);
+        return new CustomOAuth2SuccessHandler(appProperties, jwtService, userRepository, talentProfileRepository, employerProfileRepository);
     }
 
     @Bean

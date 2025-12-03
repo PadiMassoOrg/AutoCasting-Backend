@@ -4,7 +4,12 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public interface JwtService {
-    String generateTokenWithCustomExpirationTime(UserEntity user, Long expirationTime, String publicSlug);
+    String generateTokenWithCustomExpirationTime(
+        UserEntity user,
+        Long expirationTime,
+        String publicSlug,
+        String employerProfileSlug
+    );
 
     String extractEmail(String jwt);
 

@@ -34,6 +34,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final DietOptionRepository dietOptionRepository;
     private final ProductionTypeRepository productionTypeRepository;
     private final SocialMediaOptionRepository socialMediaOptionRepository;
+    private final CompanyTypeOptionRepository companyTypeOptionRepository;
 
     public SiteMetadataResponse getSiteMetadata() {
         var version = computeVersion();
@@ -47,6 +48,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var foundDietOptionEntities = dietOptionRepository.findAll();
         var foundProductionTypeOptionEntities = productionTypeRepository.findAll();
         var foundSocialMediaOptionEntities = socialMediaOptionRepository.findAll();
+        var foundCompanyTypeOptionEntities = companyTypeOptionRepository.findAll();
 
         return new SiteMetadataResponse(
             version,
@@ -59,7 +61,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             mapToSiteMetadataObject(foundColorOptionEntities),
             mapToSiteMetadataObject(foundDietOptionEntities),
             mapToSiteMetadataObject(foundProductionTypeOptionEntities),
-            mapToSiteMetadataObject(foundSocialMediaOptionEntities)
+            mapToSiteMetadataObject(foundSocialMediaOptionEntities),
+            mapToSiteMetadataObject(foundCompanyTypeOptionEntities)
         );
     }
 
@@ -106,13 +109,14 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             "skills:" + skillRepository.count() + ":" + ts(skillRepository.findMaxModifiedAt()),
             "professions:" + professionRepository.count() + ":" + ts(professionRepository.findMaxModifiedAt()),
             "gender:" + genderOptionRepository.count() + ":" + ts(genderOptionRepository.findMaxModifiedAt()),
-            "gender:" + ethnicityOptionRepository.count() + ":" + ts(ethnicityOptionRepository.findMaxModifiedAt()),
+            "ethnicity:" + ethnicityOptionRepository.count() + ":" + ts(ethnicityOptionRepository.findMaxModifiedAt()),
             "colors:" + colorOptionRepository.count() + ":" + ts(colorOptionRepository.findMaxModifiedAt()),
             "diet:" + dietOptionRepository.count() + ":" + ts(dietOptionRepository.findMaxModifiedAt()),
             "productionType:" + productionTypeRepository.count() + ":" + ts(productionTypeRepository.findMaxModifiedAt()),
             "roles:" + roleRepository.count() + ":" + ts(roleRepository.findMaxModifiedAt()),
             "plans:" + planRepository.count() + ":" + ts(planRepository.findMaxModifiedAt()),
-            "socialMedia:" + socialMediaOptionRepository.count() + ":" + ts(socialMediaOptionRepository.findMaxModifiedAt())
+            "socialMedia:" + socialMediaOptionRepository.count() + ":" + ts(socialMediaOptionRepository.findMaxModifiedAt()),
+            "companyType:" + companyTypeOptionRepository.count() + ":" + ts(companyTypeOptionRepository.findMaxModifiedAt())
         );
         return sha256(parts);
     }

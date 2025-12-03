@@ -5,7 +5,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
 import com.padimasso.autocasting.application.talent.dto.response.*;
 import com.padimasso.autocasting.application.talent.model.*;
-import com.padimasso.autocasting.application.talent.repository.TalentSocialMediaLinkRepository;
+import com.padimasso.autocasting.application.talent.repository.ProfileSocialMediaLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TalentProfileMapper {
 
-    private final TalentSocialMediaLinkRepository socialMediaLinkRepository; // 👈 INYECTAMOS EL REPO
+    private final ProfileSocialMediaLinkRepository socialMediaLinkRepository; // 👈 INYECTAMOS EL REPO
 
     public TalentProfileResponse toProfileResponse(TalentProfileEntity profile, UserEntity user) {
         // 👇 CARGAMOS LOS LINKS DESDE EL REPO (respeta deleted=false)
@@ -61,7 +61,7 @@ public class TalentProfileMapper {
         );
     }
 
-    public SocialMediaResponse toSocialMediaResponse(List<TalentSocialMediaLinkEntity> links) {
+    public SocialMediaResponse toSocialMediaResponse(List<ProfileSocialMediaLinkEntity> links) {
         var items = links.stream()
             .map(l -> new SocialMediaLinkResponse(
                 l.getOption().getId(),

@@ -20,7 +20,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE talent SET deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE talent_profile SET deleted = true WHERE id = ?")
 public class TalentProfileEntity extends AuditableEntity {
 
     @Id
@@ -48,7 +48,7 @@ public class TalentProfileEntity extends AuditableEntity {
         cascade = CascadeType.ALL,
         orphanRemoval = true
     )
-    private java.util.Set<TalentSocialMediaLinkEntity> socialMediaLinks = new java.util.HashSet<>();
+    private java.util.Set<ProfileSocialMediaLinkEntity> socialMediaLinks = new java.util.HashSet<>();
 
     @OneToOne(mappedBy = "talentProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     MediaEntity media;
