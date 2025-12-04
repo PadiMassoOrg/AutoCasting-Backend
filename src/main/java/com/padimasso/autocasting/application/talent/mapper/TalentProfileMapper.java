@@ -17,10 +17,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TalentProfileMapper {
 
-    private final ProfileSocialMediaLinkRepository socialMediaLinkRepository; // 👈 INYECTAMOS EL REPO
+    private final ProfileSocialMediaLinkRepository socialMediaLinkRepository;
 
     public TalentProfileResponse toProfileResponse(TalentProfileEntity profile, UserEntity user) {
-        // 👇 CARGAMOS LOS LINKS DESDE EL REPO (respeta deleted=false)
         var links = socialMediaLinkRepository.findAllByTalentProfileId(profile.getId())
             .stream()
             .toList();
@@ -61,28 +60,11 @@ public class TalentProfileMapper {
         );
     }
 
-    public SocialMediaResponse toSocialMediaResponse(List<ProfileSocialMediaLinkEntity> links) {
-        var items = links.stream()
-            .map(l -> new SocialMediaLinkResponse(
-                l.getOption().getId(),
-                l.getOption().getStringCode(),
-                l.getUrl()
-            ))
-            .toList();
-        return new SocialMediaResponse(items);
-    }
-
-    // ===== resto de métodos como ya los tenías =====
-
-    public BasicInfoResponse toBasicInfoResponse(BasicInfoEntity entity) {
-        if (entity == null) return null;
-        return new BasicInfoResponse(
-            entity.getId(),
-            entity.getStageName(),
-            mapToSiteMetadataObject(entity.getGender()),
-            entity.getBirthDate(),
-            entity.getProfessions().stream().map(this::mapToSiteMetadataObject).toList()
-        );
+    public static <T extends SiteMetadataBase> SiteMetadataObject mapToSiteMetadataObject(T entity) {
+        if (entity == null) {
+            return null;
+        }
+        return new SiteMetadataObject(entity.getId(), entity.getStringCode(), entity.getCategoryStringCode());
     }
 
     public ContactResponse toContactResponse(ContactEntity entity) {
@@ -151,16 +133,32 @@ public class TalentProfileMapper {
         );
     }
 
-    public <T extends SiteMetadataBase> SiteMetadataObject mapToSiteMetadataObject(T entity) {
-        if (entity == null) {
-            return null;
-        }
-        return new SiteMetadataObject(entity.getId(), entity.getStringCode(), entity.getCategoryStringCode());
+    //    STATIC METHODS
+    public static <T extends SiteMetadataBase> Set<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
+        return entities.stream()
+            .map(TalentProfileMapper::mapToSiteMetadataObject)
+            .collect(Collectors.toSet());
     }
 
-    public <T extends SiteMetadataBase> Set<SiteMetadataObject> mapToSiteMetadataObjectList(Set<T> entities) {
-        return entities.stream()
-            .map(this::mapToSiteMetadataObject)
-            .collect(Collectors.toSet());
+    public static SocialMediaResponse toSocialMediaResponse(List<ProfileSocialMediaLinkEntity> links) {
+        var items = links.stream()
+            .map(l -> new SocialMediaLinkResponse(
+                l.getOption().getId(),
+                l.getOption().getStringCode(),
+                l.getUrl()
+            ))
+            .toList();
+        return new SocialMediaResponse(items);
+    }
+
+    public BasicInfoResponse toBasicInfoResponse(BasicInfoEntity entity) {
+        if (entity == null) return null;
+        return new BasicInfoResponse(
+            entity.getId(),
+            entity.getStageName(),
+            mapToSiteMetadataObject(entity.getGender()),
+            entity.getBirthDate(),
+            entity.getProfessions().stream().map(TalentProfileMapper::mapToSiteMetadataObject).toList()
+        );
     }
 }

@@ -4,5 +4,9 @@ import com.padimasso.autocasting.application.talent.dto.request.SocialMediaPatch
 import com.padimasso.autocasting.application.talent.dto.response.SocialMediaResponse;
 
 public interface SocialMediaService {
+    
     SocialMediaResponse patchMySocialMedia(SocialMediaPatchRequest request);
+
+    SocialMediaResponse patchMyEmployerSocialMedia(SocialMediaPatchRequest request);
+
 }

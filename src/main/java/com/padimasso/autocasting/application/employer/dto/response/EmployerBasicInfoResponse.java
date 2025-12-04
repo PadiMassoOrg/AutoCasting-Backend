@@ -1,4 +1,20 @@
 package com.padimasso.autocasting.application.employer.dto.response;
 
-public record EmployerBasicInfoResponse() {
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+import com.padimasso.autocasting.application.talent.dto.response.SocialMediaResponse;
+
+import java.util.UUID;
+
+public record EmployerBasicInfoResponse(
+    UUID id,
+    String companyName,
+    String taxNumber,
+    SiteMetadataObject companyType,
+    String companyEmail,
+    String imageUrl,
+    String address,
+    String websiteUrl,
+    String about,
+    SocialMediaResponse socialMedia
+) {
 }

@@ -23,6 +23,7 @@ public class AppConstants {
 
     // Profile
     public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
+    public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
     public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent/talent-database";
 
     // Credit

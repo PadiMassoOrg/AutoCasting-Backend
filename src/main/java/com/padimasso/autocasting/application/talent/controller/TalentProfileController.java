@@ -24,7 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Perfil", description = "Operaciones relacionadas al perfil de usuario")
+@Tag(name = "Perfil Talento", description = "Operaciones relacionadas al perfil de usuario")
 @SuppressWarnings("unused")
 public class TalentProfileController {
 
