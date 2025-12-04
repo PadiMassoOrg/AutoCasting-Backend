@@ -37,13 +37,13 @@ public class EmployerProfileMapper {
 
         return new EmployerBasicInfoResponse(
             entity.getId(),
-            entity.getUserName(),
             entity.getCompanyName(),
+            entity.getTaxNumber(),
             mapToSiteMetadataObject(entity.getCompanyType()),
-            entity.getEmail(),
+            entity.getCompanyEmail(),
             entity.getImageUrl(),
             entity.getAddress(),
-            entity.getWebsite(),
+            entity.getWebsiteUrl(),
             entity.getAbout(),
             toSocialMediaResponse(links));
     }

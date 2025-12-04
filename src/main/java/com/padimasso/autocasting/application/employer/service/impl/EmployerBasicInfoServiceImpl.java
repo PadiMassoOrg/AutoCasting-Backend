@@ -41,12 +41,12 @@ public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
                 .orElseThrow(() -> new IllegalArgumentException("sitemetadata.company_type.not_found"));
             basicInfo.setCompanyType(companyTypeEntity);
         }
-        if (req.userName().isPresent()) basicInfo.setUserName(req.userName().orElse(null));
         if (req.companyName().isPresent()) basicInfo.setCompanyName(req.companyName().orElse(null));
-        if (req.email().isPresent()) basicInfo.setEmail(req.email().orElse(null));
+        if (req.taxNumber().isPresent()) basicInfo.setTaxNumber(req.taxNumber().orElse(null));
+        if (req.companyEmail().isPresent()) basicInfo.setCompanyEmail(req.companyEmail().orElse(null));
         if (req.imageUrl().isPresent()) basicInfo.setImageUrl(req.imageUrl().orElse(null));
         if (req.address().isPresent()) basicInfo.setAddress(req.address().orElse(null));
-        if (req.website().isPresent()) basicInfo.setWebsite(req.website().orElse(null));
+        if (req.websiteUrl().isPresent()) basicInfo.setWebsiteUrl(req.websiteUrl().orElse(null));
         if (req.about().isPresent()) basicInfo.setAbout(req.about().orElse(null));
 
         return employerProfileMapper.toBasicInfoResponse(employerBasicInfoRepository.save(basicInfo));

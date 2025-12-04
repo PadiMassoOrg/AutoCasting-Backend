@@ -7,13 +7,13 @@ import java.util.UUID;
 
 public record EmployerBasicInfoResponse(
     UUID id,
-    String userName,
     String companyName,
+    String taxNumber,
     SiteMetadataObject companyType,
-    String email,
+    String companyEmail,
     String imageUrl,
     String address,
-    String website,
+    String websiteUrl,
     String about,
     SocialMediaResponse socialMedia
 ) {

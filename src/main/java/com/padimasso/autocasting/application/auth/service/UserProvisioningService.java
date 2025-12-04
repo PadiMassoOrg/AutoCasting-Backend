@@ -105,15 +105,9 @@ class UserProvisioningService {
 
         if (employerProfile.getBasicInfo() == null) {
             EmployerBasicInfoEntity employerBasicInfo = EmployerBasicInfoEntity.builder()
-                .userName(name) // podemos usar el nombre de OAuth como nombre artístico inicial
                 .employerProfile(employerProfile)
                 .build();
             employerProfile.setBasicInfo(employerBasicInfo);
-        } else {
-            if ((employerProfile.getBasicInfo().getUserName() == null || employerProfile.getBasicInfo().getUserName().isBlank())
-                && name != null && !name.isBlank()) {
-                employerProfile.getBasicInfo().setUserName(name);
-            }
         }
 
         // Contact

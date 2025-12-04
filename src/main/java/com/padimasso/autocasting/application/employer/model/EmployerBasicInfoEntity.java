@@ -26,17 +26,17 @@ public class EmployerBasicInfoEntity extends AuditableEntity {
     private UUID id;
 
     @Column
-    String userName;
+    String companyName;
 
     @Column
-    String companyName;
+    String taxNumber;
 
     @ManyToOne
     @JoinColumn(name = "company_type_id")
     private CompanyTypeOptionEntity companyType;
 
     @Column
-    String email;
+    String companyEmail;
 
     @Column
     String imageUrl;
@@ -45,7 +45,7 @@ public class EmployerBasicInfoEntity extends AuditableEntity {
     String address;
 
     @Column
-    String website;
+    String websiteUrl;
 
     @Column
     String about;
