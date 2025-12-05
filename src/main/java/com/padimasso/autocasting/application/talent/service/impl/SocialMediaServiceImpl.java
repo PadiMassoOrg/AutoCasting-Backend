@@ -79,6 +79,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
         return TalentProfileMapper.toSocialMediaResponse(allLinks.stream().toList());
     }
 
+    @Transactional
     @Override
     public SocialMediaResponse patchMyEmployerSocialMedia(SocialMediaPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
