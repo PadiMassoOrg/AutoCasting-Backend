@@ -27,6 +27,9 @@ public class CastingEntity extends AuditableEntity {
     @JoinColumn(name = "employer_profile_id", nullable = false)
     private EmployerProfileEntity employerProfile;
 
+    @Column(name = "default_code", unique = true, nullable = false)
+    private String defaultCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "casting_status_option_id", nullable = false)
     private CastingStatusOptionEntity status;
@@ -42,4 +45,12 @@ public class CastingEntity extends AuditableEntity {
 
     @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private CastingRemunerationEntity remuneration;
+
+    @PrePersist
+    @SuppressWarnings("unused")
+    public void generateDefaultCode() {
+        if (this.defaultCode == null || this.defaultCode.isBlank()) {
+            this.defaultCode = "C-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+    }
 }
