@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
+import com.padimasso.autocasting.application.castings.dto.response.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
@@ -18,6 +19,8 @@ import com.padimasso.autocasting.application.sitemetadata.repository.CastingStat
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -100,6 +103,28 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
+    public List<CastingCardResponse> getMyCastings() {
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+
+        var castings = castingRepository.findAllByEmployerProfileId(employer.employerProfile().getId());
+
+        return castings.stream()
+            .map(castingMapper::toCardResponse)
+            .toList();
+    }
+
+    // Public
+    @Override
+    public List<CastingCardResponse> getCastingsCards() {
+        var castings = castingRepository.findAllCards();
+
+        return castings.stream()
+            .map(castingMapper::toCardResponse)
+            .toList();
+    }
+
+
+    @Override
     public CastingResponse getDetailsBySlug(String slug) {
         CastingEntity foundCasting = castingRepository
             .findByDefaultCode(slug)
@@ -107,4 +132,6 @@ public class CastingServiceImpl implements CastingService {
 
         return castingMapper.toCastingResponse(foundCasting);
     }
+
+
 }

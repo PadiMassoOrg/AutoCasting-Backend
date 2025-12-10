@@ -29,6 +29,19 @@ public class CastingMapper {
         );
     }
 
+    public CastingCardResponse toCardResponse(CastingEntity c) {
+        var bi = c.getBasicInfo();
+
+        return new CastingCardResponse(
+            c.getId(),
+            bi.getTitle(),
+            c.getCreatedAt().toLocalDate(),
+            bi.getApplicationDeadline(),
+            mapToSiteMetadataObject(bi.getProjectType())
+        );
+    }
+
+    // Sub Entities
     public CastingBasicInfoResponse toBasicInfoResponse(CastingBasicInfoEntity entity) {
         if (entity == null) return null;
 
