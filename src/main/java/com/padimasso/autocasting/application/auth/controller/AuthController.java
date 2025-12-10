@@ -1,11 +1,11 @@
 package com.padimasso.autocasting.application.auth.controller;
 
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
 import com.padimasso.autocasting.application.auth.dto.response.MeResponse;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

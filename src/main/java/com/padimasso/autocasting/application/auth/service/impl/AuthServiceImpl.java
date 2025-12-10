@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.auth.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
@@ -10,7 +11,6 @@ import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
