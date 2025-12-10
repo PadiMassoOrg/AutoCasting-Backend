@@ -1,15 +1,15 @@
 package com.padimasso.autocasting.application.castings.controller;
 
+import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.padimasso.autocasting.config.AppConstants.CASTINGS_URL;
+import static com.padimasso.autocasting.config.AppConstants.PUBLIC_CASTINGS_URL;
 
 @RestController
 @RequestMapping
@@ -27,6 +27,12 @@ public class CastingController {
     @PostMapping(CASTINGS_URL)
     public ResponseEntity<String> createEmptyCasting() {
         return ResponseEntity.ok(castingService.createEmptyCasting());
+    }
+
+    @Operation(summary = "Ver detalles del Casting", description = "Obtiene información pública del Casting por slug")
+    @GetMapping(PUBLIC_CASTINGS_URL + "/{slug}")
+    public ResponseEntity<CastingResponse> getCastingDetails(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getDetailsBySlug(slug));
     }
 
 }

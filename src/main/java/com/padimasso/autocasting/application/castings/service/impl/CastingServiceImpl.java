@@ -2,6 +2,8 @@ package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
+import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
+import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.castings.repository.*;
 import com.padimasso.autocasting.application.castings.service.CastingService;
@@ -26,6 +28,7 @@ public class CastingServiceImpl implements CastingService {
     private static final String SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
     private static final String ACTING_MODE_NONE = "sitemetadata.acting_mode.none";
     private static final String COMPENSATION_TYPE_UNPAID = "sitemetadata.compensation_type.unpaid";
+    private static final String CASTING_NOT_FOUND = "castings.not_found";
 
     private final EmployerContext employerContext;
     private final CastingRepository castingRepository;
@@ -37,6 +40,7 @@ public class CastingServiceImpl implements CastingService {
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
     private final CastingActingModeOptionRepository castingActingModeOptionRepository;
     private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
+    private final CastingMapper castingMapper;
 
     @Transactional
     @Override
@@ -93,5 +97,14 @@ public class CastingServiceImpl implements CastingService {
         castingRemunerationRepository.save(remuneration);
 
         return String.valueOf(casting.getId());
+    }
+
+    @Override
+    public CastingResponse getDetailsBySlug(String slug) {
+        CastingEntity foundCasting = castingRepository
+            .findByDefaultCode(slug)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return castingMapper.toCastingResponse(foundCasting);
     }
 }

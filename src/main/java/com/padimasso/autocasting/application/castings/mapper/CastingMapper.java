@@ -1,4 +1,193 @@
 package com.padimasso.autocasting.application.castings.mapper;
 
+import com.padimasso.autocasting.application.castings.dto.response.*;
+import com.padimasso.autocasting.application.castings.model.*;
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
+import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
+
+import static com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper.mapToSiteMetadataObject;
+
+@Component
+@RequiredArgsConstructor
 public class CastingMapper {
+
+    public CastingResponse toCastingResponse(
+        CastingEntity casting
+    ) {
+        return new CastingResponse(
+            casting.getId(),
+            toBasicInfoResponse(casting.getBasicInfo()),
+            toRolesSectionResponse(casting.getRoles()),
+            toActingResponse(casting.getActing()),
+            toRemunerationResponse(casting.getRemuneration())
+        );
+    }
+
+    public CastingBasicInfoResponse toBasicInfoResponse(CastingBasicInfoEntity entity) {
+        if (entity == null) return null;
+
+        SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
+        SiteMetadataObject projectType = mapToSiteMetadataObject(entity.getProjectType());
+        SiteMetadataObject castingModality = mapToSiteMetadataObject(entity.getCastingModality());
+
+        return new CastingBasicInfoResponse(
+            entity.getId(),
+            sectionStatus,
+            entity.getTitle(),
+            projectType,
+            entity.getLocationText(),
+            castingModality,
+            entity.getCastingModalityText(),
+            entity.getApplicationDeadline(),
+            entity.isHasWardrobeFitting(),
+            entity.getWardrobeFittingText(),
+            entity.getShootingStartDate(),
+            entity.getShootingEndDate(),
+            entity.getDescription()
+        );
+    }
+
+    public CastingRolesSectionResponse toRolesSectionResponse(CastingRolesSectionEntity entity) {
+        if (entity == null) return null;
+
+        SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
+
+        List<CastingRoleResponse> roles =
+            entity.getRoles() == null
+                ? List.of()
+                : entity.getRoles().stream()
+                .map(this::toRoleResponse)
+                .toList();
+
+        return new CastingRolesSectionResponse(
+            entity.getId(),
+            sectionStatus,
+            entity.getNotes(),
+            roles
+        );
+    }
+
+    private CastingRoleResponse toRoleResponse(CastingRoleEntity entity) {
+        if (entity == null) return null;
+
+        SiteMetadataObject roleType = mapToSiteMetadataObject(entity.getRoleType());
+        SiteMetadataObject gender = mapToSiteMetadataObject(entity.getGender());
+
+        List<SiteMetadataObject> professions =
+            entity.getProfessions() == null
+                ? List.of()
+                : entity.getProfessions().stream()
+                .map(TalentProfileMapper::mapToSiteMetadataObject)
+                .toList();
+
+        List<SiteMetadataObject> skills =
+            entity.getSkills() == null
+                ? List.of()
+                : entity.getSkills().stream()
+                .map(TalentProfileMapper::mapToSiteMetadataObject)
+                .toList();
+
+        CharacteristicsResponse characteristics =
+            toRoleCharacteristicsResponse(entity.getCharacteristics());
+
+        return new CastingRoleResponse(
+            entity.getId(),
+            entity.isComplete(),
+            entity.getRoleName(),
+            roleType,
+            gender,
+            entity.getAgeMin(),
+            entity.getAgeMax(),
+            entity.getDescription(),
+            professions,
+            characteristics,
+            skills
+        );
+    }
+
+    private CharacteristicsResponse toRoleCharacteristicsResponse(CastingRoleCharacteristicsEntity entity) {
+        if (entity == null) return null;
+
+        SiteMetadataObject diet = mapToSiteMetadataObject(entity.getDietOption());
+        SiteMetadataObject ethnicity = mapToSiteMetadataObject(entity.getEthnicity());
+        SiteMetadataObject hairColor = mapToSiteMetadataObject(entity.getHairColor());
+        SiteMetadataObject eyeColor = mapToSiteMetadataObject(entity.getEyeColor());
+
+        return new CharacteristicsResponse(
+            entity.getId(),
+            entity.getHeightCm(),
+            ethnicity,
+            entity.getWeightKg(),
+            hairColor,
+            eyeColor,
+            entity.getChestCm(),
+            entity.getWaistCm(),
+            entity.getHipCm(),
+            entity.getShirtSize(),
+            entity.getPantSize(),
+            entity.getDressSize(),
+            entity.getShoeSize(),
+            entity.isTattoo(),
+            entity.isPassport(),
+            entity.isDrivingLicense(),
+            diet
+        );
+    }
+
+    public CastingActingResponse toActingResponse(CastingActingEntity entity) {
+        if (entity == null) return null;
+
+        SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
+        SiteMetadataObject actingMode = mapToSiteMetadataObject(entity.getActingMode());
+
+        List<CastingActingRequirementResponse> requirements =
+            entity.getRequirements() == null
+                ? List.of()
+                : entity.getRequirements().stream()
+                .map(this::toActingRequirementResponse)
+                .toList();
+
+        return new CastingActingResponse(
+            entity.getId(),
+            sectionStatus,
+            actingMode,
+            requirements
+        );
+    }
+
+    private CastingActingRequirementResponse toActingRequirementResponse(CastingActingRequirementEntity entity) {
+        if (entity == null) return null;
+
+        UUID castingRoleId =
+            entity.getCastingRole() != null ? entity.getCastingRole().getId() : null;
+
+        return new CastingActingRequirementResponse(
+            entity.getId(),
+            castingRoleId,
+            entity.isComplete(),
+            entity.getDescription(),
+            entity.getSlotsCount()
+        );
+    }
+
+    public CastingRemunerationResponse toRemunerationResponse(CastingRemunerationEntity entity) {
+        if (entity == null) return null;
+
+        SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
+        SiteMetadataObject compensationType = mapToSiteMetadataObject(entity.getCompensationType());
+
+        return new CastingRemunerationResponse(
+            entity.getId(),
+            sectionStatus,
+            compensationType,
+            entity.isPaySameForAllRoles(),
+            List.of()
+        );
+    }
 }
