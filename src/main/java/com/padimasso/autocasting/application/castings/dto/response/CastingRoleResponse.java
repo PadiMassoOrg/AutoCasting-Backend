@@ -1,0 +1,21 @@
+package com.padimasso.autocasting.application.castings.dto.response;
+
+import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
+
+import java.util.Set;
+import java.util.UUID;
+
+public record CastingRoleResponse(
+    UUID id,
+    Boolean isComplete,
+    String name,
+    SiteMetadataObject roleType,
+    SiteMetadataObject gender,
+    Long ageMin,
+    Long ageMax,
+    String description,
+    CharacteristicsResponse characteristics,
+    Set<SiteMetadataObject> skills
+) {
+}
