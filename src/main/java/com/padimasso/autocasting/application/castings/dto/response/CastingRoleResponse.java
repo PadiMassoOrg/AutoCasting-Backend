@@ -8,12 +8,12 @@ import java.util.UUID;
 
 public record CastingRoleResponse(
     UUID id,
-    Boolean isComplete,
+    boolean isComplete,
     String name,
     SiteMetadataObject roleType,
     SiteMetadataObject gender,
-    Long ageMin,
-    Long ageMax,
+    Short ageMin,
+    Short ageMax,
     String description,
     CharacteristicsResponse characteristics,
     Set<SiteMetadataObject> skills

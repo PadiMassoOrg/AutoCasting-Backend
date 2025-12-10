@@ -14,7 +14,7 @@ public record CastingBasicInfoResponse(
     SiteMetadataObject castingModality,
     String castingModalityText,
     LocalDate applicationDeadline,
-    Boolean hasWardrobeFitting,
+    boolean hasWardrobeFitting,
     String wardrobeFittingText,
     LocalDate shootingStartDate,
     LocalDate shootingEndDate,

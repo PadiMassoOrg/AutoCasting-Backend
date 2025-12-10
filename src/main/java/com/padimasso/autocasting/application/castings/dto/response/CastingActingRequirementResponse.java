@@ -5,8 +5,8 @@ import java.util.UUID;
 public record CastingActingRequirementResponse(
     UUID id,
     UUID castingRoleId,
-    Boolean isComplete,
+    boolean isComplete,
     String description,
-    Long slotsCount
+    Integer slotsCount
 ) {
 }

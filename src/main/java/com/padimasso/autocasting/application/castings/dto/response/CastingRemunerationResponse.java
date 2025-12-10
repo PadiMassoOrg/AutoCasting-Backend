@@ -9,7 +9,7 @@ public record CastingRemunerationResponse(
     UUID id,
     SiteMetadataObject sectionStatus,
     SiteMetadataObject compensationType,
-    Boolean paySameForAllRoles,
+    boolean paySameForAllRoles,
     List<CastingRoleRemunerationResponse> remunerations
 ) {
 }

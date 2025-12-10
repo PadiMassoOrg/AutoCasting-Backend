@@ -4,9 +4,9 @@ import java.util.UUID;
 
 public record CastingResponse(
     UUID id,
-    CastingBasicInfoResponse basicInfo,
-    CastingRolesResponse roles,
-    CastingActingResponse acting,
-    CastingRemunerationResponse remuneration
+    CastingBasicInfoResponse basicInfoSection,
+    CastingRolesSectionResponse rolesSection,
+    CastingActingResponse actingSection,
+    CastingRemunerationResponse remunerationSection
 ) {
 }
