@@ -36,6 +36,9 @@ public class AppConstants {
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
     public static final String LEGAL_ACCEPT_DOCUMENT_API_URL = BASE_API_URL + "/legal/accept";
 
+    // Castings
+    public static final String CASTINGS_URL = BASE_API_URL + "/castings";
+
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
