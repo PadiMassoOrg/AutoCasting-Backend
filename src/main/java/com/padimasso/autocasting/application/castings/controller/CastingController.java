@@ -1,6 +1,5 @@
 package com.padimasso.autocasting.application.castings.controller;
 
-import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,9 +25,8 @@ public class CastingController {
         description = "Permite a un Employer crear un nuevo Casting (vacío)."
     )
     @PostMapping(CASTINGS_URL)
-    public ResponseEntity<CastingResponse> createEmptyCasting() {
+    public ResponseEntity<String> createEmptyCasting() {
         return ResponseEntity.ok(castingService.createEmptyCasting());
     }
-
 
 }
