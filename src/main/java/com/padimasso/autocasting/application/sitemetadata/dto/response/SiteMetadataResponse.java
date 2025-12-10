@@ -18,5 +18,15 @@ public record SiteMetadataResponse(
     List<SiteMetadataObject> dietOptions,
     List<SiteMetadataObject> productionTypeOptions,
     List<SiteMetadataObject> socialMediaOptions,
-    List<SiteMetadataObject> companyTypeOptions
-) {}
+    List<SiteMetadataObject> companyTypeOptions,
+    List<SiteMetadataObject> castingActingModeOptions,
+    List<SiteMetadataObject> castingCompensationTypeOptions,
+    List<SiteMetadataObject> castingModalityOptions,
+    List<SiteMetadataObject> castingSectionStatusOptions,
+    List<SiteMetadataObject> castingStatusOptions,
+    List<SiteMetadataObject> currencyOptions,
+    List<SiteMetadataObject> payRateTypeOptions,
+    List<SiteMetadataObject> projectTypeOptions,
+    List<SiteMetadataObject> roleTypeOptions
+) {
+}
