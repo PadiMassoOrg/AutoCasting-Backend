@@ -13,12 +13,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class TalentSearchServiceImpl implements TalentSearchService {
-    private static final int MAX_PAGE_SIZE = 50;
-
+    
     private final TalentProfileRepository talentProfileRepository;
 
     @Override

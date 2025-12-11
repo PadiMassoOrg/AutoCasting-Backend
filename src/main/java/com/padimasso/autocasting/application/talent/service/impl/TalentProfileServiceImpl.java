@@ -26,11 +26,11 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 public class TalentProfileServiceImpl implements TalentProfileService {
 
+    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
-    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final CreditRepository creditRepository;
     private final TalentProfileMapper talentProfileMapper;
     private final EducationRepository educationRepository;

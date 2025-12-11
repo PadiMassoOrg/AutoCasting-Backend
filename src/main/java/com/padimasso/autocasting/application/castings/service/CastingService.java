@@ -12,5 +12,4 @@ public interface CastingService {
 
     List<CastingCardResponse> getMyCastings();
 
-    List<CastingCardResponse> getCastingsCards();
 }

@@ -22,6 +22,8 @@ public class CastingMapper {
     ) {
         return new CastingResponse(
             casting.getId(),
+            casting.getDefaultCode(),
+            mapToSiteMetadataObject(casting.getStatus()),
             toBasicInfoResponse(casting.getBasicInfo()),
             toRolesSectionResponse(casting.getRoles()),
             toActingResponse(casting.getActing()),
@@ -38,6 +40,39 @@ public class CastingMapper {
             c.getCreatedAt().toLocalDate(),
             bi.getApplicationDeadline(),
             mapToSiteMetadataObject(bi.getProjectType())
+        );
+    }
+
+    public CastingRolePublicCardResponse toPublicRoleCardResponse(CastingRoleEntity role) {
+        var rolesSection = role.getRolesSection();
+        var casting = rolesSection.getCasting();
+        var basicInfo = casting.getBasicInfo();
+        var employerProfile = casting.getEmployerProfile();
+        var employerBasicInfo = employerProfile != null ? employerProfile.getBasicInfo() : null;
+
+        var professions =
+            role.getProfessions() == null
+                ? List.<SiteMetadataObject>of()
+                : role.getProfessions().stream()
+                .map(TalentProfileMapper::mapToSiteMetadataObject)
+                .toList();
+
+        return new CastingRolePublicCardResponse(
+            role.getId(),
+            role.getRoleName(),
+            employerBasicInfo != null ? employerBasicInfo.getImageUrl() : null,
+            employerBasicInfo != null ? employerBasicInfo.getCompanyName() : null,
+            basicInfo != null ? mapToSiteMetadataObject(basicInfo.getProjectType()) : null,
+            basicInfo != null ? mapToSiteMetadataObject(basicInfo.getCastingModality()) : null,
+            basicInfo != null ? basicInfo.getLocationText() : null,
+            basicInfo != null ? basicInfo.getShootingStartDate() : null,
+            basicInfo != null ? basicInfo.getShootingEndDate() : null,
+            professions,
+            mapToSiteMetadataObject(role.getRoleType()),
+            mapToSiteMetadataObject(role.getGender()),
+            role.getAgeMin(),
+            role.getAgeMax(),
+            casting.getDefaultCode()
         );
     }
 

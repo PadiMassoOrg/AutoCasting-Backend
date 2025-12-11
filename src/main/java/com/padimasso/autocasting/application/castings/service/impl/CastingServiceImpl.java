@@ -22,15 +22,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.padimasso.autocasting.config.AppConstants.*;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CastingServiceImpl implements CastingService {
-
-    private static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
-    private static final String SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
-    private static final String ACTING_MODE_NONE = "sitemetadata.acting_mode.none";
-    private static final String COMPENSATION_TYPE_UNPAID = "sitemetadata.compensation_type.unpaid";
+    
     private static final String CASTING_NOT_FOUND = "castings.not_found";
 
     private final EmployerContext employerContext;
@@ -52,19 +50,19 @@ public class CastingServiceImpl implements CastingService {
 
         CastingStatusOptionEntity draftStatus = castingStatusOptionRepository
             .findByStringCode(CASTING_STATUS_DRAFT)
-            .orElseThrow(() -> new IllegalStateException("casting_status.draft_not_seeded"));
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
 
         CastingSectionStatusOptionEntity notStartedStatus = castingSectionStatusOptionRepository
             .findByStringCode(SECTION_STATUS_NOT_STARTED)
-            .orElseThrow(() -> new IllegalStateException("casting_section_status.not_started_not_seeded"));
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
 
         CastingActingModeOptionEntity actingModeNone = castingActingModeOptionRepository
             .findByStringCode(ACTING_MODE_NONE)
-            .orElseThrow(() -> new IllegalStateException("casting_acting_mode.none_not_seeded"));
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_acting_mode.not_found"));
 
         CastingCompensationTypeOptionEntity compensationUnpaid = castingCompensationTypeOptionRepository
             .findByStringCode(COMPENSATION_TYPE_UNPAID)
-            .orElseThrow(() -> new IllegalStateException("compensation_type.unpaid_not_seeded"));
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_compensation_type.not_found"));
 
         CastingEntity casting = CastingEntity.builder()
             .employerProfile(employer.employerProfile())
@@ -115,16 +113,6 @@ public class CastingServiceImpl implements CastingService {
 
     // Public
     @Override
-    public List<CastingCardResponse> getCastingsCards() {
-        var castings = castingRepository.findAllCards();
-
-        return castings.stream()
-            .map(castingMapper::toCardResponse)
-            .toList();
-    }
-
-
-    @Override
     public CastingResponse getDetailsBySlug(String slug) {
         CastingEntity foundCasting = castingRepository
             .findByDefaultCode(slug)
@@ -132,6 +120,5 @@ public class CastingServiceImpl implements CastingService {
 
         return castingMapper.toCastingResponse(foundCasting);
     }
-
 
 }

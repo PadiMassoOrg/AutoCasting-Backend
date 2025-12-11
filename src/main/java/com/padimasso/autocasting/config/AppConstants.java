@@ -39,18 +39,25 @@ public class AppConstants {
     // Castings
     public static final String CASTINGS_URL = BASE_API_URL + "/mis-castings";
     public static final String PUBLIC_CASTINGS_URL = BASE_API_URL + "/castings";
-
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
     public static final long EXPIRATION_TIME = 86400; // 10 days
     public static final long RESET_PASSWORD_EXPIRATION_TIME = 900; // 15min
     public static final long RESET_PASSWORD_EXPIRATION_TIME_MIN = 15; // 15min
-
     // Company
     public static final String SUPPORT_EMAIL = "support@autocasting.com";
     public static final String INSTA_URL = "instagram.com";
     public static final String LINKEDIN_URL = "linkedin.com";
+
+    // SiteMetadata & Internal Usage:
+    public static final int MAX_PAGE_SIZE = 20;
+    public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
+    public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";
+    public static final String SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
+    public static final String ACTING_MODE_NONE = "sitemetadata.acting_mode.none";
+    public static final String COMPENSATION_TYPE_UNPAID = "sitemetadata.compensation_type.unpaid";
+
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");
