@@ -34,7 +34,7 @@ public class CastingRoleEntity extends AuditableEntity {
     @Column(nullable = false)
     private boolean isComplete;
 
-    @Column
+    @Column(nullable = false)
     private String roleName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,10 +45,10 @@ public class CastingRoleEntity extends AuditableEntity {
     @JoinColumn(name = "gender_option_id")
     private GenderOptionEntity gender;
 
-    @Column
+    @Column(nullable = false)
     private Short ageMin;
 
-    @Column
+    @Column(nullable = false)
     private Short ageMax;
 
     @Column(columnDefinition = "text")
@@ -84,5 +84,5 @@ public class CastingRoleEntity extends AuditableEntity {
         orphanRemoval = true,
         fetch = FetchType.LAZY
     )
-    private Set<CastingActingRequirementEntity> actingRequirements = new HashSet<>();
+    private Set<CastingRequirementEntity> actingRequirements = new HashSet<>();
 }

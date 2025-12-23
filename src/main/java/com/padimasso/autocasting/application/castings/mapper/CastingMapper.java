@@ -37,9 +37,11 @@ public class CastingMapper {
         return new CastingCardResponse(
             c.getId(),
             bi.getTitle(),
+            c.getDefaultCode(),
             c.getCreatedAt().toLocalDate(),
             bi.getApplicationDeadline(),
-            mapToSiteMetadataObject(bi.getProjectType())
+            mapToSiteMetadataObject(bi.getProjectType()),
+            mapToSiteMetadataObject(c.getStatus())
         );
     }
 
@@ -188,39 +190,38 @@ public class CastingMapper {
         );
     }
 
-    public CastingActingResponse toActingResponse(CastingActingEntity entity) {
+    public CastingRequirementsSectionResponse toActingResponse(CastingRequirementsSectionEntity entity) {
         if (entity == null) return null;
 
         SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
-        SiteMetadataObject actingMode = mapToSiteMetadataObject(entity.getActingMode());
 
-        List<CastingActingRequirementResponse> requirements =
+        List<CastingRequirementResponse> requirements =
             entity.getRequirements() == null
                 ? List.of()
                 : entity.getRequirements().stream()
                 .map(this::toActingRequirementResponse)
                 .toList();
 
-        return new CastingActingResponse(
+        return new CastingRequirementsSectionResponse(
             entity.getId(),
             sectionStatus,
-            actingMode,
             requirements
         );
     }
 
-    private CastingActingRequirementResponse toActingRequirementResponse(CastingActingRequirementEntity entity) {
+    private CastingRequirementResponse toActingRequirementResponse(CastingRequirementEntity entity) {
         if (entity == null) return null;
 
         UUID castingRoleId =
             entity.getCastingRole() != null ? entity.getCastingRole().getId() : null;
 
-        return new CastingActingRequirementResponse(
+        return new CastingRequirementResponse(
             entity.getId(),
             castingRoleId,
             entity.isComplete(),
             entity.getDescription(),
-            entity.getSlotsCount()
+            entity.isRequiresAudio(),
+            entity.isRequiresVideo()
         );
     }
 

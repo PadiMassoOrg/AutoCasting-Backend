@@ -1,7 +1,6 @@
 package com.padimasso.autocasting.application.castings.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
-import com.padimasso.autocasting.application.sitemetadata.model.CastingActingModeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,14 +11,14 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "casting_acting")
+@Table(name = "casting_requirements_section")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE casting_acting SET deleted = true WHERE id = ?")
-public class CastingActingEntity extends AuditableEntity {
+@SQLDelete(sql = "UPDATE casting_requirements_section SET deleted = true WHERE id = ?")
+public class CastingRequirementsSectionEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,15 +32,11 @@ public class CastingActingEntity extends AuditableEntity {
     @JoinColumn(name = "section_status_option_id")
     private CastingSectionStatusOptionEntity sectionStatus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casting_acting_mode_option_id", nullable = false)
-    private CastingActingModeOptionEntity actingMode;
-
     @OneToMany(
-        mappedBy = "castingActing",
+        mappedBy = "castingRequirementsSection",
         cascade = CascadeType.ALL,
         orphanRemoval = true,
         fetch = FetchType.LAZY
     )
-    private Set<CastingActingRequirementEntity> requirements = new HashSet<>();
+    private Set<CastingRequirementEntity> requirements = new HashSet<>();
 }

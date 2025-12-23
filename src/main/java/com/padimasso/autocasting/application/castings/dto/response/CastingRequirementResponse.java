@@ -2,11 +2,12 @@ package com.padimasso.autocasting.application.castings.dto.response;
 
 import java.util.UUID;
 
-public record CastingActingRequirementResponse(
+public record CastingRequirementResponse(
     UUID id,
     UUID castingRoleId,
     boolean isComplete,
     String description,
-    Integer slotsCount
+    boolean requiresAudio,
+    boolean requiresVideo
 ) {
 }

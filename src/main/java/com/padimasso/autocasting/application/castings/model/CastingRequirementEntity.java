@@ -8,14 +8,14 @@ import org.hibernate.annotations.SQLDelete;
 import java.util.UUID;
 
 @Entity
-@Table(name = "casting_acting_requirement")
+@Table(name = "casting_requirement")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SQLDelete(sql = "UPDATE casting_acting_requirement SET deleted = true WHERE id = ?")
-public class CastingActingRequirementEntity extends AuditableEntity {
+@SQLDelete(sql = "UPDATE casting_requirement SET deleted = true WHERE id = ?")
+public class CastingRequirementEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -25,14 +25,17 @@ public class CastingActingRequirementEntity extends AuditableEntity {
     private boolean isComplete;
 
     @ManyToOne
-    @JoinColumn(name = "casting_acting_id", nullable = false)
-    private CastingActingEntity castingActing;
+    @JoinColumn(name = "casting_requirements_section_id", nullable = false)
+    private CastingRequirementsSectionEntity castingRequirementsSection;
 
     @Column(columnDefinition = "text")
     private String description;
 
-    @Column(nullable = false)
-    private Integer slotsCount;
+    @Column
+    private boolean requiresAudio;
+
+    @Column
+    private boolean requiresVideo;
 
     @ManyToOne
     @JoinColumn(name = "casting_role_id")

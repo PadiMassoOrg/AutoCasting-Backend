@@ -45,5 +45,7 @@ public class CastingRoleRemunerationEntity extends AuditableEntity {
     @Column
     private String notes;
 
+    @Column(nullable = false)
+    private boolean isUnpaid;
 
 }

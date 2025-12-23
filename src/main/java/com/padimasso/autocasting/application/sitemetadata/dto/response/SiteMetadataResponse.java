@@ -19,7 +19,6 @@ public record SiteMetadataResponse(
     List<SiteMetadataObject> productionTypeOptions,
     List<SiteMetadataObject> socialMediaOptions,
     List<SiteMetadataObject> companyTypeOptions,
-    List<SiteMetadataObject> castingActingModeOptions,
     List<SiteMetadataObject> castingCompensationTypeOptions,
     List<SiteMetadataObject> castingModalityOptions,
     List<SiteMetadataObject> castingSectionStatusOptions,

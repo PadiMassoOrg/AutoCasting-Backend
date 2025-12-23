@@ -8,11 +8,9 @@ import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.castings.repository.*;
 import com.padimasso.autocasting.application.castings.service.CastingService;
-import com.padimasso.autocasting.application.sitemetadata.model.CastingActingModeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingActingModeOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingCompensationTypeOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
@@ -28,18 +26,17 @@ import static com.padimasso.autocasting.config.AppConstants.*;
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CastingServiceImpl implements CastingService {
-    
+
     private static final String CASTING_NOT_FOUND = "castings.not_found";
 
     private final EmployerContext employerContext;
     private final CastingRepository castingRepository;
     private final CastingBasicInfoRepository castingBasicInfoRepository;
     private final CastingRolesSectionRepository castingRolesSectionRepository;
-    private final CastingActingRepository castingActingRepository;
+    private final CastingRequirementsSectionRepository castingActingRepository;
     private final CastingRemunerationRepository castingRemunerationRepository;
     private final CastingStatusOptionRepository castingStatusOptionRepository;
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
-    private final CastingActingModeOptionRepository castingActingModeOptionRepository;
     private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
     private final CastingMapper castingMapper;
 
@@ -55,10 +52,6 @@ public class CastingServiceImpl implements CastingService {
         CastingSectionStatusOptionEntity notStartedStatus = castingSectionStatusOptionRepository
             .findByStringCode(SECTION_STATUS_NOT_STARTED)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
-
-        CastingActingModeOptionEntity actingModeNone = castingActingModeOptionRepository
-            .findByStringCode(ACTING_MODE_NONE)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_acting_mode.not_found"));
 
         CastingCompensationTypeOptionEntity compensationUnpaid = castingCompensationTypeOptionRepository
             .findByStringCode(COMPENSATION_TYPE_UNPAID)
@@ -82,10 +75,9 @@ public class CastingServiceImpl implements CastingService {
             .build();
         castingRolesSectionRepository.save(rolesSection);
 
-        CastingActingEntity acting = CastingActingEntity.builder()
+        CastingRequirementsSectionEntity acting = CastingRequirementsSectionEntity.builder()
             .casting(casting)
             .sectionStatus(notStartedStatus)
-            .actingMode(actingModeNone)
             .build();
         castingActingRepository.save(acting);
 
@@ -97,7 +89,7 @@ public class CastingServiceImpl implements CastingService {
             .build();
         castingRemunerationRepository.save(remuneration);
 
-        return String.valueOf(casting.getId());
+        return String.valueOf(casting.getDefaultCode());
     }
 
     @Override

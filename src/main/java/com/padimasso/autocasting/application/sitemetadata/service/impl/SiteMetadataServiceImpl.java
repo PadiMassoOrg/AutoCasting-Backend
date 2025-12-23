@@ -35,7 +35,6 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final ProductionTypeRepository productionTypeRepository;
     private final SocialMediaOptionRepository socialMediaOptionRepository;
     private final CompanyTypeOptionRepository companyTypeOptionRepository;
-    private final CastingActingModeOptionRepository castingActingModeOptionRepository;
     private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
     private final CastingModalityOptionRepository castingModalityOptionRepository;
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
@@ -58,7 +57,6 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var foundProductionTypeOptionEntities = productionTypeRepository.findAll();
         var foundSocialMediaOptionEntities = socialMediaOptionRepository.findAll();
         var foundCompanyTypeOptionEntities = companyTypeOptionRepository.findAll();
-        var foundCastingActingModeOptionEntities = castingActingModeOptionRepository.findAll();
         var foundCastingCompensationTypeOptionEntities = castingCompensationTypeOptionRepository.findAll();
         var foundCastingModalityOptionEntities = castingModalityOptionRepository.findAll();
         var foundCastingSectionStatusOptionEntities = castingSectionStatusOptionRepository.findAll();
@@ -81,7 +79,6 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             mapToSiteMetadataObject(foundProductionTypeOptionEntities),
             mapToSiteMetadataObject(foundSocialMediaOptionEntities),
             mapToSiteMetadataObject(foundCompanyTypeOptionEntities),
-            mapToSiteMetadataObject(foundCastingActingModeOptionEntities),
             mapToSiteMetadataObject(foundCastingCompensationTypeOptionEntities),
             mapToSiteMetadataObject(foundCastingModalityOptionEntities),
             mapToSiteMetadataObject(foundCastingSectionStatusOptionEntities),
@@ -144,7 +141,6 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             "plans:" + planRepository.count() + ":" + ts(planRepository.findMaxModifiedAt()),
             "socialMedia:" + socialMediaOptionRepository.count() + ":" + ts(socialMediaOptionRepository.findMaxModifiedAt()),
             "companyType:" + companyTypeOptionRepository.count() + ":" + ts(companyTypeOptionRepository.findMaxModifiedAt()),
-            "castingActingMode:" + castingActingModeOptionRepository.count() + ":" + ts(castingActingModeOptionRepository.findMaxModifiedAt()),
             "castingCompensationType:" + castingCompensationTypeOptionRepository.count() + ":" + ts(castingCompensationTypeOptionRepository.findMaxModifiedAt()),
             "castingModality:" + castingModalityOptionRepository.count() + ":" + ts(castingModalityOptionRepository.findMaxModifiedAt()),
             "castingSectionStatus:" + castingSectionStatusOptionRepository.count() + ":" + ts(castingSectionStatusOptionRepository.findMaxModifiedAt()),

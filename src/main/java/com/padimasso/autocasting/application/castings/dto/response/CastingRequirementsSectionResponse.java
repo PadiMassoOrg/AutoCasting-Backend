@@ -5,10 +5,9 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 import java.util.List;
 import java.util.UUID;
 
-public record CastingActingResponse(
+public record CastingRequirementsSectionResponse(
     UUID id,
     SiteMetadataObject sectionStatus,
-    SiteMetadataObject actingMode,
-    List<CastingActingRequirementResponse> requirements
+    List<CastingRequirementResponse> requirements
 ) {
 }

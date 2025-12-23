@@ -8,8 +8,10 @@ import java.util.UUID;
 public record CastingCardResponse(
     UUID id,
     String title,
+    String defaultCode,
     LocalDate creationDate,
     LocalDate applicationDeadline,
-    SiteMetadataObject projectType
+    SiteMetadataObject projectType,
+    SiteMetadataObject status
 ) {
 }

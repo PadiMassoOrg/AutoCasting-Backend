@@ -41,7 +41,7 @@ public class CastingEntity extends AuditableEntity {
     private CastingRolesSectionEntity roles;
 
     @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private CastingActingEntity acting;
+    private CastingRequirementsSectionEntity acting;
 
     @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private CastingRemunerationEntity remuneration;
