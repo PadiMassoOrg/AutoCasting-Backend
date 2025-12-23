@@ -1,23 +1,24 @@
-package com.padimasso.autocasting.application.castings.dto.response;
+package com.padimasso.autocasting.application.castings.dto.request;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
+import org.openapitools.jackson.nullable.JsonNullable;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record CastingBasicInfoResponse(
+public record CastingBasicInfoPatchRequest(
     UUID id,
     SiteMetadataObject sectionStatus,
     String title,
-    SiteMetadataObject projectType,
+    UUID projectTypeId,
     String location,
-    SiteMetadataObject castingModality,
+    UUID castingModalityId,
     String castingModalityText,
     LocalDate applicationDeadline,
     Boolean hasWardrobeFitting,
     String wardrobeFittingText,
     LocalDate shootingStartDate,
     LocalDate shootingEndDate,
-    String description
+    JsonNullable<String> description
 ) {
 }

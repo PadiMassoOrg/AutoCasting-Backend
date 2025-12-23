@@ -10,7 +10,7 @@ public record CastingResponse(
     SiteMetadataObject castingStatus,
     CastingBasicInfoResponse basicInfoSection,
     CastingRolesSectionResponse rolesSection,
-    CastingRequirementsSectionResponse actingSection,
+    CastingRequirementsSectionResponse requirementsSection,
     CastingRemunerationResponse remunerationSection
 ) {
 }
