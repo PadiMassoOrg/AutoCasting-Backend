@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.CASTINGS_URL;
-import static com.padimasso.autocasting.config.AppConstants.PUBLIC_CASTINGS_URL;
+import static com.padimasso.autocasting.config.AppConstants.CASTING_DATABASE_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTINGS_URL;
 
 @RestController
 @RequestMapping
@@ -35,7 +35,7 @@ public class CastingController {
         summary = "Creacion de un nuevo Casting",
         description = "Permite a un Employer crear un nuevo Casting (vacío)."
     )
-    @PostMapping(CASTINGS_URL)
+    @PostMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<String> createEmptyCasting() {
         return ResponseEntity.ok(castingService.createEmptyCasting());
     }
@@ -44,7 +44,7 @@ public class CastingController {
         summary = "Listado de mis Castings",
         description = "Permite a un Employer ver sus Castings. CARDS"
     )
-    @GetMapping(CASTINGS_URL)
+    @GetMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<List<CastingCardResponse>> getMyCastingsCards() {
         return ResponseEntity.ok(castingService.getMyCastings());
     }
@@ -54,7 +54,7 @@ public class CastingController {
         summary = "Listado público de Roles (Casting Database)",
         description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database."
     )
-    @GetMapping(AppConstants.PUBLIC_CASTINGS_URL)
+    @GetMapping(AppConstants.CASTING_DATABASE_API_URL)
     public SliceResponse<CastingRolePublicCardResponse> searchPublicCastings(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "12") int size,
@@ -108,7 +108,7 @@ public class CastingController {
     }
 
     @Operation(summary = "Ver detalles del Casting", description = "Obtiene información pública del Casting por slug")
-    @GetMapping(PUBLIC_CASTINGS_URL + "/{slug}")
+    @GetMapping(CASTING_DATABASE_API_URL + "/{slug}")
     public ResponseEntity<CastingResponse> getCastingDetails(@PathVariable String slug) {
         return ResponseEntity.ok(castingService.getDetailsBySlug(slug));
     }

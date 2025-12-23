@@ -21,30 +21,30 @@ public class AppConstants {
     public static final String SITE_METADATA_URL = BASE_API_URL + "/sitemetadata";
     public static final String SITE_METADATA_VERSION_URL = SITE_METADATA_URL + "/version";
 
-    // Profile
+    // Database
+    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent-database";
+    public static final String CASTING_DATABASE_API_URL = BASE_API_URL + "/castings-database";
+
+    // Talent
     public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
-    public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
-    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent/talent-database";
-
-    // Credit
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
-
-    // Education
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
+
+    // Employer
+    public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
+    public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
 
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
     public static final String LEGAL_ACCEPT_DOCUMENT_API_URL = BASE_API_URL + "/legal/accept";
 
-    // Castings
-    public static final String CASTINGS_URL = BASE_API_URL + "/mis-castings";
-    public static final String PUBLIC_CASTINGS_URL = BASE_API_URL + "/castings";
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
     public static final long EXPIRATION_TIME = 86400; // 10 days
     public static final long RESET_PASSWORD_EXPIRATION_TIME = 900; // 15min
     public static final long RESET_PASSWORD_EXPIRATION_TIME_MIN = 15; // 15min
+
     // Company
     public static final String SUPPORT_EMAIL = "support@autocasting.com";
     public static final String INSTA_URL = "instagram.com";
@@ -55,9 +55,7 @@ public class AppConstants {
     public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
     public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";
     public static final String SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
-    public static final String ACTING_MODE_NONE = "sitemetadata.acting_mode.none";
     public static final String COMPENSATION_TYPE_UNPAID = "sitemetadata.compensation_type.unpaid";
-
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");
