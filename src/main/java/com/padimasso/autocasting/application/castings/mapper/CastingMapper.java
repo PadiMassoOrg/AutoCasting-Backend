@@ -91,7 +91,6 @@ public class CastingMapper {
             sectionStatus,
             entity.getTitle(),
             projectType,
-            entity.getLocationText(),
             castingModality,
             entity.getCastingModalityText(),
             entity.getApplicationDeadline(),

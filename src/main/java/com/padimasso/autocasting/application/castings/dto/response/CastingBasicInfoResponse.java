@@ -10,7 +10,6 @@ public record CastingBasicInfoResponse(
     SiteMetadataObject sectionStatus,
     String title,
     SiteMetadataObject projectType,
-    String location,
     SiteMetadataObject castingModality,
     String castingModalityText,
     LocalDate applicationDeadline,

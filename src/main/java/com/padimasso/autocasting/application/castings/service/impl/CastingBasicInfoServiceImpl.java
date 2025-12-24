@@ -38,29 +38,24 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
                 .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
             basicInfo.setProjectType(projectType);
         }
-        if (request.location() != null) {
-            basicInfo.setLocationText(request.location().trim());
-        }
         if (request.castingModalityId() != null) {
             CastingModalityOptionEntity castingModality = castingModalityOptionRepository.findById(request.castingModalityId())
                 .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
             basicInfo.setCastingModality(castingModality);
         }
+        if (request.castingModalityText().isPresent())
+            basicInfo.setCastingModalityText(request.castingModalityText().orElse(null));
         if (request.applicationDeadline() != null) {
             basicInfo.setApplicationDeadline(request.applicationDeadline());
         }
         if (request.hasWardrobeFitting() != null) {
             basicInfo.setHasWardrobeFitting(request.hasWardrobeFitting());
         }
-        if (request.wardrobeFittingText() != null) {
-            basicInfo.setWardrobeFittingText(request.wardrobeFittingText());
-        }
-        if (request.shootingStartDate() != null) {
-            basicInfo.setShootingStartDate(request.shootingStartDate());
-        }
-        if (request.shootingEndDate() != null) {
-            basicInfo.setShootingEndDate(request.shootingEndDate());
-        }
+        if (request.wardrobeFittingText().isPresent())
+            basicInfo.setWardrobeFittingText(request.wardrobeFittingText().orElse(null));
+        if (request.shootingStartDate().isPresent())
+            basicInfo.setShootingStartDate(request.shootingStartDate().orElse(null));
+        if (request.shootingEndDate().isPresent()) basicInfo.setShootingEndDate(request.shootingEndDate().orElse(null));
         if (request.description().isPresent()) basicInfo.setDescription(request.description().orElse(null));
 
         return castingMapper.toBasicInfoResponse(castingBasicInfoRepository.save(basicInfo));

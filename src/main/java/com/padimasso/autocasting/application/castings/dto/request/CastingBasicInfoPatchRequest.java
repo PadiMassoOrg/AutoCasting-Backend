@@ -11,14 +11,13 @@ public record CastingBasicInfoPatchRequest(
     SiteMetadataObject sectionStatus,
     String title,
     UUID projectTypeId,
-    String location,
     UUID castingModalityId,
-    String castingModalityText,
+    JsonNullable<String> castingModalityText,
     LocalDate applicationDeadline,
     Boolean hasWardrobeFitting,
-    String wardrobeFittingText,
-    LocalDate shootingStartDate,
-    LocalDate shootingEndDate,
+    JsonNullable<String> wardrobeFittingText,
+    JsonNullable<LocalDate> shootingStartDate,
+    JsonNullable<LocalDate> shootingEndDate,
     JsonNullable<String> description
 ) {
 }
