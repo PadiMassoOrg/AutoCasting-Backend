@@ -58,8 +58,37 @@ public class SecurityConfig {
                     // Test Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(EMPLOYER.name())
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(TALENT.name())
-                    // Profile
+                    // Talent
+                    .requestMatchers(HttpMethod.POST, AppConstants.TALENT_PROFILE_API_URL).authenticated()
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.TALENT_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.TALENT_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.CREDIT_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.CREDIT_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.CREDIT_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.CREDIT_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.EDUCATION_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.EDUCATION_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.EDUCATION_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.EDUCATION_API_URL).authenticated()
+                    // Employer
+                    .requestMatchers(HttpMethod.POST, AppConstants.EMPLOYER_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.EMPLOYER_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.EMPLOYER_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.EMPLOYER_PROFILE_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.EMPLOYER_CASTINGS_URL).authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.EMPLOYER_CASTINGS_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.EMPLOYER_CASTINGS_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.EMPLOYER_CASTINGS_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.CASTING_DETAILS_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.CASTING_DETAILS_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.CASTING_DETAILS_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.CASTING_BASIC_INFO_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.CASTING_BASIC_INFO_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.CASTING_BASIC_INFO_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.CASTING_ROLE_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.CASTING_ROLE_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.CASTING_ROLE_URL).authenticated()
                     // Serve
                     .requestMatchers("/email/**", "/css/**", "/js/**", "/images/**").permitAll()
                     // Any

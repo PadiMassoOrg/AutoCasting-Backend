@@ -113,15 +113,17 @@ public class CastingController {
         return castingRoleSearchService.search(filter, page, size);
     }
 
-    @Operation(summary = "Ver detalles del Casting", description = "Obtiene información del Casting por slug")
+    @Operation(summary = "Ver detalles del Casting",
+        description = "Obtiene información del Casting por slug",
+        security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(CASTING_DETAILS_URL + "/{slug}")
     public ResponseEntity<CastingResponse> getCastingDetails(@PathVariable String slug) {
         return ResponseEntity.ok(castingService.getDetailsBySlug(slug));
     }
 
     //    Basic Info
-    @PatchMapping(AppConstants.CASTING_DETAILS_URL + "/basic-info")
     @Operation(summary = "PATCH BasicInfo (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping(AppConstants.CASTING_BASIC_INFO_URL)
     public ResponseEntity<CastingBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody CastingBasicInfoPatchRequest request) {
         return ResponseEntity.ok(castingBasicInfoService.patchCastingBasicInfo(request));
     }

@@ -34,6 +34,8 @@ public class AppConstants {
     public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
     public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
+    public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";
+    public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
 
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
