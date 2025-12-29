@@ -122,7 +122,7 @@ public class CastingMapper {
         );
     }
 
-    private CastingRoleResponse toRoleResponse(CastingRoleEntity entity) {
+    public CastingRoleResponse toRoleResponse(CastingRoleEntity entity) {
         if (entity == null) return null;
 
         SiteMetadataObject roleType = mapToSiteMetadataObject(entity.getRoleType());

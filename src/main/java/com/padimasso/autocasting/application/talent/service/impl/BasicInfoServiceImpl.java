@@ -47,7 +47,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
         }
         if (req.genderId() != null) {
             GenderOptionEntity gender = genderOptionRepository.findById(req.genderId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
             basicInfo.setGender(gender);
         }
         if (req.birthDate() != null) {
