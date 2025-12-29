@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.castings.controller;
 
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
+import com.padimasso.autocasting.application.castings.dto.response.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.config.AppConstants;
@@ -10,10 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping
@@ -23,6 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class CastingRoleController {
 
     private final CastingRoleService castingRoleService;
+
+    @Operation(summary = "GET Casting Roles by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping(AppConstants.CASTING_ROLE_URL + "/{sectionId}")
+    public ResponseEntity<List<CastingRoleEmployerCardResponse>> getRolesBySectionId(@PathVariable UUID sectionId) {
+        return ResponseEntity.ok().body(castingRoleService.getCastingRolesBySectionId(sectionId));
+    }
 
     @Operation(summary = "CREATE Casting Role", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(AppConstants.CASTING_ROLE_URL)

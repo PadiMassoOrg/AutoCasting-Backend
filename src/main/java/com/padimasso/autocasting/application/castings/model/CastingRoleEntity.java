@@ -32,9 +32,6 @@ public class CastingRoleEntity extends AuditableEntity {
     private CastingRolesSectionEntity rolesSection;
 
     @Column(nullable = false)
-    private boolean isComplete;
-
-    @Column(nullable = false)
     private String roleName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -72,10 +69,10 @@ public class CastingRoleEntity extends AuditableEntity {
     )
     private Set<SkillEntity> skills = new HashSet<>();
 
-    @OneToOne(mappedBy = "castingRole", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "castingRole", cascade = CascadeType.ALL, orphanRemoval = true)
     private CastingRoleCharacteristicsEntity characteristics;
 
-    @OneToOne(mappedBy = "castingRole", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "castingRole", cascade = CascadeType.ALL, orphanRemoval = true)
     private CastingRoleRemunerationEntity remuneration;
 
     @OneToMany(

@@ -2,7 +2,6 @@ package com.padimasso.autocasting.application.castings.dto.request;
 
 import org.openapitools.jackson.nullable.JsonNullable;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,6 +15,6 @@ public record CastingRoleRequest(
     JsonNullable<String> description,
     Set<UUID> professionIds,
     JsonNullable<CastingRoleCharacteristicsRequest> characteristics,
-    JsonNullable<List<UUID>> skills
+    JsonNullable<Set<UUID>> skillIds
 ) {
 }

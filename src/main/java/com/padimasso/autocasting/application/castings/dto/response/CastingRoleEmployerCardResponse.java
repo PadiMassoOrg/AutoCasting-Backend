@@ -1,21 +1,20 @@
 package com.padimasso.autocasting.application.castings.dto.response;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
-import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
 
 import java.util.List;
 import java.util.UUID;
 
-public record CastingRoleResponse(
+public record CastingRoleEmployerCardResponse(
+    // Casting Role
     UUID id,
-    String name,
-    SiteMetadataObject roleType,
+    String roleName,
+    // Casting Role
     SiteMetadataObject gender,
     Short ageMin,
     Short ageMax,
-    String description,
     List<SiteMetadataObject> professions,
-    CharacteristicsResponse characteristics,
+    SiteMetadataObject roleType,
     List<SiteMetadataObject> skills
 ) {
 }

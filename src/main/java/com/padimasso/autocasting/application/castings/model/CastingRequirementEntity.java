@@ -21,9 +21,6 @@ public class CastingRequirementEntity extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
-    private boolean isComplete;
-
     @ManyToOne
     @JoinColumn(name = "casting_requirements_section_id", nullable = false)
     private CastingRequirementsSectionEntity castingRequirementsSection;

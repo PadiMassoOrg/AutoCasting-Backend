@@ -78,6 +78,33 @@ public class CastingMapper {
         );
     }
 
+    public CastingRoleEmployerCardResponse toEmployerRoleCardResponse(CastingRoleEntity role) {
+        var professions =
+            role.getProfessions() == null
+                ? List.<SiteMetadataObject>of()
+                : role.getProfessions().stream()
+                .map(TalentProfileMapper::mapToSiteMetadataObject)
+                .toList();
+        List<SiteMetadataObject> skills =
+            role.getSkills() == null
+                ? List.of()
+                : role.getSkills().stream()
+                .map(TalentProfileMapper::mapToSiteMetadataObject)
+                .toList();
+
+        return new CastingRoleEmployerCardResponse(
+            role.getId(),
+            role.getRoleName(),
+            mapToSiteMetadataObject(role.getGender()),
+            role.getAgeMin(),
+            role.getAgeMax(),
+            professions,
+            mapToSiteMetadataObject(role.getRoleType()),
+            skills
+        );
+    }
+
+
     // Sub Entities
     public CastingBasicInfoResponse toBasicInfoResponse(CastingBasicInfoEntity entity) {
         if (entity == null) return null;
@@ -147,7 +174,6 @@ public class CastingMapper {
 
         return new CastingRoleResponse(
             entity.getId(),
-            entity.isComplete(),
             entity.getRoleName(),
             roleType,
             gender,
@@ -217,7 +243,6 @@ public class CastingMapper {
         return new CastingRequirementResponse(
             entity.getId(),
             castingRoleId,
-            entity.isComplete(),
             entity.getDescription(),
             entity.isRequiresAudio(),
             entity.isRequiresVideo()
