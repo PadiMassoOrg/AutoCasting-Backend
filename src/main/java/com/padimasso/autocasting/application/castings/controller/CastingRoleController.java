@@ -25,7 +25,7 @@ public class CastingRoleController {
 
     private final CastingRoleService castingRoleService;
 
-    @Operation(summary = "GET Casting Roles by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "GET Roles by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(AppConstants.CASTING_ROLE_URL + "/{sectionId}")
     public ResponseEntity<List<CastingRoleEmployerCardResponse>> getRolesBySectionId(@PathVariable UUID sectionId) {
         return ResponseEntity.ok().body(castingRoleService.getCastingRolesBySectionId(sectionId));

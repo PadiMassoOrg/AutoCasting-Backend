@@ -2,11 +2,13 @@ package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
+import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.castings.repository.*;
+import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
@@ -16,6 +18,8 @@ import com.padimasso.autocasting.application.sitemetadata.repository.CastingSect
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -93,12 +97,25 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
+    @Transactional
     public List<CastingCardResponse> getMyCastings() {
-        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        var employer = employerContext.getCurrentEmployerOrThrow();
+        var employerProfileId = employer.employerProfile().getId();
 
-        var castings = castingRepository.findAllByEmployerProfileId(employer.employerProfile().getId());
+        var filter = new EmployerCastingsFilter(employerProfileId);
+        var spec = CastingSpecs.fromFilter(filter);
 
-        return castings.stream()
+        int page = 0;
+        var pageable = PageRequest.of(
+            page,
+            MAX_PAGE_SIZE,
+            Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
+        );
+
+        var result = castingRepository.findAll(spec, pageable); // SoftDelete => deleted = false
+
+        return result.getContent()
+            .stream()
             .map(castingMapper::toCardResponse)
             .toList();
     }

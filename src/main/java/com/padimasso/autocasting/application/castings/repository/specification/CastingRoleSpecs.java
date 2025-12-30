@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.castings.repository.specification;
 
 import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
+import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.sitemetadata.model.*;
 import jakarta.persistence.criteria.Join;
@@ -20,6 +21,7 @@ public class CastingRoleSpecs {
 
     public static Specification<CastingRoleEntity> fromFilter(CastingRoleFilter f, UUID publishedStatusId) {
         return (root, query, cb) -> {
+            assert query != null;
             query.distinct(true);
 
             Join<CastingRoleEntity, CastingRolesSectionEntity> rolesSection =
@@ -159,4 +161,28 @@ public class CastingRoleSpecs {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    public static Specification<CastingRoleEntity> byRolesSectionId(UUID sectionId) {
+        if (sectionId == null) return null;
+        return (root, query, cb) ->
+            cb.equal(root.join("rolesSection").get("id"), sectionId);
+    }
+
+    public static Specification<CastingRoleEntity> fromEmployerFilter(EmployerCastingRoleFilter f) {
+        Specification<CastingRoleEntity> spec = null;
+
+        // TODO: Filtering
+        spec = and(spec, byRolesSectionId(f.rolesSectionId()));
+
+        return spec;
+    }
+
+    private static Specification<CastingRoleEntity> and(
+        Specification<CastingRoleEntity> base,
+        Specification<CastingRoleEntity> next
+    ) {
+        if (next == null) return base;
+        return (base == null) ? next : base.and(next);
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
+import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -10,6 +11,7 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleRemunerat
 import com.padimasso.autocasting.application.castings.model.CastingRolesSectionEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRolesSectionRepository;
+import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.DietOptionEntity;
@@ -17,12 +19,16 @@ import com.padimasso.autocasting.application.sitemetadata.model.EthnicityOptionE
 import com.padimasso.autocasting.application.sitemetadata.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 
 @Service
 @RequiredArgsConstructor
@@ -123,8 +129,25 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     }
 
     @Override
+    @Transactional
     public List<CastingRoleEmployerCardResponse> getCastingRolesBySectionId(UUID sectionId) {
-        var foundRoles = castingRoleRepository.findAllByRolesSection_IdOrderByCreatedAtDesc(sectionId);
-        return foundRoles.stream().map(castingMapper::toEmployerRoleCardResponse).toList();
+        var filter = new EmployerCastingRoleFilter(sectionId);
+        var spec = CastingRoleSpecs.fromEmployerFilter(filter);
+
+        int page = 0;
+        var pageable = PageRequest.of(
+            page,
+            MAX_PAGE_SIZE,
+            Sort.by(Sort.Direction.DESC, "createdAt", "id")
+        );
+
+        var result = castingRoleRepository.findAll(spec, pageable); // SoftDelete => deleted=false
+
+        return result.getContent()
+            .stream()
+            .map(castingMapper::toEmployerRoleCardResponse)
+            .toList();
     }
+
 }
+

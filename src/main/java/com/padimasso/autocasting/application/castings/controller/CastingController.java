@@ -37,6 +37,7 @@ public class CastingController {
     private final CastingRoleSearchService castingRoleSearchService;
     private final CastingBasicInfoService castingBasicInfoService;
 
+    // Employer
     @Operation(
         summary = "Creacion de un nuevo Casting",
         description = "Permite a un Employer crear un nuevo Casting (vacío)."
@@ -55,7 +56,14 @@ public class CastingController {
         return ResponseEntity.ok(castingService.getMyCastings());
     }
 
-    // Public
+    // Basic Info
+    @Operation(summary = "PATCH BasicInfo (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping(AppConstants.CASTING_BASIC_INFO_URL)
+    public ResponseEntity<CastingBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody CastingBasicInfoPatchRequest request) {
+        return ResponseEntity.ok(castingBasicInfoService.patchCastingBasicInfo(request));
+    }
+
+    // Casting Database
     @Operation(
         summary = "Listado público de Roles (Casting Database)",
         description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database."
@@ -119,13 +127,6 @@ public class CastingController {
     @GetMapping(CASTING_DETAILS_URL + "/{slug}")
     public ResponseEntity<CastingResponse> getCastingDetails(@PathVariable String slug) {
         return ResponseEntity.ok(castingService.getDetailsBySlug(slug));
-    }
-
-    //    Basic Info
-    @Operation(summary = "PATCH BasicInfo (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
-    @PatchMapping(AppConstants.CASTING_BASIC_INFO_URL)
-    public ResponseEntity<CastingBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody CastingBasicInfoPatchRequest request) {
-        return ResponseEntity.ok(castingBasicInfoService.patchCastingBasicInfo(request));
     }
 
 }

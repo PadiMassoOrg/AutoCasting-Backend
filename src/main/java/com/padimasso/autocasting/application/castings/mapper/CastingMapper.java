@@ -26,7 +26,7 @@ public class CastingMapper {
             mapToSiteMetadataObject(casting.getStatus()),
             toBasicInfoResponse(casting.getBasicInfo()),
             toRolesSectionResponse(casting.getRoles()),
-            toActingResponse(casting.getActing()),
+            toActingResponse(casting.getRequirements()),
             toRemunerationResponse(casting.getRemuneration())
         );
     }

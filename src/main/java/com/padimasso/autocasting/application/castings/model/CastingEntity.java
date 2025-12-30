@@ -34,16 +34,16 @@ public class CastingEntity extends AuditableEntity {
     @JoinColumn(name = "casting_status_option_id", nullable = false)
     private CastingStatusOptionEntity status;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
     private CastingBasicInfoEntity basicInfo;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
     private CastingRolesSectionEntity roles;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private CastingRequirementsSectionEntity acting;
+    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
+    private CastingRequirementsSectionEntity requirements;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
     private CastingRemunerationEntity remuneration;
 
     @PrePersist
