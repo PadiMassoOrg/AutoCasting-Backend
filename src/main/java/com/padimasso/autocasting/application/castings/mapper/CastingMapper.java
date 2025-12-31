@@ -94,6 +94,7 @@ public class CastingMapper {
 
         return new CastingRoleEmployerCardResponse(
             role.getId(),
+            role.getRolesSection().getId(),
             role.getRoleName(),
             mapToSiteMetadataObject(role.getGender()),
             role.getAgeMin(),
