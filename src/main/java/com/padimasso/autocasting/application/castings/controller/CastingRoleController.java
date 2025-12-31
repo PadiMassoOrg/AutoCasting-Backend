@@ -43,4 +43,20 @@ public class CastingRoleController {
         return ResponseEntity.ok().body(castingRoleService.createCastingRole(request));
     }
 
+    @Operation(summary = "UPDATE Casting Role", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping(AppConstants.CASTING_ROLE_URL + "/{roleId}")
+    public ResponseEntity<CastingRoleResponse> updateCastingRole(
+        @PathVariable UUID roleId,
+        @Valid @RequestBody CastingRoleRequest request
+    ) {
+        return ResponseEntity.ok().body(castingRoleService.updateCastingRole(roleId, request));
+    }
+
+    @Operation(summary = "DELETE Casting Role", security = @SecurityRequirement(name = "bearerAuth"))
+    @DeleteMapping(AppConstants.CASTING_ROLE_URL + "/{roleId}")
+    public ResponseEntity<Void> deleteCastingRole(@PathVariable UUID roleId) {
+        castingRoleService.deleteCastingRole(roleId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

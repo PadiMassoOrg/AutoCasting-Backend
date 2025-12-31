@@ -147,5 +147,120 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .toList();
     }
 
+    @Override
+    public CastingRoleResponse updateCastingRole(UUID roleId, CastingRoleRequest request) {
+        CastingRoleEntity role = castingRoleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.role.not_found"));
+        if (role.getRolesSection() == null || role.getRolesSection().getId() == null) {
+            throw new IllegalStateException("castings.section.not_found");
+        }
+        if (!role.getRolesSection().getId().equals(request.rolesSectionId())) {
+            throw new IllegalArgumentException("castings.section.mismatch");
+        }
+
+        var foundRoleType = roleTypeOptionRepository.findById(request.roleTypeId())
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_role.not_found"));
+        var foundGender = genderOptionRepository.findById(request.genderId())
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
+        Set<UUID> professionIds = request.professionIds();
+        var foundProfessions = new HashSet<>(professionRepository.findAllByIdIn(professionIds));
+
+        // Required
+        role.setRoleName(request.roleName());
+        role.setRoleType(foundRoleType);
+        role.setGender(foundGender);
+        role.setAgeMin(request.ageMin());
+        role.setAgeMax(request.ageMax());
+        role.setProfessions(foundProfessions);
+
+        // Optional
+        role.setDescription(request.description().orElse(null));
+
+        // 6) Optional: skills (si no vienen => null / empty según tu criterio)
+        // Yo lo dejo: si viene -> set; si no viene -> no tocar (conserva)
+        // Si preferís que el "no viene" borre, entonces hacé role.setSkills(Collections.emptySet())
+        if (request.skillIds().isPresent()) {
+            Set<UUID> skillIds = request.skillIds().get();
+            var foundSkills = new HashSet<>(skillRepository.findAllByIdIn(skillIds));
+            role.setSkills(foundSkills);
+        }
+
+        CastingRoleCharacteristicsEntity characteristics = role.getCharacteristics();
+        if (characteristics == null) {
+            characteristics = CastingRoleCharacteristicsEntity.builder()
+                .castingRole(role)
+                .build();
+            role.setCharacteristics(characteristics);
+        }
+
+        CastingRoleRemunerationEntity remuneration = role.getRemuneration();
+        if (remuneration == null) {
+            remuneration = CastingRoleRemunerationEntity.builder()
+                .castingRole(role)
+                .build();
+            role.setRemuneration(remuneration);
+        }
+
+        // Characteristics
+        if (request.characteristics().isPresent()) {
+            var ch = request.characteristics().get();
+
+            if (ch.heightCm().isPresent()) characteristics.setHeightCm(ch.heightCm().orElse(null));
+            if (ch.weightKg().isPresent()) characteristics.setWeightKg(ch.weightKg().orElse(null));
+            if (ch.chestCm().isPresent()) characteristics.setChestCm(ch.chestCm().orElse(null));
+            if (ch.waistCm().isPresent()) characteristics.setWaistCm(ch.waistCm().orElse(null));
+            if (ch.hipCm().isPresent()) characteristics.setHipCm(ch.hipCm().orElse(null));
+            if (ch.shirtSize().isPresent()) characteristics.setShirtSize(ch.shirtSize().orElse(null));
+            if (ch.pantSize().isPresent()) characteristics.setPantSize(ch.pantSize().orElse(null));
+            if (ch.dressSize().isPresent()) characteristics.setDressSize(ch.dressSize().orElse(null));
+            if (ch.shoeSize().isPresent()) characteristics.setShoeSize(ch.shoeSize().orElse(null));
+
+            if (ch.tattoo() != null) characteristics.setTattoo(ch.tattoo());
+            if (ch.passport() != null) characteristics.setPassport(ch.passport());
+            if (ch.drivingLicense() != null) characteristics.setDrivingLicense(ch.drivingLicense());
+
+            if (ch.ethnicityId() != null) {
+                EthnicityOptionEntity ethnicityOption = ethnicityOptionRepository.findById(ch.ethnicityId())
+                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.ethnicity.not_found"));
+                characteristics.setEthnicity(ethnicityOption);
+            } else {
+                characteristics.setEthnicity(null);
+            }
+
+            if (ch.hairColorId() != null) {
+                ColorOptionEntity color = colorOptionRepository.findById(ch.hairColorId())
+                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                characteristics.setHairColor(color);
+            } else {
+                characteristics.setHairColor(null);
+            }
+
+            if (ch.eyeColorId() != null) {
+                ColorOptionEntity color = colorOptionRepository.findById(ch.eyeColorId())
+                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                characteristics.setEyeColor(color);
+            } else {
+                characteristics.setEyeColor(null);
+            }
+
+            if (ch.dietOptionId() != null) {
+                DietOptionEntity diet = dietOptionRepository.findById(ch.dietOptionId())
+                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.diet.not_found"));
+                characteristics.setDietOption(diet);
+            } else {
+                characteristics.setDietOption(null);
+            }
+        }
+
+        CastingRoleEntity saved = castingRoleRepository.save(role);
+        return castingMapper.toRoleResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCastingRole(UUID roleId) {
+        castingRoleRepository.deleteById(roleId);
+    }
+
 }
 

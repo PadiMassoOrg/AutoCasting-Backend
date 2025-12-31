@@ -175,6 +175,7 @@ public class CastingMapper {
 
         return new CastingRoleResponse(
             entity.getId(),
+            entity.getRolesSection().getId(),
             entity.getRoleName(),
             roleType,
             gender,

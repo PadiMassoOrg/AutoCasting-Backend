@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record CastingRoleResponse(
     UUID id,
+    UUID sectionId,
     String roleName,
     SiteMetadataObject roleType,
     SiteMetadataObject gender,
