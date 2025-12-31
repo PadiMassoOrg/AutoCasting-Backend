@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.controller;
 
+import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -27,8 +28,13 @@ public class CastingRoleController {
 
     @Operation(summary = "GET Roles by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(AppConstants.CASTING_ROLE_URL + "/{sectionId}")
-    public ResponseEntity<List<CastingRoleEmployerCardResponse>> getRolesBySectionId(@PathVariable UUID sectionId) {
-        return ResponseEntity.ok().body(castingRoleService.getCastingRolesBySectionId(sectionId));
+    public ResponseEntity<List<CastingRoleEmployerCardResponse>> getRolesBySectionId(
+        @PathVariable UUID sectionId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "50") int size
+    ) {
+        var filter = new EmployerCastingRoleFilter(sectionId);
+        return ResponseEntity.ok().body(castingRoleService.getCastingRolesBySectionId(filter, page, size));
     }
 
     @Operation(summary = "CREATE Casting Role", security = @SecurityRequirement(name = "bearerAuth"))

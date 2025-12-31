@@ -130,14 +130,12 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     @Override
     @Transactional
-    public List<CastingRoleEmployerCardResponse> getCastingRolesBySectionId(UUID sectionId) {
-        var filter = new EmployerCastingRoleFilter(sectionId);
-        var spec = CastingRoleSpecs.fromEmployerFilter(filter);
+    public List<CastingRoleEmployerCardResponse> getCastingRolesBySectionId(EmployerCastingRoleFilter incomingFilter, int page, int size) {
+        var spec = CastingRoleSpecs.fromEmployerFilter(incomingFilter);
 
-        int page = 0;
         var pageable = PageRequest.of(
             page,
-            MAX_PAGE_SIZE,
+            Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 

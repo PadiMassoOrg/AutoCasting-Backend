@@ -171,8 +171,8 @@ public class CastingRoleSpecs {
     public static Specification<CastingRoleEntity> fromEmployerFilter(EmployerCastingRoleFilter f) {
         Specification<CastingRoleEntity> spec = null;
 
-        // TODO: Filtering
         spec = and(spec, byRolesSectionId(f.rolesSectionId()));
+        // TODO: Filtering
 
         return spec;
     }

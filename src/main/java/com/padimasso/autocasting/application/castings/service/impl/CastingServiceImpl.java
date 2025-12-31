@@ -98,21 +98,24 @@ public class CastingServiceImpl implements CastingService {
 
     @Override
     @Transactional
-    public List<CastingCardResponse> getMyCastings() {
+    public List<CastingCardResponse> getMyCastings(EmployerCastingsFilter incomingFilter, int page, int size) {
         var employer = employerContext.getCurrentEmployerOrThrow();
         var employerProfileId = employer.employerProfile().getId();
 
-        var filter = new EmployerCastingsFilter(employerProfileId);
-        var spec = CastingSpecs.fromFilter(filter);
+        var effectiveFilter = new EmployerCastingsFilter(
+            employerProfileId
+            // TODO: Filtering coming from UI
+        );
 
-        int page = 0;
+        var spec = CastingSpecs.fromFilter(effectiveFilter);
+
         var pageable = PageRequest.of(
             page,
-            MAX_PAGE_SIZE,
+            Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
             Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
         );
 
-        var result = castingRepository.findAll(spec, pageable); // SoftDelete => deleted = false
+        var result = castingRepository.findAll(spec, pageable);
 
         return result.getContent()
             .stream()
