@@ -1,6 +1,9 @@
 package com.padimasso.autocasting.application.castings.mapper;
 
 import com.padimasso.autocasting.application.castings.dto.response.*;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;

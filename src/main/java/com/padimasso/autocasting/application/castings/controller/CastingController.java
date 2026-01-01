@@ -4,9 +4,9 @@ import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingBasicInfoPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingBasicInfoResponse;
-import com.padimasso.autocasting.application.castings.dto.response.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.CastingRolePublicCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.service.CastingBasicInfoService;
 import com.padimasso.autocasting.application.castings.service.CastingRoleSearchService;
 import com.padimasso.autocasting.application.castings.service.CastingService;
@@ -61,7 +61,7 @@ public class CastingController {
     public ResponseEntity<CastingBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody CastingBasicInfoPatchRequest request) {
         return ResponseEntity.ok(castingBasicInfoService.patchCastingBasicInfo(request));
     }
-
+    
     // Casting Database
     @Operation(summary = "Listado público de Roles (Casting Database)", description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database.")
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)

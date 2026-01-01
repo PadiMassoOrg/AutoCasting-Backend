@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.castings.dto.response;
+package com.padimasso.autocasting.application.castings.dto.response.card;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 

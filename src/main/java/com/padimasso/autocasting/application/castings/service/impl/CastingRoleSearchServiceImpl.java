@@ -1,7 +1,7 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
-import com.padimasso.autocasting.application.castings.dto.response.CastingRolePublicCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;

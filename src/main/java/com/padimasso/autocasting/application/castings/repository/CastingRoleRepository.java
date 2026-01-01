@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleEntity, UUID> {
@@ -40,4 +42,9 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
         "remuneration.payRateType"
     })
     Page<CastingRoleEntity> findAll(@Nullable Specification<CastingRoleEntity> spec, Pageable pageable);
+
+    List<CastingRoleEntity> findAllByRolesSection_Casting_IdAndIdInAndDeletedFalse(
+        UUID castingId,
+        Collection<UUID> roleIds
+    );
 }

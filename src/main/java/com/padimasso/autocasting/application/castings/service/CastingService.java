@@ -1,8 +1,8 @@
 package com.padimasso.autocasting.application.castings.service;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
-import com.padimasso.autocasting.application.castings.dto.response.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 
 import java.util.List;
 

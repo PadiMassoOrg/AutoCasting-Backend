@@ -2,8 +2,8 @@ package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
-import com.padimasso.autocasting.application.castings.dto.response.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingRoleCharacteristicsEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;

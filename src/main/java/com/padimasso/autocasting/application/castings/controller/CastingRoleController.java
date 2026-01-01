@@ -2,8 +2,8 @@ package com.padimasso.autocasting.application.castings.controller;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
-import com.padimasso.autocasting.application.castings.dto.response.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
