@@ -68,13 +68,13 @@ public class CastingRoleCharacteristicsEntity extends AuditableEntity {
     private String shoeSize;
 
     @Column
-    private boolean tattoo;
+    private Boolean tattoo;
 
     @Column
-    private boolean passport;
+    private Boolean passport;
 
     @Column
-    private boolean drivingLicense;
+    private Boolean drivingLicense;
 
     @ManyToOne
     @JoinColumn(name = "diet_option_id")

@@ -210,9 +210,9 @@ public class CastingMapper {
             entity.getPantSize(),
             entity.getDressSize(),
             entity.getShoeSize(),
-            entity.isTattoo(),
-            entity.isPassport(),
-            entity.isDrivingLicense(),
+            entity.getTattoo(),
+            entity.getPassport(),
+            entity.getDrivingLicense(),
             diet
         );
     }

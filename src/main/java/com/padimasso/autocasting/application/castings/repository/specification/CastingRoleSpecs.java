@@ -118,15 +118,18 @@ public class CastingRoleSpecs {
             }
 
             if (characteristics != null && f.tattoo() != null) {
-                predicates.add(cb.equal(characteristics.get("tattoo"), f.tattoo()));
+                var field = characteristics.get("tattoo");
+                predicates.add(cb.or(cb.isNull(field), cb.equal(field, f.tattoo())));
             }
 
             if (characteristics != null && f.passport() != null) {
-                predicates.add(cb.equal(characteristics.get("passport"), f.passport()));
+                var field = characteristics.get("passport");
+                predicates.add(cb.or(cb.isNull(field), cb.equal(field, f.passport())));
             }
 
             if (characteristics != null && f.drivingLicense() != null) {
-                predicates.add(cb.equal(characteristics.get("drivingLicense"), f.drivingLicense()));
+                var field = characteristics.get("drivingLicense");
+                predicates.add(cb.or(cb.isNull(field), cb.equal(field, f.drivingLicense())));
             }
 
             if (f.skillIds() != null && !f.skillIds().isEmpty()) {

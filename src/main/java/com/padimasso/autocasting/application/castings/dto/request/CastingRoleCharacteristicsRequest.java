@@ -18,9 +18,9 @@ public record CastingRoleCharacteristicsRequest(
     JsonNullable<String> pantSize,
     JsonNullable<String> dressSize,
     JsonNullable<String> shoeSize,
-    Boolean tattoo,
-    Boolean passport,
-    Boolean drivingLicense,
+    JsonNullable<Boolean> tattoo,
+    JsonNullable<Boolean> passport,
+    JsonNullable<Boolean> drivingLicense,
     UUID dietOptionId
 ) {
 }

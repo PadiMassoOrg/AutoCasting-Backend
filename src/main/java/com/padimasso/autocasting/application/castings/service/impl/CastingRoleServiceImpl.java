@@ -108,9 +108,9 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             if (ch.pantSize().isPresent()) newCharacteristics.setPantSize(ch.pantSize().orElse(null));
             if (ch.dressSize().isPresent()) newCharacteristics.setDressSize(ch.dressSize().orElse(null));
             if (ch.shoeSize().isPresent()) newCharacteristics.setShoeSize(ch.shoeSize().orElse(null));
-            if (ch.tattoo() != null) newCharacteristics.setTattoo(ch.tattoo());
-            if (ch.passport() != null) newCharacteristics.setPassport(ch.passport());
-            if (ch.drivingLicense() != null) newCharacteristics.setDrivingLicense(ch.drivingLicense());
+            if (ch.tattoo().isPresent()) newCharacteristics.setTattoo(ch.tattoo().orElse(null));
+            if (ch.passport().isPresent()) newCharacteristics.setPassport(ch.passport().orElse(null));
+            if (ch.drivingLicense().isPresent()) newCharacteristics.setDrivingLicense(ch.drivingLicense().orElse(null));
             if (ch.dietOptionId() != null) {
                 DietOptionEntity diet = dietOptionRepository.findById(ch.dietOptionId())
                     .orElseThrow(() -> new IllegalArgumentException("sitemetadata.diet.not_found"));
@@ -148,6 +148,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     }
 
     @Override
+    @Transactional
     public CastingRoleResponse updateCastingRole(UUID roleId, CastingRoleRequest request) {
         CastingRoleEntity role = castingRoleRepository.findById(roleId)
             .orElseThrow(() -> new IllegalArgumentException("castings.role.not_found"));
@@ -215,9 +216,9 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             if (ch.dressSize().isPresent()) characteristics.setDressSize(ch.dressSize().orElse(null));
             if (ch.shoeSize().isPresent()) characteristics.setShoeSize(ch.shoeSize().orElse(null));
 
-            if (ch.tattoo() != null) characteristics.setTattoo(ch.tattoo());
-            if (ch.passport() != null) characteristics.setPassport(ch.passport());
-            if (ch.drivingLicense() != null) characteristics.setDrivingLicense(ch.drivingLicense());
+            if (ch.tattoo().isPresent()) characteristics.setTattoo(ch.tattoo().orElse(null));
+            if (ch.passport().isPresent()) characteristics.setPassport(ch.passport().orElse(null));
+            if (ch.drivingLicense().isPresent()) characteristics.setDrivingLicense(ch.drivingLicense().orElse(null));
 
             if (ch.ethnicityId() != null) {
                 EthnicityOptionEntity ethnicityOption = ethnicityOptionRepository.findById(ch.ethnicityId())
