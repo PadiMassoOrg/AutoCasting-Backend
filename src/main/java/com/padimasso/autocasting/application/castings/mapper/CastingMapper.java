@@ -20,17 +20,15 @@ import static com.padimasso.autocasting.application.talent.mapper.TalentProfileM
 @RequiredArgsConstructor
 public class CastingMapper {
 
-    public CastingResponse toCastingResponse(
-        CastingEntity casting
-    ) {
+    public CastingResponse toCastingResponse(CastingEntity casting) {
         return new CastingResponse(
             casting.getId(),
             casting.getDefaultCode(),
             mapToSiteMetadataObject(casting.getStatus()),
             toBasicInfoResponse(casting.getBasicInfo()),
-            toRolesSectionResponse(casting.getRoles()),
-            toActingResponse(casting.getRequirements()),
-            toRemunerationResponse(casting.getRemuneration())
+            toRolesSectionResponsePublic(casting.getRoles()),
+            toRequirementsSectionResponsePublic(casting.getRequirements()),
+            toRemunerationResponsePublic(casting.getRemuneration())
         );
     }
 
@@ -108,8 +106,9 @@ public class CastingMapper {
         );
     }
 
-
+    // =========================
     // Sub Entities
+    // =========================
     public CastingBasicInfoResponse toBasicInfoResponse(CastingBasicInfoEntity entity) {
         if (entity == null) return null;
 
@@ -133,7 +132,7 @@ public class CastingMapper {
         );
     }
 
-    public CastingRolesSectionResponse toRolesSectionResponse(CastingRolesSectionEntity entity) {
+    public CastingRolesSectionResponse toRolesSectionResponsePublic(CastingRolesSectionEntity entity) {
         if (entity == null) return null;
 
         SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
@@ -142,6 +141,7 @@ public class CastingMapper {
             entity.getRoles() == null
                 ? List.of()
                 : entity.getRoles().stream()
+                .filter(r -> !isSoftDeleted(r.isDeleted()))
                 .map(this::toRoleResponse)
                 .toList();
 
@@ -220,7 +220,7 @@ public class CastingMapper {
         );
     }
 
-    public CastingRequirementsSectionResponse toActingResponse(CastingRequirementsSectionEntity entity) {
+    public CastingRequirementsSectionResponse toRequirementsSectionResponsePublic(CastingRequirementsSectionEntity entity) {
         if (entity == null) return null;
 
         SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
@@ -229,6 +229,7 @@ public class CastingMapper {
             entity.getRequirements() == null
                 ? List.of()
                 : entity.getRequirements().stream()
+                .filter(r -> !isSoftDeleted(r.isDeleted()))
                 .map(this::toActingRequirementResponse)
                 .toList();
 
@@ -267,5 +268,15 @@ public class CastingMapper {
             entity.isPaySameForAllRoles(),
             List.of()
         );
+    }
+
+    public CastingRemunerationResponse toRemunerationResponsePublic(CastingRemunerationEntity entity) {
+        if (entity == null) return null;
+        if (isSoftDeleted(entity.isDeleted())) return null;
+        return toRemunerationResponse(entity);
+    }
+
+    private boolean isSoftDeleted(Boolean deleted) {
+        return Boolean.TRUE.equals(deleted);
     }
 }
