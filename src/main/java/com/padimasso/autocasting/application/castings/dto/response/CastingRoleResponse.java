@@ -17,6 +17,7 @@ public record CastingRoleResponse(
     String description,
     List<SiteMetadataObject> professions,
     CharacteristicsResponse characteristics,
-    List<SiteMetadataObject> skills
+    List<SiteMetadataObject> skills,
+    CastingRoleRemunerationResponse remuneration
 ) {
 }

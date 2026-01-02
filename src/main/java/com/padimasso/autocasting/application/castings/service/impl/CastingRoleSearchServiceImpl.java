@@ -42,7 +42,7 @@ public class CastingRoleSearchServiceImpl implements CastingRoleSearchService {
 
         CastingStatusOptionEntity publishedStatus = castingStatusOptionRepository
             .findByStringCode(CASTING_STATUS_PUBLISHED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.published_not_seeded"));
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_modality.not_found"));
 
         var spec = CastingRoleSpecs.fromFilter(filter, publishedStatus.getId());
 

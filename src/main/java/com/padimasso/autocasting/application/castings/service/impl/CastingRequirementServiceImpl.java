@@ -58,8 +58,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
     public List<CastingRequirementCardResponse> createRequirementsBulk(CastingRequirementBulkRequest request) {
 
         if (!Boolean.TRUE.equals(request.requiresAudio()) && !Boolean.TRUE.equals(request.requiresVideo())) {
-            // TODO: Message
-            throw new IllegalArgumentException("Debe seleccionar al menos Audio o Video.");
+            throw new IllegalArgumentException("general.required_one");
         }
 
         List<UUID> roleIds = request.roleIds().stream()
@@ -68,17 +67,14 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
             .toList();
 
         if (roleIds.isEmpty()) {
-            // TODO: Message
-            throw new IllegalArgumentException("Debe seleccionar al menos un rol.");
+            throw new IllegalArgumentException("casting.role.required");
         }
 
-        // TODO: Message
         var section = requirementsSectionRepository.findById(request.requirementsSectionId())
-            .orElseThrow(() -> new IllegalArgumentException("castings.requirements.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
 
         if (section.getCasting() == null || section.getCasting().getId() == null) {
-            // TODO: Message
-            throw new IllegalStateException("castings.casting.not_found");
+            throw new IllegalStateException("castings.not_found");
         }
 
         UUID castingId = section.getCasting().getId();
@@ -88,8 +84,8 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
         List<UUID> missingRoleIds = roleIds.stream().filter(id -> !foundRoleIds.contains(id)).toList();
 
         if (!missingRoleIds.isEmpty()) {
-            // TODO: Message
-            throw new IllegalArgumentException("Algunos roles no pertenecen al casting: " + missingRoleIds);
+            String message = "castings.role.mismatch";
+            throw new IllegalArgumentException(message + missingRoleIds);
         }
 
         Map<UUID, String> roleNameById = roles.stream()
@@ -101,9 +97,9 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
 
         if (!existing.isEmpty()) {
             UUID conflictRoleId = existing.getFirst().getCastingRole().getId();
+            String message = "casting.role.requirement.already_exists";
             String roleName = roleNameById.getOrDefault(conflictRoleId, conflictRoleId.toString());
-            // TODO: Message
-            throw new IllegalArgumentException("Ya existe una requirement para role: " + roleName);
+            throw new IllegalArgumentException(message + roleName);
         }
 
         String description = readNullableTrimmed(request.description());
@@ -123,8 +119,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
             var saved = requirementRepository.saveAll(toSave);
             return saved.stream().map(castingMapper::toRequirementCardResponse).toList();
         } catch (DataIntegrityViolationException ex) {
-            // TODO: Message
-            throw new IllegalArgumentException("Ya existe una requirement para uno de los roles seleccionados.");
+            throw new IllegalArgumentException("casting.role.requirement.already_exists");
         }
     }
 
@@ -132,25 +127,22 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
     @Transactional
     public CastingRequirementResponse updateCastingRequirement(UUID requirementId, CastingRequirementBulkRequest request) {
         if (!Boolean.TRUE.equals(request.requiresAudio()) && !Boolean.TRUE.equals(request.requiresVideo())) {
-            throw new IllegalArgumentException("Debe seleccionar al menos Audio o Video.");
+            throw new IllegalArgumentException("general.required_one");
         }
-
         CastingRequirementEntity requirement = requirementRepository.findById(requirementId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.requirement.not_found"));
-
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
         if (requirement.getCastingRequirementsSection() == null || requirement.getCastingRequirementsSection().getId() == null) {
-            throw new IllegalStateException("castings.requirements.section.not_found");
+            throw new IllegalStateException("castings.section.not_found");
         }
         if (!requirement.getCastingRequirementsSection().getId().equals(request.requirementsSectionId())) {
             throw new IllegalArgumentException("castings.section.mismatch");
         }
-
         if (request.roleIds() == null || request.roleIds().isEmpty()) {
-            throw new IllegalArgumentException("Debe enviar roleIds.");
+            throw new IllegalArgumentException("casting.role.required");
         }
         UUID currentRoleId = requirement.getCastingRole() != null ? requirement.getCastingRole().getId() : null;
         if (currentRoleId == null) {
-            throw new IllegalStateException("castings.role.not_found");
+            throw new IllegalStateException("casting.role.not_found");
         }
         if (!request.roleIds().contains(currentRoleId)) {
             throw new IllegalArgumentException("castings.role.mismatch");
@@ -167,7 +159,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
     @Transactional
     public void deleteCastingRequirement(UUID requirementId) {
         if (!requirementRepository.existsById(requirementId)) {
-            throw new IllegalArgumentException("castings.requirement.not_found");
+            throw new IllegalArgumentException("castings.section.not_found");
         }
         requirementRepository.deleteById(requirementId);
     }

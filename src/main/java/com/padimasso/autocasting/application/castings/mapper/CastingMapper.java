@@ -103,7 +103,8 @@ public class CastingMapper {
             role.getAgeMax(),
             professions,
             mapToSiteMetadataObject(role.getRoleType()),
-            skills
+            skills,
+            toRoleRemunerationResponse(role.getRemuneration())
         );
     }
 
@@ -191,7 +192,8 @@ public class CastingMapper {
             entity.getDescription(),
             professions,
             characteristics,
-            skills
+            skills,
+            toRoleRemunerationResponse(entity.getRemuneration())
         );
     }
 
@@ -300,6 +302,21 @@ public class CastingMapper {
         if (entity == null) return null;
         if (isSoftDeleted(entity.isDeleted())) return null;
         return toRemunerationResponse(entity);
+    }
+
+    public CastingRoleRemunerationResponse toRoleRemunerationResponse(CastingRoleRemunerationEntity entity) {
+        if (entity == null) return null;
+        if (isSoftDeleted(entity.isDeleted())) return null;
+
+        return new CastingRoleRemunerationResponse(
+            entity.getId(),
+            entity.getCastingRole().getId(),
+            entity.isComplete(),
+            mapToSiteMetadataObject(entity.getPayRateType()),
+            mapToSiteMetadataObject(entity.getCurrency()),
+            entity.getAmount(),
+            entity.getNotes()
+        );
     }
 
     private boolean isSoftDeleted(Boolean deleted) {

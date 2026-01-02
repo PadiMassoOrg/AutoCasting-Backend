@@ -24,8 +24,8 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
     private final CastingModalityOptionRepository castingModalityOptionRepository;
     private final CastingMapper castingMapper;
 
-    @Transactional
     @Override
+    @Transactional
     public CastingBasicInfoResponse patchCastingBasicInfo(CastingBasicInfoPatchRequest request) {
         CastingBasicInfoEntity basicInfo = castingBasicInfoRepository.findById(request.id())
             .orElseThrow(() -> new IllegalArgumentException("castings.not_found"));
@@ -35,12 +35,12 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
         }
         if (request.projectTypeId() != null) {
             ProjectTypeOptionEntity projectType = projectTypeOptionRepository.findById(request.projectTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.project_type.not_found"));
             basicInfo.setProjectType(projectType);
         }
         if (request.castingModalityId() != null) {
             CastingModalityOptionEntity castingModality = castingModalityOptionRepository.findById(request.castingModalityId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_modality.not_found"));
             basicInfo.setCastingModality(castingModality);
         }
         if (request.castingModalityText().isPresent())

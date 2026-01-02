@@ -151,7 +151,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Transactional
     public CastingRoleResponse updateCastingRole(UUID roleId, CastingRoleRequest request) {
         CastingRoleEntity role = castingRoleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.role.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException("casting.role.not_found"));
         if (role.getRolesSection() == null || role.getRolesSection().getId() == null) {
             throw new IllegalStateException("castings.section.not_found");
         }
@@ -176,16 +176,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         // Optional
         role.setDescription(request.description().orElse(null));
-
-        // 6) Optional: skills (si no vienen => null / empty según tu criterio)
-        // Yo lo dejo: si viene -> set; si no viene -> no tocar (conserva)
-        // Si preferís que el "no viene" borre, entonces hacé role.setSkills(Collections.emptySet())
         if (request.skillIds().isPresent()) {
             Set<UUID> skillIds = request.skillIds().get();
             var foundSkills = new HashSet<>(skillRepository.findAllByIdIn(skillIds));
             role.setSkills(foundSkills);
         }
-
         CastingRoleCharacteristicsEntity characteristics = role.getCharacteristics();
         if (characteristics == null) {
             characteristics = CastingRoleCharacteristicsEntity.builder()
@@ -193,7 +188,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
                 .build();
             role.setCharacteristics(characteristics);
         }
-
         CastingRoleRemunerationEntity remuneration = role.getRemuneration();
         if (remuneration == null) {
             remuneration = CastingRoleRemunerationEntity.builder()

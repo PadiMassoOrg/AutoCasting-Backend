@@ -36,7 +36,7 @@ public class CreditServiceImpl implements CreditService {
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
         var foundProductionType = productionTypeRepository.findById(request.productionTypeId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type_not_found"));
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type.not_found"));
 
         var newCredit = CreditEntity.builder()
             .productionType(foundProductionType)
@@ -73,7 +73,7 @@ public class CreditServiceImpl implements CreditService {
 
         if (request.productionTypeId() != null) {
             var prodType = productionTypeRepository.findById(request.productionTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type_not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type.not_found"));
             credit.setProductionType(prodType);
         }
 

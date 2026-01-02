@@ -32,10 +32,11 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "roles.roles.roleType",
         "roles.roles.gender",
         "roles.roles.skills",
+        "roles.roles.remuneration",
 
-        // Si quieres, también remuneration / acting para futuras vistas
+        "requirements",
+
         "remuneration",
-        "requirements"
     })
     Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
 

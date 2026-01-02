@@ -29,6 +29,7 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
         "roleType",
         "gender",
         "skills",
+        "remuneration",
 
         // Subentidades del rol
         "characteristics",

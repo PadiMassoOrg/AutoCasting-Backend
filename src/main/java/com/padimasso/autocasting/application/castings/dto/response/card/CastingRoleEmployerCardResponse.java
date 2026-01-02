@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.dto.response.card;
 
+import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRemunerationResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public record CastingRoleEmployerCardResponse(
     Short ageMax,
     List<SiteMetadataObject> professions,
     SiteMetadataObject roleType,
-    List<SiteMetadataObject> skills
+    List<SiteMetadataObject> skills,
+    CastingRoleRemunerationResponse remuneration
 ) {
 }

@@ -37,6 +37,7 @@ public class AppConstants {
     public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
     public static final String CASTING_REQUIREMENT_URL = CASTING_DETAILS_URL + "/requirement";
+    public static final String CASTING_REMUNERATION_URL = CASTING_DETAILS_URL + "/remuneration";
 
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
