@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public record CastingRequirementResponse(
     UUID id,
-    UUID castingRoleId,
+    UUID roleId,
     String description,
     boolean requiresAudio,
     boolean requiresVideo

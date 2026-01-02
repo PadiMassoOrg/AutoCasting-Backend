@@ -2,7 +2,9 @@ package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRequirementsFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRequirementBulkRequest;
+import com.padimasso.autocasting.application.castings.dto.response.CastingRequirementResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
+import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingRequirementEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRequirementRepository;
@@ -30,6 +32,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
     private final CastingRequirementRepository requirementRepository;
     private final CastingRequirementsSectionRepository requirementsSectionRepository;
     private final CastingRoleRepository castingRoleRepository;
+    private final CastingMapper castingMapper;
 
     @Override
     @Transactional
@@ -46,7 +49,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
 
         return result.getContent()
             .stream()
-            .map(this::toCard)
+            .map(castingMapper::toRequirementCardResponse)
             .toList();
     }
 
@@ -118,23 +121,55 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
 
         try {
             var saved = requirementRepository.saveAll(toSave);
-            return saved.stream().map(this::toCard).toList();
+            return saved.stream().map(castingMapper::toRequirementCardResponse).toList();
         } catch (DataIntegrityViolationException ex) {
-            // Defensa final (si ya aplicaste el UNIQUE INDEX parcial)
             // TODO: Message
             throw new IllegalArgumentException("Ya existe una requirement para uno de los roles seleccionados.");
         }
     }
 
-    private CastingRequirementCardResponse toCard(CastingRequirementEntity e) {
-        return new CastingRequirementCardResponse(
-            e.getId(),
-            e.getCastingRole() != null ? e.getCastingRole().getId() : null,
-            e.getCastingRole() != null ? e.getCastingRole().getRoleName() : null,
-            e.isRequiresAudio(),
-            e.isRequiresVideo(),
-            e.getDescription()
-        );
+    @Override
+    @Transactional
+    public CastingRequirementResponse updateCastingRequirement(UUID requirementId, CastingRequirementBulkRequest request) {
+        if (!Boolean.TRUE.equals(request.requiresAudio()) && !Boolean.TRUE.equals(request.requiresVideo())) {
+            throw new IllegalArgumentException("Debe seleccionar al menos Audio o Video.");
+        }
+
+        CastingRequirementEntity requirement = requirementRepository.findById(requirementId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.requirement.not_found"));
+
+        if (requirement.getCastingRequirementsSection() == null || requirement.getCastingRequirementsSection().getId() == null) {
+            throw new IllegalStateException("castings.requirements.section.not_found");
+        }
+        if (!requirement.getCastingRequirementsSection().getId().equals(request.requirementsSectionId())) {
+            throw new IllegalArgumentException("castings.section.mismatch");
+        }
+
+        if (request.roleIds() == null || request.roleIds().isEmpty()) {
+            throw new IllegalArgumentException("Debe enviar roleIds.");
+        }
+        UUID currentRoleId = requirement.getCastingRole() != null ? requirement.getCastingRole().getId() : null;
+        if (currentRoleId == null) {
+            throw new IllegalStateException("castings.role.not_found");
+        }
+        if (!request.roleIds().contains(currentRoleId)) {
+            throw new IllegalArgumentException("castings.role.mismatch");
+        }
+
+        requirement.setRequiresAudio(Boolean.TRUE.equals(request.requiresAudio()));
+        requirement.setRequiresVideo(Boolean.TRUE.equals(request.requiresVideo()));
+        requirement.setDescription(readNullableTrimmed(request.description()));
+
+        return castingMapper.toRequirementResponse(requirementRepository.save(requirement));
+    }
+
+    @Override
+    @Transactional
+    public void deleteCastingRequirement(UUID requirementId) {
+        if (!requirementRepository.existsById(requirementId)) {
+            throw new IllegalArgumentException("castings.requirement.not_found");
+        }
+        requirementRepository.deleteById(requirementId);
     }
 
     private String readNullableTrimmed(JsonNullable<String> v) {

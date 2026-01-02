@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.castings.controller;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRequirementsFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRequirementBulkRequest;
+import com.padimasso.autocasting.application.castings.dto.response.CastingRequirementResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRequirementService;
 import com.padimasso.autocasting.config.AppConstants;
@@ -44,5 +45,22 @@ public class CastingRequirementController {
     ) {
         return ResponseEntity.ok().body(castingRequirementService.createRequirementsBulk(request));
     }
+
+    @Operation(summary = "UPDATE Casting Requirement", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping(AppConstants.CASTING_REQUIREMENT_URL + "/{requirementId}")
+    public ResponseEntity<CastingRequirementResponse> updateCastingRequirement(
+        @PathVariable UUID requirementId,
+        @Valid @RequestBody CastingRequirementBulkRequest request
+    ) {
+        return ResponseEntity.ok().body(castingRequirementService.updateCastingRequirement(requirementId, request));
+    }
+
+    @Operation(summary = "DELETE Casting Requirement", security = @SecurityRequirement(name = "bearerAuth"))
+    @DeleteMapping(AppConstants.CASTING_REQUIREMENT_URL + "/{requirementId}")
+    public ResponseEntity<Void> deleteCastingRequirement(@PathVariable UUID requirementId) {
+        castingRequirementService.deleteCastingRequirement(requirementId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }

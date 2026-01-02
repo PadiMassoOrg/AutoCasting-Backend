@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.castings.mapper;
 
 import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.model.*;
@@ -107,7 +108,7 @@ public class CastingMapper {
     }
 
     // =========================
-    // Sub Entities
+    // Basic Info
     // =========================
     public CastingBasicInfoResponse toBasicInfoResponse(CastingBasicInfoEntity entity) {
         if (entity == null) return null;
@@ -132,6 +133,9 @@ public class CastingMapper {
         );
     }
 
+    // =========================
+    // Roles
+    // =========================
     public CastingRolesSectionResponse toRolesSectionResponsePublic(CastingRolesSectionEntity entity) {
         if (entity == null) return null;
 
@@ -220,6 +224,9 @@ public class CastingMapper {
         );
     }
 
+    // =========================
+    // Requirements
+    // =========================
     public CastingRequirementsSectionResponse toRequirementsSectionResponsePublic(CastingRequirementsSectionEntity entity) {
         if (entity == null) return null;
 
@@ -230,7 +237,7 @@ public class CastingMapper {
                 ? List.of()
                 : entity.getRequirements().stream()
                 .filter(r -> !isSoftDeleted(r.isDeleted()))
-                .map(this::toActingRequirementResponse)
+                .map(this::toRequirementResponse)
                 .toList();
 
         return new CastingRequirementsSectionResponse(
@@ -240,7 +247,7 @@ public class CastingMapper {
         );
     }
 
-    private CastingRequirementResponse toActingRequirementResponse(CastingRequirementEntity entity) {
+    public CastingRequirementResponse toRequirementResponse(CastingRequirementEntity entity) {
         if (entity == null) return null;
 
         UUID castingRoleId =
@@ -255,6 +262,25 @@ public class CastingMapper {
         );
     }
 
+    public CastingRequirementCardResponse toRequirementCardResponse(CastingRequirementEntity entity) {
+        if (entity == null) return null;
+
+        var base = toRequirementResponse(entity);
+        var roleName = entity.getCastingRole() != null ? entity.getCastingRole().getRoleName() : null;
+
+        return new CastingRequirementCardResponse(
+            base.id(),
+            base.roleId(),
+            roleName,
+            base.requiresAudio(),
+            base.requiresVideo(),
+            base.description()
+        );
+    }
+
+    // =========================
+    // Remuneration
+    // =========================
     public CastingRemunerationResponse toRemunerationResponse(CastingRemunerationEntity entity) {
         if (entity == null) return null;
 
