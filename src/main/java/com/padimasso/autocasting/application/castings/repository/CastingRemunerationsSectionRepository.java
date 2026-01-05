@@ -5,5 +5,5 @@ import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 
 import java.util.UUID;
 
-public interface CastingRemunerationRepository extends SoftDeleteRepository<CastingRemunerationEntity, UUID> {
+public interface CastingRemunerationsSectionRepository extends SoftDeleteRepository<CastingRemunerationEntity, UUID> {
 }

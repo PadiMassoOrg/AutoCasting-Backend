@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFil
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingRoleCharacteristicsEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
@@ -50,7 +51,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     public CastingRoleResponse createCastingRole(CastingRoleRequest request) {
         CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(request.rolesSectionId())
-            .orElseThrow(() -> new IllegalArgumentException("castings.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
         Set<UUID> professionIds = request.professionIds();
         var foundProfessions = new HashSet<>(professionRepository.findAllByIdIn(professionIds));
         var foundRoleType = roleTypeOptionRepository.findById(request.roleTypeId())
@@ -126,6 +127,13 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         newRole.setRemuneration(newRemuneration);
 
         return castingMapper.toRoleResponse(castingRoleRepository.save(newRole));
+    }
+
+    @Override
+    public CastingRolesSectionResponse getBySectionId(UUID sectionId) {
+        CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(sectionId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+        return castingMapper.toRolesSectionResponsePublic(foundSection);
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingRequire
 import com.padimasso.autocasting.application.castings.dto.request.CastingRequirementBulkRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRequirementResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,4 +18,6 @@ public interface CastingRequirementService {
     CastingRequirementResponse updateCastingRequirement(UUID requirementId, CastingRequirementBulkRequest request);
 
     void deleteCastingRequirement(UUID requirementId);
+
+    CastingRequirementsSectionResponse getBySectionId(UUID sectionId);
 }

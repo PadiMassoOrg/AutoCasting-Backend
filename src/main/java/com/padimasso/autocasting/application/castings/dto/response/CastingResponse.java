@@ -1,5 +1,9 @@
 package com.padimasso.autocasting.application.castings.dto.response;
 
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingBasicInfoResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRemunerationsSectionResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
 import java.util.UUID;
@@ -11,6 +15,6 @@ public record CastingResponse(
     CastingBasicInfoResponse basicInfoSection,
     CastingRolesSectionResponse rolesSection,
     CastingRequirementsSectionResponse requirementsSection,
-    CastingRemunerationResponse remunerationSection
+    CastingRemunerationsSectionResponse remunerationSection
 ) {
 }

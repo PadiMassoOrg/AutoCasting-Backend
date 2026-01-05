@@ -4,8 +4,10 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingRequire
 import com.padimasso.autocasting.application.castings.dto.request.CastingRequirementBulkRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRequirementResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingRequirementEntity;
+import com.padimasso.autocasting.application.castings.model.CastingRequirementsSectionEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRequirementRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRequirementsSectionRepository;
@@ -29,10 +31,17 @@ import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 @RequiredArgsConstructor
 public class CastingRequirementServiceImpl implements CastingRequirementService {
 
-    private final CastingRequirementRepository requirementRepository;
     private final CastingRequirementsSectionRepository requirementsSectionRepository;
+    private final CastingRequirementRepository requirementRepository;
     private final CastingRoleRepository castingRoleRepository;
     private final CastingMapper castingMapper;
+
+    @Override
+    public CastingRequirementsSectionResponse getBySectionId(UUID sectionId) {
+        CastingRequirementsSectionEntity foundSection = requirementsSectionRepository.findById(sectionId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+        return castingMapper.toRequirementsSectionResponsePublic(foundSection);
+    }
 
     @Override
     @Transactional

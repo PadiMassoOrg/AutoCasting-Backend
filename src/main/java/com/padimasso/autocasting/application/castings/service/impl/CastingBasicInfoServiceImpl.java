@@ -1,7 +1,7 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.castings.dto.request.CastingBasicInfoPatchRequest;
-import com.padimasso.autocasting.application.castings.dto.response.CastingBasicInfoResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingBasicInfoResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingBasicInfoEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingBasicInfoRepository;
@@ -14,6 +14,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -23,6 +25,13 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
     private final ProjectTypeOptionRepository projectTypeOptionRepository;
     private final CastingModalityOptionRepository castingModalityOptionRepository;
     private final CastingMapper castingMapper;
+
+    @Override
+    public CastingBasicInfoResponse getBySectionId(UUID sectionId) {
+        CastingBasicInfoEntity foundSection = castingBasicInfoRepository.findById(sectionId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+        return castingMapper.toBasicInfoResponse(foundSection);
+    }
 
     @Override
     @Transactional

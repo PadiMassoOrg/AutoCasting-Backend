@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFil
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.config.AppConstants.CASTING_ROLE_URL;
+
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
@@ -26,8 +29,14 @@ public class CastingRoleController {
 
     private final CastingRoleService castingRoleService;
 
+    @Operation(summary = "GET Roles Section by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping(CASTING_ROLE_URL + "/{sectionId}")
+    public ResponseEntity<CastingRolesSectionResponse> getSectionRolesById(@PathVariable UUID sectionId) {
+        return ResponseEntity.ok().body(castingRoleService.getBySectionId(sectionId));
+    }
+
     @Operation(summary = "GET Roles by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(AppConstants.CASTING_ROLE_URL + "/{sectionId}")
+    @GetMapping(AppConstants.CASTING_ROLE_ROLES_URL + "/{sectionId}")
     public ResponseEntity<List<CastingRoleEmployerCardResponse>> getRolesBySectionId(
         @PathVariable UUID sectionId,
         @RequestParam(defaultValue = "0") int page,

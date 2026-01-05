@@ -5,6 +5,10 @@ import com.padimasso.autocasting.application.castings.dto.response.card.CastingC
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingBasicInfoResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRemunerationsSectionResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
@@ -283,25 +287,32 @@ public class CastingMapper {
     // =========================
     // Remuneration
     // =========================
-    public CastingRemunerationResponse toRemunerationResponse(CastingRemunerationEntity entity) {
+    public CastingRemunerationsSectionResponse toRemunerationsSectionResponse(CastingRemunerationEntity entity) {
+        return toRemunerationsSectionResponse(entity, List.of());
+    }
+
+    public CastingRemunerationsSectionResponse toRemunerationsSectionResponse(
+        CastingRemunerationEntity entity,
+        List<CastingRoleRemunerationRowResponse> remunerations
+    ) {
         if (entity == null) return null;
 
         SiteMetadataObject sectionStatus = mapToSiteMetadataObject(entity.getSectionStatus());
         SiteMetadataObject compensationType = mapToSiteMetadataObject(entity.getCompensationType());
 
-        return new CastingRemunerationResponse(
+        return new CastingRemunerationsSectionResponse(
             entity.getId(),
             sectionStatus,
             compensationType,
             entity.isPaySameForAllRoles(),
-            List.of()
+            remunerations == null ? List.of() : remunerations
         );
     }
 
-    public CastingRemunerationResponse toRemunerationResponsePublic(CastingRemunerationEntity entity) {
+    public CastingRemunerationsSectionResponse toRemunerationResponsePublic(CastingRemunerationEntity entity) {
         if (entity == null) return null;
         if (isSoftDeleted(entity.isDeleted())) return null;
-        return toRemunerationResponse(entity);
+        return toRemunerationsSectionResponse(entity, List.of());
     }
 
     public CastingRoleRemunerationResponse toRoleRemunerationResponse(CastingRoleRemunerationEntity entity) {
@@ -316,6 +327,27 @@ public class CastingMapper {
             mapToSiteMetadataObject(entity.getCurrency()),
             entity.getAmount(),
             entity.getNotes()
+        );
+    }
+
+    public CastingRoleRemunerationRowResponse toRoleRemunerationRowResponse(CastingRoleRemunerationEntity rr) {
+        if (rr == null) return null;
+        if (isSoftDeleted(rr.isDeleted())) return null;
+
+        var base = toRoleRemunerationResponse(rr);
+        if (base == null) return null;
+
+        String roleName = rr.getCastingRole() != null ? rr.getCastingRole().getRoleName() : null;
+
+        return new CastingRoleRemunerationRowResponse(
+            base.id(),
+            base.castingRoleId(),
+            roleName,
+            base.isComplete(),
+            base.payRateType(),
+            base.currency(),
+            base.amount(),
+            base.notes()
         );
     }
 

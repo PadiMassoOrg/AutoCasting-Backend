@@ -86,9 +86,11 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, AppConstants.CASTING_BASIC_INFO_URL).authenticated()
                     .requestMatchers(HttpMethod.PATCH, AppConstants.CASTING_BASIC_INFO_URL).authenticated()
                     .requestMatchers(HttpMethod.DELETE, AppConstants.CASTING_BASIC_INFO_URL).authenticated()
-                    .requestMatchers(HttpMethod.POST, AppConstants.CASTING_ROLE_URL).authenticated()
-                    .requestMatchers(HttpMethod.PATCH, AppConstants.CASTING_ROLE_URL).authenticated()
-                    .requestMatchers(HttpMethod.DELETE, AppConstants.CASTING_ROLE_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.CASTING_ROLE_ROLES_URL).authenticated()
+                    .requestMatchers(HttpMethod.PATCH, AppConstants.CASTING_ROLE_ROLES_URL).authenticated()
+                    .requestMatchers(HttpMethod.DELETE, AppConstants.CASTING_ROLE_ROLES_URL).authenticated()
+                    //TODO: Add: CASTING_ROLE, CASTING_REQUIREMENT_URL, CASTING_REQUIREMENT_REQUIREMENTS_URL, CASTING_REMUNERATION_URL
+
                     // Serve
                     .requestMatchers("/email/**", "/css/**", "/js/**", "/images/**").permitAll()
                     // Any

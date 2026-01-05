@@ -2,8 +2,12 @@ package com.padimasso.autocasting.application.castings.service.impl;
 
 import com.padimasso.autocasting.application.castings.dto.request.CastingRemunerationPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRemunerationResponse;
+import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRemunerationRowResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRemunerationsSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
+import com.padimasso.autocasting.application.castings.model.CastingRemunerationEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleRemunerationEntity;
+import com.padimasso.autocasting.application.castings.repository.CastingRemunerationsSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRemunerationRepository;
 import com.padimasso.autocasting.application.castings.service.CastingRemunerationService;
 import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
@@ -14,16 +18,34 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class CastingRemunerationServiceImpl implements CastingRemunerationService {
 
+    private final CastingRemunerationsSectionRepository castingRemunerationsSectionRepository;
     private final CastingRoleRemunerationRepository castingRoleRemunerationRepository;
     private final PayRateTypeOptionRepository payRateTypeOptionRepository;
     private final CurrencyOptionRepository currencyOptionRepository;
     private final CastingMapper castingMapper;
+
+    @Override
+    public CastingRemunerationsSectionResponse getBySectionId(UUID sectionId) {
+        CastingRemunerationEntity foundSection = castingRemunerationsSectionRepository.findById(sectionId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+
+        List<CastingRoleRemunerationEntity> entities =
+            castingRoleRemunerationRepository.findAllByRemunerationSectionId(sectionId);
+
+        List<CastingRoleRemunerationRowResponse> rows = entities.stream()
+            .map(castingMapper::toRoleRemunerationRowResponse)
+            .filter(java.util.Objects::nonNull)
+            .toList();
+
+        return castingMapper.toRemunerationsSectionResponse(foundSection, rows);
+    }
 
     @Override
     @Transactional

@@ -33,10 +33,13 @@ public class AppConstants {
     // Employer
     public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
     public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
+    public static final String EMPLOYER_CASTING_URL = BASE_API_URL + "/employer/casting";
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
+    public static final String CASTING_ROLE_ROLES_URL = CASTING_ROLE_URL + "/roles";
     public static final String CASTING_REQUIREMENT_URL = CASTING_DETAILS_URL + "/requirement";
+    public static final String CASTING_REQUIREMENT_REQUIREMENTS_URL = CASTING_REQUIREMENT_URL + "/requirements";
     public static final String CASTING_REMUNERATION_URL = CASTING_DETAILS_URL + "/remuneration";
 
     // Legal

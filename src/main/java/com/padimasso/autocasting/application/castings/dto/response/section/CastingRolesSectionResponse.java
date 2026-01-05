@@ -1,5 +1,6 @@
-package com.padimasso.autocasting.application.castings.dto.response;
+package com.padimasso.autocasting.application.castings.dto.response.section;
 
+import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
 import java.util.List;

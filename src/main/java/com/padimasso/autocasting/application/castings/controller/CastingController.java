@@ -2,9 +2,8 @@ package com.padimasso.autocasting.application.castings.controller;
 
 import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
-import com.padimasso.autocasting.application.castings.dto.request.CastingBasicInfoPatchRequest;
-import com.padimasso.autocasting.application.castings.dto.response.CastingBasicInfoResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
+import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.service.CastingBasicInfoService;
@@ -16,7 +15,6 @@ import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.CASTING_DETAILS_URL;
-import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTINGS_URL;
+import static com.padimasso.autocasting.config.AppConstants.*;
 
 @RestController
 @RequestMapping
@@ -55,13 +52,12 @@ public class CastingController {
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
     }
 
-    // Basic Info
-    @Operation(summary = "PATCH BasicInfo (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
-    @PatchMapping(AppConstants.CASTING_BASIC_INFO_URL)
-    public ResponseEntity<CastingBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody CastingBasicInfoPatchRequest request) {
-        return ResponseEntity.ok(castingBasicInfoService.patchCastingBasicInfo(request));
+    @Operation(summary = "Ver detalles del Casting para Employer", description = "Obtiene información del Casting por slug para un Employer", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}")
+    public ResponseEntity<EmployerCastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getDetailsForEmployerBySlug(slug));
     }
-    
+
     // Casting Database
     @Operation(summary = "Listado público de Roles (Casting Database)", description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database.")
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)

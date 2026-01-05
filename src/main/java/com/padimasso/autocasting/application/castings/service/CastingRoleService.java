@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFil
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -17,4 +18,6 @@ public interface CastingRoleService {
     CastingRoleResponse updateCastingRole(UUID roleId, @Valid CastingRoleRequest request);
 
     void deleteCastingRole(UUID roleId);
+
+    CastingRolesSectionResponse getBySectionId(UUID sectionId);
 }
