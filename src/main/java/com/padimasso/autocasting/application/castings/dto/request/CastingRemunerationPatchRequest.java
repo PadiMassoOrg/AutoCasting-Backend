@@ -7,8 +7,8 @@ import java.util.UUID;
 
 public record CastingRemunerationPatchRequest(
     UUID id,
-    JsonNullable<UUID> payRateTypeId,
-    JsonNullable<UUID> currencyId,
+    UUID payRateTypeId,
+    UUID currencyId,
     JsonNullable<BigDecimal> amount,
     JsonNullable<String> notes
 ) {

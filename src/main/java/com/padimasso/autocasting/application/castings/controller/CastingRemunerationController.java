@@ -36,17 +36,13 @@ public class CastingRemunerationController {
 
     @Operation(summary = "PATCH Section Remuneration (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
     @PatchMapping(CASTING_REMUNERATION_URL)
-    public ResponseEntity<CastingRemunerationsSectionResponse> patchSectionRemuneration(
-        @Valid @RequestBody CastingRemunerationsSectionPatchRequest request
-    ) {
+    public ResponseEntity<CastingRemunerationsSectionResponse> patchSectionRemuneration(@Valid @RequestBody CastingRemunerationsSectionPatchRequest request) {
         return ResponseEntity.ok(castingRemunerationService.patchSectionRemuneration(request));
     }
 
     @Operation(summary = "PATCH Role Remuneration (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
     @PatchMapping(CASTING_REMUNERATION_REMUNERATIONS_URL)
-    public ResponseEntity<CastingRoleRemunerationResponse> patchRoleRemuneration(
-        @Valid @RequestBody CastingRemunerationPatchRequest request
-    ) {
+    public ResponseEntity<CastingRoleRemunerationResponse> patchRoleRemuneration(@Valid @RequestBody CastingRemunerationPatchRequest request) {
         return ResponseEntity.ok(castingRemunerationService.patchRoleRemuneration(request));
     }
 
