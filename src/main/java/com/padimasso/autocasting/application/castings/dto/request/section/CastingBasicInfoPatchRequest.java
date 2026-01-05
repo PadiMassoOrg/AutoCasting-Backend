@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.castings.dto.request;
+package com.padimasso.autocasting.application.castings.dto.request.section;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import org.openapitools.jackson.nullable.JsonNullable;

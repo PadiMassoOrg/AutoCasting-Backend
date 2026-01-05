@@ -1,6 +1,6 @@
 package com.padimasso.autocasting.application.castings.controller;
 
-import com.padimasso.autocasting.application.castings.dto.request.CastingBasicInfoPatchRequest;
+import com.padimasso.autocasting.application.castings.dto.request.section.CastingBasicInfoPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingBasicInfoResponse;
 import com.padimasso.autocasting.application.castings.service.CastingBasicInfoService;
 import io.swagger.v3.oas.annotations.Operation;

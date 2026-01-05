@@ -14,9 +14,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.castings.repository.CastingRolesSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
-import com.padimasso.autocasting.application.sitemetadata.model.ColorOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.model.DietOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.model.EthnicityOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.*;
 import com.padimasso.autocasting.application.sitemetadata.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
+import static com.padimasso.autocasting.config.AppConstants.PAY_RATE_TYPE_UNPAID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,19 +44,28 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final EthnicityOptionRepository ethnicityOptionRepository;
     private final ColorOptionRepository colorOptionRepository;
     private final DietOptionRepository dietOptionRepository;
+    private final PayRateTypeOptionRepository payRateTypeOptionRepository;
     private final CastingMapper castingMapper;
 
-    @Transactional
     @Override
+    @Transactional
     public CastingRoleResponse createCastingRole(CastingRoleRequest request) {
+
         CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(request.rolesSectionId())
             .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+
         Set<UUID> professionIds = request.professionIds();
         var foundProfessions = new HashSet<>(professionRepository.findAllByIdIn(professionIds));
-        var foundRoleType = roleTypeOptionRepository.findById(request.roleTypeId())
+
+        RoleTypeOptionEntity foundRoleType = roleTypeOptionRepository.findById(request.roleTypeId())
             .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_role.not_found"));
-        var foundGender = genderOptionRepository.findById(request.genderId())
+
+        GenderOptionEntity foundGender = genderOptionRepository.findById(request.genderId())
             .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
+
+        PayRateTypeOptionEntity payRateTypeUnpaid = payRateTypeOptionRepository
+            .findByStringCode(PAY_RATE_TYPE_UNPAID)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.pay_rate_type.not_found"));
 
         // Required
         var newRole = CastingRoleEntity.builder()
@@ -121,6 +129,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         CastingRoleRemunerationEntity newRemuneration = CastingRoleRemunerationEntity.builder()
             .castingRole(newRole)
+            .payRateType(payRateTypeUnpaid)
             .build();
 
         newRole.setCharacteristics(newCharacteristics);

@@ -304,8 +304,7 @@ public class CastingMapper {
             entity.getId(),
             sectionStatus,
             compensationType,
-            entity.isPaySameForAllRoles(),
-            remunerations == null ? List.of() : remunerations
+            remunerations
         );
     }
 

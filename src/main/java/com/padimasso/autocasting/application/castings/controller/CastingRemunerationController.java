@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.castings.controller;
 
 
 import com.padimasso.autocasting.application.castings.dto.request.CastingRemunerationPatchRequest;
+import com.padimasso.autocasting.application.castings.dto.request.section.CastingRemunerationsSectionPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRemunerationResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRemunerationsSectionResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRemunerationService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+import static com.padimasso.autocasting.config.AppConstants.CASTING_REMUNERATION_REMUNERATIONS_URL;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_REMUNERATION_URL;
 
 @RestController
@@ -32,8 +34,16 @@ public class CastingRemunerationController {
         return ResponseEntity.ok().body(castingRemunerationService.getBySectionId(sectionId));
     }
 
-    @Operation(summary = "PATCH Role Remuneration (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "PATCH Section Remuneration (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
     @PatchMapping(CASTING_REMUNERATION_URL)
+    public ResponseEntity<CastingRemunerationsSectionResponse> patchSectionRemuneration(
+        @Valid @RequestBody CastingRemunerationsSectionPatchRequest request
+    ) {
+        return ResponseEntity.ok(castingRemunerationService.patchSectionRemuneration(request));
+    }
+
+    @Operation(summary = "PATCH Role Remuneration (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping(CASTING_REMUNERATION_REMUNERATIONS_URL)
     public ResponseEntity<CastingRoleRemunerationResponse> patchRoleRemuneration(
         @Valid @RequestBody CastingRemunerationPatchRequest request
     ) {

@@ -56,11 +56,11 @@ public class CastingServiceImpl implements CastingService {
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
 
         CastingSectionStatusOptionEntity notStartedStatus = castingSectionStatusOptionRepository
-            .findByStringCode(SECTION_STATUS_NOT_STARTED)
+            .findByStringCode(CASTING_SECTION_STATUS_NOT_STARTED)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
 
-        CastingCompensationTypeOptionEntity compensationUnpaid = castingCompensationTypeOptionRepository
-            .findByStringCode(COMPENSATION_TYPE_UNPAID)
+        CastingCompensationTypeOptionEntity compensationPaid = castingCompensationTypeOptionRepository
+            .findByStringCode(CASTING_COMPENSATION_TYPE_PAID)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_compensation_type.not_found"));
 
         CastingEntity casting = CastingEntity.builder()
@@ -90,8 +90,7 @@ public class CastingServiceImpl implements CastingService {
         CastingRemunerationEntity remuneration = CastingRemunerationEntity.builder()
             .casting(casting)
             .sectionStatus(notStartedStatus)
-            .compensationType(compensationUnpaid)
-            .paySameForAllRoles(true)
+            .compensationType(compensationPaid)
             .build();
         castingRemunerationsSectionRepository.save(remuneration);
 
@@ -128,8 +127,7 @@ public class CastingServiceImpl implements CastingService {
     @Override
     public EmployerCastingResponse getDetailsForEmployerBySlug(String slug) {
         if (slug == null || slug.isBlank()) {
-            // TODO: MEssage
-            throw new IllegalArgumentException("castings.slug.required");
+            throw new IllegalArgumentException("general.slug_required");
         }
 
         var p = castingRepository.findDetailsProjectionBySlug(slug.trim())

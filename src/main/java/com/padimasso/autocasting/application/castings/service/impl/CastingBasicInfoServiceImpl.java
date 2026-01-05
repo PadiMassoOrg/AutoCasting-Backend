@@ -1,6 +1,6 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
-import com.padimasso.autocasting.application.castings.dto.request.CastingBasicInfoPatchRequest;
+import com.padimasso.autocasting.application.castings.dto.request.section.CastingBasicInfoPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingBasicInfoResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingBasicInfoEntity;

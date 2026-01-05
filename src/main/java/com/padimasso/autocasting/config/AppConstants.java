@@ -41,6 +41,7 @@ public class AppConstants {
     public static final String CASTING_REQUIREMENT_URL = CASTING_DETAILS_URL + "/requirement";
     public static final String CASTING_REQUIREMENT_REQUIREMENTS_URL = CASTING_REQUIREMENT_URL + "/requirements";
     public static final String CASTING_REMUNERATION_URL = CASTING_DETAILS_URL + "/remuneration";
+    public static final String CASTING_REMUNERATION_REMUNERATIONS_URL = CASTING_REMUNERATION_URL + "/remunerations";
 
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
@@ -62,8 +63,11 @@ public class AppConstants {
     public static final int MAX_PAGE_SIZE = 20;
     public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
     public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";
-    public static final String SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
-    public static final String COMPENSATION_TYPE_UNPAID = "sitemetadata.compensation_type.unpaid";
+    public static final String CASTING_SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
+    public static final String CASTING_SECTION_STATUS_IN_PROGRESS = "sitemetadata.casting_section_status.in_progress";
+    public static final String CASTING_SECTION_STATUS_COMPLETED = "sitemetadata.casting_section_status.completed";
+    public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
+    public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");
