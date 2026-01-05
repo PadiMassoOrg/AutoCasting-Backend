@@ -27,8 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
-import static com.padimasso.autocasting.config.AppConstants.PAY_RATE_TYPE_UNPAID;
+import static com.padimasso.autocasting.config.AppConstants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +44,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final ColorOptionRepository colorOptionRepository;
     private final DietOptionRepository dietOptionRepository;
     private final PayRateTypeOptionRepository payRateTypeOptionRepository;
+    private final CurrencyOptionRepository currencyOptionRepository;
     private final CastingMapper castingMapper;
 
     @Override
@@ -66,6 +66,10 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         PayRateTypeOptionEntity payRateTypeUnpaid = payRateTypeOptionRepository
             .findByStringCode(PAY_RATE_TYPE_UNPAID)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.pay_rate_type.not_found"));
+
+        CurrencyOptionEntity currencyARS = currencyOptionRepository
+            .findByStringCode(CURRENCY_ARS)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.currency.not_found"));
 
         // Required
         var newRole = CastingRoleEntity.builder()
@@ -130,6 +134,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         CastingRoleRemunerationEntity newRemuneration = CastingRoleRemunerationEntity.builder()
             .castingRole(newRole)
             .payRateType(payRateTypeUnpaid)
+            .currency(currencyARS)
             .build();
 
         newRole.setCharacteristics(newCharacteristics);

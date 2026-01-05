@@ -68,6 +68,7 @@ public class AppConstants {
     public static final String CASTING_SECTION_STATUS_COMPLETED = "sitemetadata.casting_section_status.completed";
     public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
+    public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");
