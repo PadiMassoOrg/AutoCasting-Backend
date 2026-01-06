@@ -1,7 +1,7 @@
 package com.padimasso.autocasting.application.castings.controller;
 
 
-import com.padimasso.autocasting.application.castings.dto.request.CastingRemunerationPatchRequest;
+import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRemunerationPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.request.section.CastingRemunerationsSectionPatchRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRemunerationResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRemunerationsSectionResponse;
@@ -42,7 +42,7 @@ public class CastingRemunerationController {
 
     @Operation(summary = "PATCH Role Remuneration (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
     @PatchMapping(CASTING_REMUNERATION_REMUNERATIONS_URL)
-    public ResponseEntity<CastingRoleRemunerationResponse> patchRoleRemuneration(@Valid @RequestBody CastingRemunerationPatchRequest request) {
+    public ResponseEntity<CastingRoleRemunerationResponse> patchRoleRemuneration(@Valid @RequestBody CastingRoleRemunerationPatchRequest request) {
         return ResponseEntity.ok(castingRemunerationService.patchRoleRemuneration(request));
     }
 

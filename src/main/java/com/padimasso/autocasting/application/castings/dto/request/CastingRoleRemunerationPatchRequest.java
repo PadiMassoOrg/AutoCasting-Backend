@@ -5,7 +5,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record CastingRemunerationPatchRequest(
+public record CastingRoleRemunerationPatchRequest(
     UUID id,
     UUID payRateTypeId,
     UUID currencyId,

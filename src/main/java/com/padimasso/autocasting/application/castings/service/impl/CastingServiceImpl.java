@@ -59,6 +59,10 @@ public class CastingServiceImpl implements CastingService {
             .findByStringCode(CASTING_SECTION_STATUS_NOT_STARTED)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
 
+        CastingSectionStatusOptionEntity completedStatus = castingSectionStatusOptionRepository
+            .findByStringCode(CASTING_SECTION_STATUS_COMPLETED)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
+
         CastingCompensationTypeOptionEntity compensationPaid = castingCompensationTypeOptionRepository
             .findByStringCode(CASTING_COMPENSATION_TYPE_PAID)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_compensation_type.not_found"));
@@ -81,9 +85,12 @@ public class CastingServiceImpl implements CastingService {
             .build();
         castingRolesSectionRepository.save(rolesSection);
 
+        // Status Completed: Since there is no need for evaluation.
+        // 1. Requirements have not null fields on creation.
+        // 2. Not mandatory to have requirements in Section.
         CastingRequirementsSectionEntity acting = CastingRequirementsSectionEntity.builder()
             .casting(casting)
-            .sectionStatus(notStartedStatus)
+            .sectionStatus(completedStatus)
             .build();
         castingActingRepository.save(acting);
 

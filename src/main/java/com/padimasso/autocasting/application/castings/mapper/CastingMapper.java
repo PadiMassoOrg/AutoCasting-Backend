@@ -287,10 +287,6 @@ public class CastingMapper {
     // =========================
     // Remuneration
     // =========================
-    public CastingRemunerationsSectionResponse toRemunerationsSectionResponse(CastingRemunerationEntity entity) {
-        return toRemunerationsSectionResponse(entity, List.of());
-    }
-
     public CastingRemunerationsSectionResponse toRemunerationsSectionResponse(
         CastingRemunerationEntity entity,
         List<CastingRoleRemunerationRowResponse> remunerations
@@ -304,6 +300,7 @@ public class CastingMapper {
             entity.getId(),
             sectionStatus,
             compensationType,
+            entity.getNotes(),
             remunerations
         );
     }

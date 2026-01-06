@@ -10,6 +10,7 @@ public record CastingRemunerationsSectionResponse(
     UUID id,
     SiteMetadataObject sectionStatus,
     SiteMetadataObject compensationType,
+    String notes,
     List<CastingRoleRemunerationRowResponse> remunerations
 ) {
 }

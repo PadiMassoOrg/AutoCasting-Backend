@@ -35,4 +35,7 @@ public class CastingRemunerationEntity extends AuditableEntity {
     @JoinColumn(name = "compensation_type_option_id", nullable = false)
     private CastingCompensationTypeOptionEntity compensationType;
 
+    @Column
+    private String notes;
+
 }
