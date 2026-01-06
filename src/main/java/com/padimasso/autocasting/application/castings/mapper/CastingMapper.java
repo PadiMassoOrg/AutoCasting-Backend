@@ -130,7 +130,7 @@ public class CastingMapper {
             castingModality,
             entity.getCastingModalityText(),
             entity.getApplicationDeadline(),
-            entity.isHasWardrobeFitting(),
+            entity.getHasWardrobeFitting(),
             entity.getWardrobeFittingText(),
             entity.getShootingStartDate(),
             entity.getShootingEndDate(),

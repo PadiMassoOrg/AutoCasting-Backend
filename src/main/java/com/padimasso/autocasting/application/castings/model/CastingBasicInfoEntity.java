@@ -55,8 +55,8 @@ public class CastingBasicInfoEntity extends AuditableEntity {
     @Column
     private LocalDate applicationDeadline;
 
-    @Column(nullable = false)
-    private boolean hasWardrobeFitting;
+    @Column
+    private Boolean hasWardrobeFitting;
 
     @Column
     private String wardrobeFittingText;

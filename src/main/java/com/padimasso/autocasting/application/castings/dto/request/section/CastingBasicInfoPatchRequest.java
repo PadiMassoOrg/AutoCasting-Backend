@@ -14,7 +14,7 @@ public record CastingBasicInfoPatchRequest(
     UUID castingModalityId,
     JsonNullable<String> castingModalityText,
     LocalDate applicationDeadline,
-    Boolean hasWardrobeFitting,
+    JsonNullable<Boolean> hasWardrobeFitting,
     JsonNullable<String> wardrobeFittingText,
     JsonNullable<LocalDate> shootingStartDate,
     JsonNullable<LocalDate> shootingEndDate,
