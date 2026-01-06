@@ -59,6 +59,10 @@ public class CastingServiceImpl implements CastingService {
             .findByStringCode(CASTING_SECTION_STATUS_NOT_STARTED)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
 
+        CastingSectionStatusOptionEntity inProgressStatus = castingSectionStatusOptionRepository
+            .findByStringCode(CASTING_SECTION_STATUS_IN_PROGRESS)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
+
         CastingSectionStatusOptionEntity completedStatus = castingSectionStatusOptionRepository
             .findByStringCode(CASTING_SECTION_STATUS_COMPLETED)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
@@ -81,7 +85,7 @@ public class CastingServiceImpl implements CastingService {
 
         CastingRolesSectionEntity rolesSection = CastingRolesSectionEntity.builder()
             .casting(casting)
-            .sectionStatus(notStartedStatus)
+            .sectionStatus(inProgressStatus)
             .build();
         castingRolesSectionRepository.save(rolesSection);
 

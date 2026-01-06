@@ -45,6 +45,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final DietOptionRepository dietOptionRepository;
     private final PayRateTypeOptionRepository payRateTypeOptionRepository;
     private final CurrencyOptionRepository currencyOptionRepository;
+    private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
     private final CastingMapper castingMapper;
 
     @Override
@@ -71,7 +72,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .findByStringCode(CURRENCY_ARS)
             .orElseThrow(() -> new IllegalStateException("sitemetadata.currency.not_found"));
 
-        // Required
         var newRole = CastingRoleEntity.builder()
             .rolesSection(foundSection)
             .roleName(request.roleName())
@@ -82,7 +82,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .ageMax(request.ageMax())
             .build();
 
-        // Optional
         if (request.description().isPresent()) newRole.setDescription(request.description().orElse(null));
         if (request.skillIds().isPresent()) {
             Set<UUID> skillIds = request.skillIds().get();
@@ -90,7 +89,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             newRole.setSkills(foundSkills);
         }
 
-        // Related Entities
         CastingRoleCharacteristicsEntity newCharacteristics = CastingRoleCharacteristicsEntity.builder()
             .castingRole(newRole)
             .build();
@@ -140,7 +138,13 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         newRole.setCharacteristics(newCharacteristics);
         newRole.setRemuneration(newRemuneration);
 
-        return castingMapper.toRoleResponse(castingRoleRepository.save(newRole));
+        CastingRoleEntity saved = castingRoleRepository.save(newRole);
+
+        if (foundSection.getId() != null) {
+            updateSectionStatus(foundSection.getId());
+        }
+
+        return castingMapper.toRoleResponse(saved);
     }
 
     @Override
@@ -161,7 +165,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        var result = castingRoleRepository.findAll(spec, pageable); // SoftDelete => deleted=false
+        var result = castingRoleRepository.findAll(spec, pageable);
 
         return result.getContent()
             .stream()
@@ -188,7 +192,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         Set<UUID> professionIds = request.professionIds();
         var foundProfessions = new HashSet<>(professionRepository.findAllByIdIn(professionIds));
 
-        // Required
         role.setRoleName(request.roleName());
         role.setRoleType(foundRoleType);
         role.setGender(foundGender);
@@ -196,13 +199,13 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         role.setAgeMax(request.ageMax());
         role.setProfessions(foundProfessions);
 
-        // Optional
         role.setDescription(request.description().orElse(null));
         if (request.skillIds().isPresent()) {
             Set<UUID> skillIds = request.skillIds().get();
             var foundSkills = new HashSet<>(skillRepository.findAllByIdIn(skillIds));
             role.setSkills(foundSkills);
         }
+
         CastingRoleCharacteristicsEntity characteristics = role.getCharacteristics();
         if (characteristics == null) {
             characteristics = CastingRoleCharacteristicsEntity.builder()
@@ -210,6 +213,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
                 .build();
             role.setCharacteristics(characteristics);
         }
+
         CastingRoleRemunerationEntity remuneration = role.getRemuneration();
         if (remuneration == null) {
             remuneration = CastingRoleRemunerationEntity.builder()
@@ -218,7 +222,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             role.setRemuneration(remuneration);
         }
 
-        // Characteristics
         if (request.characteristics().isPresent()) {
             var ch = request.characteristics().get();
 
@@ -276,8 +279,33 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     @Transactional
     public void deleteCastingRole(UUID roleId) {
+        CastingRoleEntity role = castingRoleRepository.findById(roleId)
+            .orElseThrow(() -> new IllegalArgumentException("casting.role.not_found"));
+
+        UUID sectionId = role.getRolesSection() != null ? role.getRolesSection().getId() : null;
+
         castingRoleRepository.deleteById(roleId);
+
+        if (sectionId != null) {
+            updateSectionStatus(sectionId);
+        }
+    }
+
+    private void updateSectionStatus(UUID sectionId) {
+        CastingRolesSectionEntity section = castingRolesSectionRepository.findById(sectionId)
+            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+
+        long activeCount = castingRoleRepository.countByRolesSectionIdAndDeletedFalse(sectionId);
+
+        String nextStatusCode = activeCount >= 1
+            ? CASTING_SECTION_STATUS_COMPLETED
+            : CASTING_SECTION_STATUS_IN_PROGRESS;
+
+        CastingSectionStatusOptionEntity status = castingSectionStatusOptionRepository.findByStringCode(nextStatusCode)
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_section_status.not_found"));
+
+        section.setSectionStatus(status);
+        castingRolesSectionRepository.save(section);
     }
 
 }
-

@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleEntity, UUID> {
+
+    long countByRolesSectionIdAndDeletedFalse(UUID rolesSectionId);
+
     @Override
     @EntityGraph(attributePaths = {
         // Sección y casting padre
