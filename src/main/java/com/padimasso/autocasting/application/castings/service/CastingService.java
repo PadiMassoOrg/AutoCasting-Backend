@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.castings.dto.response.EmployerCasti
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CastingService {
     String createEmptyCasting();
@@ -15,4 +16,6 @@ public interface CastingService {
     List<CastingCardResponse> getMyCastings(EmployerCastingsFilter filter, int page, int size);
 
     EmployerCastingResponse getDetailsForEmployerBySlug(String slug);
+
+    void deleteCasting(UUID castingId);
 }

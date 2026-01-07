@@ -24,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper.mapToSiteMetadataObject;
 import static com.padimasso.autocasting.config.AppConstants.*;
@@ -80,6 +81,7 @@ public class CastingServiceImpl implements CastingService {
         CastingBasicInfoEntity basicInfo = CastingBasicInfoEntity.builder()
             .casting(casting)
             .sectionStatus(notStartedStatus)
+            .hasWardrobeFitting(false)
             .build();
         castingBasicInfoRepository.save(basicInfo);
 
@@ -142,7 +144,7 @@ public class CastingServiceImpl implements CastingService {
         }
 
         var p = castingRepository.findDetailsProjectionBySlug(slug.trim())
-            .orElseThrow(() -> new IllegalArgumentException("castings.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
         return new EmployerCastingResponse(
             p.getId(),
@@ -153,6 +155,15 @@ public class CastingServiceImpl implements CastingService {
             p.getRequirementsSectionId(),
             p.getRemunerationSectionId()
         );
+    }
+
+    @Override
+    @Transactional
+    public void deleteCasting(UUID castingId) {
+        CastingEntity casting = castingRepository.findById(castingId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        castingRepository.deleteById(castingId);
     }
 
     // Public

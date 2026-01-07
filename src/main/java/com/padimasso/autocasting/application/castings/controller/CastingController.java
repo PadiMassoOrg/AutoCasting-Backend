@@ -42,6 +42,19 @@ public class CastingController {
         return ResponseEntity.ok(castingService.createEmptyCasting());
     }
 
+    @Operation(summary = "Ver detalles del Casting para Employer", description = "Obtiene información del Casting por slug para un Employer", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}")
+    public ResponseEntity<EmployerCastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getDetailsForEmployerBySlug(slug));
+    }
+
+    @Operation(summary = "DELETE Casting", security = @SecurityRequirement(name = "bearerAuth"))
+    @DeleteMapping(AppConstants.EMPLOYER_CASTING_URL + "/{castingId}")
+    public ResponseEntity<Void> deleteCastingRole(@PathVariable UUID castingId) {
+        castingService.deleteCasting(castingId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Listado de mis Castings", description = "Permite a un Employer ver sus Castings. CARDS")
     @GetMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<List<CastingCardResponse>> getMyCastingsCards(
@@ -50,12 +63,6 @@ public class CastingController {
     ) {
         var filter = new EmployerCastingsFilter(null);
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
-    }
-
-    @Operation(summary = "Ver detalles del Casting para Employer", description = "Obtiene información del Casting por slug para un Employer", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}")
-    public ResponseEntity<EmployerCastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
-        return ResponseEntity.ok(castingService.getDetailsForEmployerBySlug(slug));
     }
 
     // Casting Database
