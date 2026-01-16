@@ -11,6 +11,11 @@ public record EmployerCastingResponse(
     UUID basicInfoSectionId,
     UUID rolesSectionId,
     UUID requirementsSectionId,
-    UUID remunerationSectionId
+    UUID remunerationSectionId,
+    SiteMetadataObject basicInfoSectionStatus,
+    SiteMetadataObject rolesSectionStatus,
+    SiteMetadataObject requirementsSectionStatus,
+    SiteMetadataObject remunerationSectionStatus,
+    boolean publishable
 ) {
 }

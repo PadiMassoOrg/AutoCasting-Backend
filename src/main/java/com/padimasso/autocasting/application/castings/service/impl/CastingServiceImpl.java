@@ -35,6 +35,7 @@ import static com.padimasso.autocasting.config.AppConstants.*;
 public class CastingServiceImpl implements CastingService {
 
     private static final String CASTING_NOT_FOUND = "castings.not_found";
+    private static final String CASTING_SECTION_NOT_FOUND = "castings.section.not_found";
 
     private final EmployerContext employerContext;
     private final CastingRepository castingRepository;
@@ -146,6 +147,12 @@ public class CastingServiceImpl implements CastingService {
         var p = castingRepository.findDetailsProjectionBySlug(slug.trim())
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
+        boolean publishable =
+            isSectionCompleted(p.getBasicInfoSectionStatus())
+                && isSectionCompleted(p.getRolesSectionStatus())
+                && isSectionCompleted(p.getRequirementsSectionStatus())
+                && isSectionCompleted(p.getRemunerationSectionStatus());
+
         return new EmployerCastingResponse(
             p.getId(),
             p.getDefaultCode(),
@@ -153,7 +160,12 @@ public class CastingServiceImpl implements CastingService {
             p.getBasicInfoSectionId(),
             p.getRolesSectionId(),
             p.getRequirementsSectionId(),
-            p.getRemunerationSectionId()
+            p.getRemunerationSectionId(),
+            mapToSiteMetadataObject(p.getBasicInfoSectionStatus()),
+            mapToSiteMetadataObject(p.getRolesSectionStatus()),
+            mapToSiteMetadataObject(p.getRequirementsSectionStatus()),
+            mapToSiteMetadataObject(p.getRemunerationSectionStatus()),
+            publishable
         );
     }
 
@@ -175,5 +187,12 @@ public class CastingServiceImpl implements CastingService {
 
         return castingMapper.toCastingResponse(foundCasting);
     }
+
+    // Helpers
+    private boolean isSectionCompleted(CastingSectionStatusOptionEntity status) {
+        if (status == null || status.getStringCode() == null) return false;
+        return CASTING_SECTION_STATUS_COMPLETED.equals(status.getStringCode());
+    }
+
 
 }

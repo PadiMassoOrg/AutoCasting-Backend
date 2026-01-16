@@ -24,13 +24,21 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
             bi.id as basicInfoSectionId,
             rs.id as rolesSectionId,
             req.id as requirementsSectionId,
-            rem.id as remunerationSectionId
+            rem.id as remunerationSectionId,
+            biSS as basicInfoSectionStatus,
+            rsSS as rolesSectionStatus,
+            reqSS as requirementsSectionStatus,
+            remSS as remunerationSectionStatus
         from CastingEntity c
             left join c.status s
             left join c.basicInfo bi
+            left join bi.sectionStatus biSS
             left join c.roles rs
+            left join rs.sectionStatus rsSS
             left join c.requirements req
+            left join req.sectionStatus reqSS
             left join c.remuneration rem
+            left join rem.sectionStatus remSS
         where c.defaultCode = :slug
           and c.deleted = false
         """)

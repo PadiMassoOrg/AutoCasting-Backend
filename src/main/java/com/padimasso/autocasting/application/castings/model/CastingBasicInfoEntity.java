@@ -31,7 +31,7 @@ public class CastingBasicInfoEntity extends AuditableEntity {
     @JoinColumn(name = "casting_id", nullable = false, unique = true)
     private CastingEntity casting;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "section_status_option_id")
     private CastingSectionStatusOptionEntity sectionStatus;
 
