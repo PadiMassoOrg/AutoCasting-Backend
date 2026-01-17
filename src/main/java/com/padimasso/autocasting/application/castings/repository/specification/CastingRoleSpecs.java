@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
@@ -56,33 +57,52 @@ public class CastingRoleSpecs {
                 ));
             }
 
-            if (f.genderIdTokens() != null && !f.genderIdTokens().isEmpty()) {
-                Join<CastingRoleEntity, GenderOptionEntity> gender =
-                    root.join("gender", JoinType.LEFT);
-                var in = cb.in(gender.get("stringCode"));
-                f.genderIdTokens().forEach(in::value);
-                predicates.add(in);
+            if (f.genderIdTokens() != null && !f.genderIdTokens().isEmpty() && !containsNullToken(f.genderIdTokens())) {
+                Join<CastingRoleEntity, GenderOptionEntity> gender = root.join("gender", JoinType.LEFT);
+
+                var parsed = parseUuidOrStringCodes(f.genderIdTokens());
+                if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) {
+                    predicates.add(gender.get("id").in(parsed.ids));
+                } else if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) {
+                    predicates.add(gender.get("stringCode").in(parsed.codes));
+                } else if (!parsed.ids.isEmpty()) {
+                    predicates.add(cb.or(
+                        gender.get("id").in(parsed.ids),
+                        gender.get("stringCode").in(parsed.codes)
+                    ));
+                }
             }
 
             Join<CastingRoleEntity, CastingRoleCharacteristicsEntity> characteristics = null;
-            if ((f.ethnicityIdTokens() != null && !f.ethnicityIdTokens().isEmpty())
-                || f.heightMinCm() != null
-                || f.heightMaxCm() != null
-                || f.hairColorIds() != null && !f.hairColorIds().isEmpty()
-                || f.eyeColorIds() != null && !f.eyeColorIds().isEmpty()
-                || f.tattoo() != null
-                || f.passport() != null
-                || f.drivingLicense() != null) {
+            boolean needsCharacteristics =
+                (f.ethnicityIdTokens() != null && !f.ethnicityIdTokens().isEmpty() && !containsNullToken(f.ethnicityIdTokens()))
+                    || f.heightMinCm() != null
+                    || f.heightMaxCm() != null
+                    || (f.hairColorIds() != null && !f.hairColorIds().isEmpty())
+                    || (f.eyeColorIds() != null && !f.eyeColorIds().isEmpty())
+                    || f.tattoo() != null
+                    || f.passport() != null
+                    || f.drivingLicense() != null;
 
+            if (needsCharacteristics) {
                 characteristics = root.join("characteristics", JoinType.LEFT);
             }
 
-            if (characteristics != null && f.ethnicityIdTokens() != null && !f.ethnicityIdTokens().isEmpty()) {
+            if (characteristics != null && f.ethnicityIdTokens() != null && !f.ethnicityIdTokens().isEmpty() && !containsNullToken(f.ethnicityIdTokens())) {
                 Join<CastingRoleCharacteristicsEntity, EthnicityOptionEntity> ethnicity =
                     characteristics.join("ethnicity", JoinType.LEFT);
-                var in = cb.in(ethnicity.get("stringCode"));
-                f.ethnicityIdTokens().forEach(in::value);
-                predicates.add(in);
+
+                var parsed = parseUuidOrStringCodes(f.ethnicityIdTokens());
+                if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) {
+                    predicates.add(ethnicity.get("id").in(parsed.ids));
+                } else if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) {
+                    predicates.add(ethnicity.get("stringCode").in(parsed.codes));
+                } else if (!parsed.ids.isEmpty()) {
+                    predicates.add(cb.or(
+                        ethnicity.get("id").in(parsed.ids),
+                        ethnicity.get("stringCode").in(parsed.codes)
+                    ));
+                }
             }
 
             if (f.professionIds() != null && !f.professionIds().isEmpty()) {
@@ -118,18 +138,15 @@ public class CastingRoleSpecs {
             }
 
             if (characteristics != null && f.tattoo() != null) {
-                var field = characteristics.get("tattoo");
-                predicates.add(cb.or(cb.isNull(field), cb.equal(field, f.tattoo())));
+                predicates.add(cb.equal(characteristics.get("tattoo"), f.tattoo()));
             }
 
             if (characteristics != null && f.passport() != null) {
-                var field = characteristics.get("passport");
-                predicates.add(cb.or(cb.isNull(field), cb.equal(field, f.passport())));
+                predicates.add(cb.equal(characteristics.get("passport"), f.passport()));
             }
 
             if (characteristics != null && f.drivingLicense() != null) {
-                var field = characteristics.get("drivingLicense");
-                predicates.add(cb.or(cb.isNull(field), cb.equal(field, f.drivingLicense())));
+                predicates.add(cb.equal(characteristics.get("drivingLicense"), f.drivingLicense()));
             }
 
             if (f.skillIds() != null && !f.skillIds().isEmpty()) {
@@ -188,4 +205,30 @@ public class CastingRoleSpecs {
         return (base == null) ? next : base.and(next);
     }
 
+    private static boolean containsNullToken(List<String> tokens) {
+        return tokens.stream().filter(Objects::nonNull).anyMatch(t -> "NULL".equalsIgnoreCase(t.trim()));
+    }
+
+    private static ParsedTokens parseUuidOrStringCodes(List<String> tokens) {
+        List<UUID> ids = new ArrayList<>();
+        List<String> codes = new ArrayList<>();
+
+        for (String raw : tokens) {
+            if (raw == null) continue;
+            String t = raw.trim();
+            if (t.isEmpty()) continue;
+            if ("NULL".equalsIgnoreCase(t)) continue;
+
+            try {
+                ids.add(UUID.fromString(t));
+            } catch (IllegalArgumentException ex) {
+                codes.add(t);
+            }
+        }
+
+        return new ParsedTokens(ids, codes);
+    }
+
+    private record ParsedTokens(List<UUID> ids, List<String> codes) {
+    }
 }
