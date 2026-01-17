@@ -193,6 +193,4 @@ public class CastingServiceImpl implements CastingService {
         if (status == null || status.getStringCode() == null) return false;
         return CASTING_SECTION_STATUS_COMPLETED.equals(status.getStringCode());
     }
-
-
 }
