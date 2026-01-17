@@ -18,4 +18,6 @@ public interface CastingService {
     EmployerCastingResponse getDetailsForEmployerBySlug(String slug);
 
     void deleteCasting(UUID castingId);
+
+    EmployerCastingResponse publishCasting(UUID castingId);
 }

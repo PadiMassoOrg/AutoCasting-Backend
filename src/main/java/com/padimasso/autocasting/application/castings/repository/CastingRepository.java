@@ -1,13 +1,16 @@
 package com.padimasso.autocasting.application.castings.repository;
 
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
+import com.padimasso.autocasting.application.castings.repository.projection.CastingPublishGateProjection;
 import com.padimasso.autocasting.application.castings.repository.projection.EmployerCastingDetailsProjection;
+import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,6 +48,51 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     Optional<EmployerCastingDetailsProjection> findDetailsProjectionBySlug(@Param("slug") String slug);
 
     Optional<CastingEntity> findByDefaultCode(String slug);
+
+    // Casting Statuses
+    @Query("""
+        select
+            s.stringCode as castingStatusCode,
+            biSS.stringCode as basicInfoStatusCode,
+            rsSS.stringCode as rolesStatusCode,
+            reqSS.stringCode as requirementsStatusCode,
+            remSS.stringCode as remunerationStatusCode,
+            bi.applicationDeadline as applicationDeadline
+        from CastingEntity c
+            join c.status s
+            left join c.basicInfo bi
+            left join bi.sectionStatus biSS
+            left join c.roles rs
+            left join rs.sectionStatus rsSS
+            left join c.requirements req
+            left join req.sectionStatus reqSS
+            left join c.remuneration rem
+            left join rem.sectionStatus remSS
+        where c.id = :castingId
+          and c.employerProfile.id = :employerProfileId
+          and c.deleted = false
+        """)
+    Optional<CastingPublishGateProjection> findPublishGateForEmployer(
+        @Param("castingId") UUID castingId,
+        @Param("employerProfileId") UUID employerProfileId
+    );
+
+    @Modifying
+    @Query("""
+        update CastingEntity c
+           set c.status = :publishedStatus
+         where c.id = :castingId
+           and c.employerProfile.id = :employerProfileId
+           and c.deleted = false
+           and (c.status.stringCode = :draftCode or c.status.stringCode = :pausedCode)
+        """)
+    int publishIfAllowed(
+        @Param("castingId") UUID castingId,
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("publishedStatus") CastingStatusOptionEntity publishedStatus,
+        @Param("draftCode") String draftCode,
+        @Param("pausedCode") String pausedCode
+    );
 
     @Override
     @EntityGraph(attributePaths = {

@@ -59,13 +59,19 @@ public class AppConstants {
     public static final String INSTA_URL = "instagram.com";
     public static final String LINKEDIN_URL = "linkedin.com";
 
-    // SiteMetadata & Internal Usage:
+    // Internal Usage:
     public static final int MAX_PAGE_SIZE = 20;
+    // Casting
     public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
     public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";
+    public static final String CASTING_STATUS_CLOSED = "sitemetadata.casting_status.closed";
+    public static final String CASTING_STATUS_PAUSED = "sitemetadata.casting_status.paused";
+    public static final String CASTING_STATUS_ARCHIVED = "sitemetadata.casting_status.archived";
+    // Section
     public static final String CASTING_SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
     public static final String CASTING_SECTION_STATUS_IN_PROGRESS = "sitemetadata.casting_section_status.in_progress";
     public static final String CASTING_SECTION_STATUS_COMPLETED = "sitemetadata.casting_section_status.completed";
+    // Casting SiteMetadata
     public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
     public static final String CASTING_COMPENSATION_TYPE_COLLABORATIVE = "sitemetadata.compensation_type.collaborative";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";

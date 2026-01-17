@@ -48,8 +48,8 @@ public class CastingServiceImpl implements CastingService {
     private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
     private final CastingMapper castingMapper;
 
-    @Transactional
     @Override
+    @Transactional
     public String createEmptyCasting() {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
 
@@ -176,6 +176,89 @@ public class CastingServiceImpl implements CastingService {
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
         castingRepository.deleteById(castingId);
+    }
+
+    // Casting Statuses
+    @Override
+    @Transactional
+    public EmployerCastingResponse publishCasting(UUID castingId) {
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        // 1) Gate ultra-liviano: ownership + estados + deadline + status actual
+        var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        // 2) Validar "publishable" (secciones completas)
+        boolean publishable =
+            isCompletedCode(gate.getBasicInfoStatusCode())
+                && isCompletedCode(gate.getRolesStatusCode())
+                && isCompletedCode(gate.getRequirementsStatusCode())
+                && isCompletedCode(gate.getRemunerationStatusCode());
+
+        if (!publishable) {
+            throw new IllegalStateException("castings.not_publishable");
+        }
+
+        // 3) Validar deadline (defensa server-side)
+        //    Si deadline es null, igual no debería llegar acá (basicInfo no sería COMPLETED),
+        //    pero lo defendemos.
+        var deadline = gate.getApplicationDeadline();
+        if (deadline == null) {
+            throw new IllegalStateException("castings.deadline_required");
+        }
+
+        var today = java.time.LocalDate.now();
+        if (deadline.isBefore(today)) {
+            // opcional: podrías también setear CLOSED automáticamente acá en el futuro
+            throw new IllegalStateException("castings.deadline_passed");
+        }
+
+        // 4) Validar transición por status actual
+        String currentStatusCode = gate.getCastingStatusCode();
+        boolean canPublishNow =
+            CASTING_STATUS_DRAFT.equals(currentStatusCode) || CASTING_STATUS_PAUSED.equals(currentStatusCode);
+
+        if (!canPublishNow) {
+            // bloquea PUBLISHED, CLOSED, ARCHIVED
+            throw new IllegalStateException("castings.invalid_status_transition");
+        }
+
+        // 5) Resolver status PUBLISHED (por sitemetadata)
+        CastingStatusOptionEntity published = castingStatusOptionRepository
+            .findByStringCode(CASTING_STATUS_PUBLISHED)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+
+        // 6) Update condicionado (evita carreras y evita cargar CastingEntity)
+        int updated = castingRepository.publishIfAllowed(
+            castingId,
+            employerProfileId,
+            published,
+            CASTING_STATUS_DRAFT,
+            CASTING_STATUS_PAUSED
+        );
+
+        if (updated == 0) {
+            // alguien lo cambió entre gate y update, o no pertenece al employer
+            throw new IllegalStateException("castings.invalid_status_transition");
+        }
+
+        // 7) Responder datos actualizados
+        // Ideal: si tu frontend está en /{slug}, puedes devolver EmployerCastingResponse por slug,
+        // pero acá no lo tenemos sin otra query. Dos opciones:
+        // A) devolver 204 (más eficiente) y el front refetchea.
+        // B) devolver response recargando por id/slug.
+        //
+        // Como tú ya trabajas con slug y dashboard, recomiendo B por DX (una query extra aceptable).
+        // Si quieres CERO queries extra, cambia el controller a 204.
+        CastingEntity casting = castingRepository.findById(castingId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+    }
+
+    private boolean isCompletedCode(String code) {
+        return CASTING_SECTION_STATUS_COMPLETED.equals(code);
     }
 
     // Public

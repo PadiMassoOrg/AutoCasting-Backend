@@ -65,6 +65,17 @@ public class CastingController {
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
     }
 
+    // Casting Statuses:
+    @Operation(
+        summary = "PUBLISH Casting",
+        description = "Publica un casting si pertenece al employer, es publishable y su deadline no está vencida.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/publish")
+    public ResponseEntity<EmployerCastingResponse> publishCasting(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.publishCasting(castingId));
+    }
+
     // Casting Database
     @Operation(summary = "Listado público de Roles (Casting Database)", description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database.")
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)

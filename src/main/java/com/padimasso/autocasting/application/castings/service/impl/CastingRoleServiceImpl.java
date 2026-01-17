@@ -14,6 +14,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.castings.repository.CastingRolesSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
+import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.*;
 import com.padimasso.autocasting.application.sitemetadata.repository.*;
 import jakarta.transaction.Transactional;
@@ -46,6 +47,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final PayRateTypeOptionRepository payRateTypeOptionRepository;
     private final CurrencyOptionRepository currencyOptionRepository;
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
+    private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
     private final CastingMapper castingMapper;
 
     @Override
@@ -142,6 +144,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         if (foundSection.getId() != null) {
             updateSectionStatus(foundSection.getId());
+        }
+
+        UUID castingId = foundSection.getCasting() != null ? foundSection.getCasting().getId() : null;
+        if (castingId != null) {
+            remunerationSectionStatusService.recomputeForCasting(castingId);
         }
 
         return castingMapper.toRoleResponse(saved);
@@ -284,10 +291,19 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         UUID sectionId = role.getRolesSection() != null ? role.getRolesSection().getId() : null;
 
+        UUID castingId = null;
+        if (role.getRolesSection() != null && role.getRolesSection().getCasting() != null) {
+            castingId = role.getRolesSection().getCasting().getId();
+        }
+
         castingRoleRepository.deleteById(roleId);
 
         if (sectionId != null) {
             updateSectionStatus(sectionId);
+        }
+
+        if (castingId != null) {
+            remunerationSectionStatusService.recomputeForCasting(castingId);
         }
     }
 

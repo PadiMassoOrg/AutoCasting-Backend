@@ -11,6 +11,7 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleRemunerat
 import com.padimasso.autocasting.application.castings.repository.CastingRemunerationsSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRemunerationRepository;
 import com.padimasso.autocasting.application.castings.service.CastingRemunerationService;
+import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
@@ -38,6 +39,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
     private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
     private final PayRateTypeOptionRepository payRateTypeOptionRepository;
     private final CurrencyOptionRepository currencyOptionRepository;
+    private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
     private final CastingMapper castingMapper;
 
     @Override
@@ -79,6 +81,12 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         }
 
         updateSectionStatus(saved.getId());
+
+        UUID castingId = saved.getCasting() != null ? saved.getCasting().getId() : null;
+        if (castingId != null) {
+            remunerationSectionStatusService.recomputeForCasting(castingId);
+        }
+
         return getBySectionId(saved.getId());
     }
 
@@ -128,6 +136,16 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         UUID sectionId = section != null ? section.getId() : null;
         if (sectionId != null) {
             updateSectionStatus(sectionId);
+        }
+
+        UUID castingId = null;
+        if (saved.getCastingRole() != null
+            && saved.getCastingRole().getRolesSection() != null
+            && saved.getCastingRole().getRolesSection().getCasting() != null) {
+            castingId = saved.getCastingRole().getRolesSection().getCasting().getId();
+        }
+        if (castingId != null) {
+            remunerationSectionStatusService.recomputeForCasting(castingId);
         }
 
         return castingMapper.toRoleRemunerationResponse(saved);
@@ -233,5 +251,4 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         section.setSectionStatus(status);
         castingRemunerationsSectionRepository.save(section);
     }
-
 }
