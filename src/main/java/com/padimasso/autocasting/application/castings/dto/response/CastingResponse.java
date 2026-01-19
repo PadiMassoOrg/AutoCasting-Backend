@@ -12,6 +12,7 @@ public record CastingResponse(
     UUID id,
     String defaultCode,
     SiteMetadataObject castingStatus,
+    CastingEmployerInfoResponse employerInfo,
     CastingBasicInfoResponse basicInfoSection,
     CastingRolesSectionResponse rolesSection,
     CastingRequirementsSectionResponse requirementsSection,

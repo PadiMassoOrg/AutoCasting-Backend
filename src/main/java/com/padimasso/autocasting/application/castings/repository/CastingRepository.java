@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,6 +50,11 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
 
     @EntityGraph(attributePaths = {
         "status",
+
+        "employerProfile",
+        "employerProfile.basicInfo",
+        "employerProfile.basicInfo.companyType",
+
         "basicInfo",
         "basicInfo.sectionStatus",
         "basicInfo.projectType",
@@ -102,6 +108,18 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     Optional<CastingPublishGateProjection> findPublishGateForEmployer(
         @Param("castingId") UUID castingId,
         @Param("employerProfileId") UUID employerProfileId
+    );
+
+    @Query("""
+            select count(c)
+            from CastingEntity c
+            where c.employerProfile.id = :employerProfileId
+              and c.status.stringCode in :statusCodes
+              and c.deleted = false
+        """)
+    long countPublicCastingsByEmployerProfileId(
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("statusCodes") List<String> statusCodes
     );
 
     @Modifying

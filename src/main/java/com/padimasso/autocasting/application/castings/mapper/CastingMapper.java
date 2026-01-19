@@ -10,12 +10,15 @@ import com.padimasso.autocasting.application.castings.dto.response.section.Casti
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.castings.model.*;
+import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -26,15 +29,38 @@ import static com.padimasso.autocasting.application.talent.mapper.TalentProfileM
 @RequiredArgsConstructor
 public class CastingMapper {
 
-    public CastingResponse toCastingResponse(CastingEntity casting) {
+    public CastingResponse toCastingResponse(CastingEntity casting, CastingEmployerInfoResponse employerInfo) {
         return new CastingResponse(
             casting.getId(),
             casting.getDefaultCode(),
             mapToSiteMetadataObject(casting.getStatus()),
+            employerInfo,
             toBasicInfoResponse(casting.getBasicInfo()),
             toRolesSectionResponsePublic(casting.getRoles()),
             toRequirementsSectionResponsePublic(casting.getRequirements()),
             toRemunerationResponsePublic(casting)
+        );
+    }
+
+    public CastingEmployerInfoResponse toCastingEmployerInfoResponse(
+        EmployerProfileEntity employerProfile,
+        Long totalCastings,
+        LocalDate memberSince
+    ) {
+        if (employerProfile == null) return null;
+
+        EmployerBasicInfoEntity bi = employerProfile.getBasicInfo();
+
+        return new CastingEmployerInfoResponse(
+            employerProfile.getId(),
+            bi != null ? bi.getCompanyName() : null,
+            mapToSiteMetadataObject(bi != null ? bi.getCompanyType() : null),
+            bi != null ? bi.getImageUrl() : null,
+            bi != null ? TalentProfileMapper.toSocialMediaResponse(
+                bi.getSocialMediaLinks() == null ? List.of() : bi.getSocialMediaLinks().stream().toList()
+            ) : null,
+            totalCastings,
+            memberSince
         );
     }
 

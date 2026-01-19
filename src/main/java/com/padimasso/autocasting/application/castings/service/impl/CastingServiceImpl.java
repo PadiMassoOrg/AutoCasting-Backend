@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.castings.service.impl;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
+import com.padimasso.autocasting.application.castings.dto.response.CastingEmployerInfoResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -268,7 +270,28 @@ public class CastingServiceImpl implements CastingService {
             .findPublicDetailsByDefaultCode(slug)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
-        return castingMapper.toCastingResponse(foundCasting);
+        UUID employerProfileId = foundCasting.getEmployerProfile() != null ? foundCasting.getEmployerProfile().getId() : null;
+
+        Long totalCastings = null;
+        if (employerProfileId != null) {
+            totalCastings = castingRepository.countPublicCastingsByEmployerProfileId(
+                employerProfileId,
+                List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED)
+            );
+        }
+
+        LocalDate memberSince = null;
+        if (foundCasting.getEmployerProfile() != null && foundCasting.getEmployerProfile().getCreatedAt() != null) {
+            memberSince = foundCasting.getEmployerProfile().getCreatedAt().toLocalDate();
+        }
+
+        CastingEmployerInfoResponse employerInfo = castingMapper.toCastingEmployerInfoResponse(
+            foundCasting.getEmployerProfile(),
+            totalCastings,
+            memberSince
+        );
+
+        return castingMapper.toCastingResponse(foundCasting, employerInfo);
     }
 
     // Helpers
