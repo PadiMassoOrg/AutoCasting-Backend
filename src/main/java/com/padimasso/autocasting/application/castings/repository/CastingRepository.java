@@ -47,7 +47,34 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         """)
     Optional<EmployerCastingDetailsProjection> findDetailsProjectionBySlug(@Param("slug") String slug);
 
-    Optional<CastingEntity> findByDefaultCode(String slug);
+    @EntityGraph(attributePaths = {
+        "status",
+        "basicInfo",
+        "basicInfo.sectionStatus",
+        "basicInfo.projectType",
+        "basicInfo.castingModality",
+
+        "roles",
+        "roles.sectionStatus",
+        "roles.roles",
+        "roles.roles.roleType",
+        "roles.roles.gender",
+        "roles.roles.professions",
+        "roles.roles.skills",
+        "roles.roles.remuneration",
+        "roles.roles.remuneration.payRateType",
+        "roles.roles.remuneration.currency",
+
+        "requirements",
+        "requirements.sectionStatus",
+        "requirements.requirements",
+        "requirements.requirements.castingRole",
+
+        "remuneration",
+        "remuneration.sectionStatus",
+        "remuneration.compensationType"
+    })
+    Optional<CastingEntity> findPublicDetailsByDefaultCode(String slug);
 
     // Casting Statuses
     @Query("""
