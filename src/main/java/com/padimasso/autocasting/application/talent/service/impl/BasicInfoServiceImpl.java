@@ -1,7 +1,7 @@
 package com.padimasso.autocasting.application.talent.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.repository.GenderOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.ProfessionRepository;
@@ -47,7 +47,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
         }
         if (req.genderId() != null) {
             GenderOptionEntity gender = genderOptionRepository.findById(req.genderId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
             basicInfo.setGender(gender);
         }
         if (req.birthDate() != null) {

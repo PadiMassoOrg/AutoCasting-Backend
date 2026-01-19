@@ -1,7 +1,7 @@
 package com.padimasso.autocasting.application.talent.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.sitemetadata.repository.ProductionTypeRepository;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
 import com.padimasso.autocasting.application.talent.dto.response.CreditResponse;
@@ -36,7 +36,7 @@ public class CreditServiceImpl implements CreditService {
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
         var foundProductionType = productionTypeRepository.findById(request.productionTypeId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type_not_found"));
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type.not_found"));
 
         var newCredit = CreditEntity.builder()
             .productionType(foundProductionType)
@@ -73,7 +73,7 @@ public class CreditServiceImpl implements CreditService {
 
         if (request.productionTypeId() != null) {
             var prodType = productionTypeRepository.findById(request.productionTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type_not_found"));
+                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type.not_found"));
             credit.setProductionType(prodType);
         }
 

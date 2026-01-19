@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.auth.service;
+package com.padimasso.autocasting.application.auth.context;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;

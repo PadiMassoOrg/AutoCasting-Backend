@@ -21,16 +21,27 @@ public class AppConstants {
     public static final String SITE_METADATA_URL = BASE_API_URL + "/sitemetadata";
     public static final String SITE_METADATA_VERSION_URL = SITE_METADATA_URL + "/version";
 
-    // Profile
+    // Database
+    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent-database";
+    public static final String CASTING_DATABASE_API_URL = BASE_API_URL + "/castings-database";
+
+    // Talent
     public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
-    public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
-    public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent/talent-database";
-
-    // Credit
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
-
-    // Education
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
+
+    // Employer
+    public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
+    public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
+    public static final String EMPLOYER_CASTING_URL = BASE_API_URL + "/employer/casting";
+    public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
+    public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";
+    public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
+    public static final String CASTING_ROLE_ROLES_URL = CASTING_ROLE_URL + "/roles";
+    public static final String CASTING_REQUIREMENT_URL = CASTING_DETAILS_URL + "/requirement";
+    public static final String CASTING_REQUIREMENT_REQUIREMENTS_URL = CASTING_REQUIREMENT_URL + "/requirements";
+    public static final String CASTING_REMUNERATION_URL = CASTING_DETAILS_URL + "/remuneration";
+    public static final String CASTING_REMUNERATION_REMUNERATIONS_URL = CASTING_REMUNERATION_URL + "/remunerations";
 
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
@@ -47,6 +58,24 @@ public class AppConstants {
     public static final String SUPPORT_EMAIL = "support@autocasting.com";
     public static final String INSTA_URL = "instagram.com";
     public static final String LINKEDIN_URL = "linkedin.com";
+
+    // Internal Usage:
+    public static final int MAX_PAGE_SIZE = 20;
+    // Casting
+    public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
+    public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";
+    public static final String CASTING_STATUS_CLOSED = "sitemetadata.casting_status.closed";
+    public static final String CASTING_STATUS_PAUSED = "sitemetadata.casting_status.paused";
+    public static final String CASTING_STATUS_ARCHIVED = "sitemetadata.casting_status.archived";
+    // Section
+    public static final String CASTING_SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
+    public static final String CASTING_SECTION_STATUS_IN_PROGRESS = "sitemetadata.casting_section_status.in_progress";
+    public static final String CASTING_SECTION_STATUS_COMPLETED = "sitemetadata.casting_section_status.completed";
+    // Casting SiteMetadata
+    public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
+    public static final String CASTING_COMPENSATION_TYPE_COLLABORATIVE = "sitemetadata.compensation_type.collaborative";
+    public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
+    public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");

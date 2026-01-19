@@ -1,6 +1,6 @@
 package com.padimasso.autocasting.application.legal.controller;
 
-import com.padimasso.autocasting.application.auth.service.AuthContext;
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.legal.dto.response.LegalDocumentResponse;
 import com.padimasso.autocasting.application.legal.model.LegalDocument;
 import com.padimasso.autocasting.application.legal.model.LegalDocumentType;

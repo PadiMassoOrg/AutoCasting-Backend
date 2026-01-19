@@ -1,0 +1,15 @@
+package com.padimasso.autocasting.application.sitemetadata.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+
+@Entity
+@Table(name = "currency_option")
+@Getter
+@Setter
+@SQLDelete(sql = "UPDATE currency_option SET deleted = true WHERE id = ?")
+public class CurrencyOptionEntity extends SiteMetadataBase {
+}

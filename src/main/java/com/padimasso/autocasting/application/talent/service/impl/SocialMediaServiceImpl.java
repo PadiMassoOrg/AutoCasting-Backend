@@ -1,7 +1,7 @@
 package com.padimasso.autocasting.application.talent.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;

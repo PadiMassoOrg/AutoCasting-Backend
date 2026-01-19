@@ -1,7 +1,6 @@
 package com.padimasso.autocasting.application.employer.service.impl;
 
-import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
+import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.employer.dto.request.EmployerBasicInfoPatchRequest;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerBasicInfoResponse;
 import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Service;
 @SuppressWarnings("unused")
 public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
 
-    private final AuthContext authContext;
+    private final EmployerContext employerContext;
     private final EmployerProfileRepository employerProfileRepository;
     private final EmployerBasicInfoRepository employerBasicInfoRepository;
     private final CompanyTypeOptionRepository companyTypeOptionRepository;
@@ -30,11 +29,15 @@ public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
     @Transactional
     @Override
     public EmployerBasicInfoResponse patchMyBasicInfo(EmployerBasicInfoPatchRequest req) {
-        UserEntity user = authContext.getCurrentUserOrThrow();
-        EmployerProfileEntity profile = employerProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
-        EmployerBasicInfoEntity basicInfo = employerBasicInfoRepository.findByEmployerProfileId(profile.getId())
-            .orElseGet(() -> employerBasicInfoRepository.save(EmployerBasicInfoEntity.builder().employerProfile(profile).build()));
+        var principal = employerContext.getCurrentEmployerOrThrow();
+        EmployerProfileEntity profile = principal.employerProfile();
+        EmployerBasicInfoEntity basicInfo = employerBasicInfoRepository
+                .findByEmployerProfileId(profile.getId())
+                .orElseGet(() -> employerBasicInfoRepository.save(
+                        EmployerBasicInfoEntity.builder()
+                                .employerProfile(profile)
+                                .build()
+                ));
 
         if (req.companyTypeId() != null) {
             CompanyTypeOptionEntity companyTypeEntity = companyTypeOptionRepository.findById(req.companyTypeId())

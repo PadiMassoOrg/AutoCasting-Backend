@@ -1,8 +1,8 @@
 package com.padimasso.autocasting.application.talent.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
-import com.padimasso.autocasting.application.auth.service.AuthContext;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.repository.SkillRepository;
 import com.padimasso.autocasting.application.talent.dto.request.SkillsPatchRequest;
@@ -26,11 +26,11 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 public class TalentProfileServiceImpl implements TalentProfileService {
 
+    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final UserRepository userRepository;
     private final SkillRepository skillRepository;
-    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final CreditRepository creditRepository;
     private final TalentProfileMapper talentProfileMapper;
     private final EducationRepository educationRepository;
@@ -74,7 +74,7 @@ public class TalentProfileServiceImpl implements TalentProfileService {
             }
         }
 
-        return talentProfileMapper.mapToSiteMetadataObjectList(talentProfileRepository.save(foundProfile).getSkills());
+        return TalentProfileMapper.mapToSiteMetadataObjectList(talentProfileRepository.save(foundProfile).getSkills());
     }
 
 }
