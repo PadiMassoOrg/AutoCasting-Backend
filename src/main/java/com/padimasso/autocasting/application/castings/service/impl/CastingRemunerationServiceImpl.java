@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
@@ -64,19 +65,32 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         CastingRemunerationEntity section = castingRemunerationsSectionRepository.findById(request.id())
             .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
 
-        CastingCompensationTypeOptionEntity compensationTypeOption = castingCompensationTypeOptionRepository.findById(request.castingCompensationTypeId())
+        String prevCode = section.getCompensationType() != null ? section.getCompensationType().getStringCode() : null;
+
+        CastingCompensationTypeOptionEntity nextType = castingCompensationTypeOptionRepository
+            .findById(request.castingCompensationTypeId())
             .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_compensation_type.not_found"));
 
-        section.setCompensationType(compensationTypeOption);
+        String nextCode = nextType.getStringCode();
 
-        if (request.notes() != null && request.notes().isPresent()) {
+        boolean typeChanged = !Objects.equals(prevCode, nextCode);
+
+        section.setCompensationType(nextType);
+
+        // Si cambió el tipo, y el cliente no mandó notes explícitamente: limpiarlas
+        if (typeChanged && (request.notes() == null || !request.notes().isPresent())) {
+            section.setNotes(null);
+        } else if (request.notes() != null && request.notes().isPresent()) {
             section.setNotes(request.notes().orElse(null));
         }
 
         CastingRemunerationEntity saved = castingRemunerationsSectionRepository.save(section);
 
-        if (compensationTypeOption.getStringCode() != null
-            && CASTING_COMPENSATION_TYPE_COLLABORATIVE.equals(compensationTypeOption.getStringCode())) {
+        if (typeChanged) {
+            resetRoleRemunerationsOnCompTypeChange(saved.getId());
+        }
+
+        if (CASTING_COMPENSATION_TYPE_COLLABORATIVE.equals(nextCode)) {
             applyCollaborativeDefaults(saved.getId());
         }
 
@@ -123,9 +137,8 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
             remuneration.setNotes(request.notes().orElse(null));
         }
 
-        ensureDefaults(remuneration);
-
         if (isCollaborative) {
+            ensureDefaults(remuneration);
             forceUnpaid(remuneration);
         } else {
             recomputeIsComplete(remuneration);
@@ -170,8 +183,9 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         List<CastingRoleRemunerationEntity> next = active.stream().map(r -> {
             r.setPayRateType(unpaid);
-            if (r.getCurrency() == null) r.setCurrency(ars);
+            r.setCurrency(ars);
             r.setAmount(null);
+            r.setNotes(null);
             r.setComplete(true);
             return r;
         }).toList();
@@ -250,5 +264,33 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         section.setSectionStatus(status);
         castingRemunerationsSectionRepository.save(section);
+    }
+
+    private void resetRoleRemunerationsOnCompTypeChange(UUID sectionId) {
+        List<CastingRoleRemunerationEntity> entities =
+            castingRoleRemunerationRepository.findAllByRemunerationSectionId(sectionId);
+
+        List<CastingRoleRemunerationEntity> active = entities == null
+            ? List.of()
+            : entities.stream().filter(r -> r != null && !r.isDeleted()).toList();
+
+        if (active.isEmpty()) return;
+
+        PayRateTypeOptionEntity unpaid = payRateTypeOptionRepository.findByStringCode(PAY_RATE_TYPE_UNPAID)
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.pay_rate_type.not_found"));
+
+        CurrencyOptionEntity ars = currencyOptionRepository.findByStringCode(CURRENCY_ARS)
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.currency.not_found"));
+
+        List<CastingRoleRemunerationEntity> next = active.stream().map(r -> {
+            r.setNotes(null);
+            r.setAmount(null);
+            r.setPayRateType(unpaid);
+            r.setCurrency(ars);
+            r.setComplete(false);
+            return r;
+        }).toList();
+
+        castingRoleRemunerationRepository.saveAll(next);
     }
 }

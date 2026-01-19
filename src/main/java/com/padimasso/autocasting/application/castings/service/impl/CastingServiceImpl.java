@@ -265,7 +265,7 @@ public class CastingServiceImpl implements CastingService {
     @Override
     public CastingResponse getDetailsBySlug(String slug) {
         CastingEntity foundCasting = castingRepository
-            .findByDefaultCode(slug)
+            .findPublicDetailsByDefaultCode(slug)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
         return castingMapper.toCastingResponse(foundCasting);

@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper.mapToSiteMetadataObject;
@@ -33,7 +34,7 @@ public class CastingMapper {
             toBasicInfoResponse(casting.getBasicInfo()),
             toRolesSectionResponsePublic(casting.getRoles()),
             toRequirementsSectionResponsePublic(casting.getRequirements()),
-            toRemunerationResponsePublic(casting.getRemuneration())
+            toRemunerationResponsePublic(casting)
         );
     }
 
@@ -305,10 +306,24 @@ public class CastingMapper {
         );
     }
 
-    public CastingRemunerationsSectionResponse toRemunerationResponsePublic(CastingRemunerationEntity entity) {
-        if (entity == null) return null;
-        if (isSoftDeleted(entity.isDeleted())) return null;
-        return toRemunerationsSectionResponse(entity, List.of());
+    public CastingRemunerationsSectionResponse toRemunerationResponsePublic(CastingEntity casting) {
+        if (casting == null) return null;
+
+        CastingRemunerationEntity section = casting.getRemuneration();
+        if (section == null) return null;
+        if (isSoftDeleted(section.isDeleted())) return null;
+
+        List<CastingRoleRemunerationRowResponse> rows =
+            casting.getRoles() == null || casting.getRoles().getRoles() == null
+                ? List.of()
+                : casting.getRoles().getRoles().stream()
+                .filter(r -> r != null && !isSoftDeleted(r.isDeleted()))
+                .map(CastingRoleEntity::getRemuneration)
+                .map(this::toRoleRemunerationRowResponse)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return toRemunerationsSectionResponse(section, rows);
     }
 
     public CastingRoleRemunerationResponse toRoleRemunerationResponse(CastingRoleRemunerationEntity entity) {
