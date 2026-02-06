@@ -10,6 +10,7 @@ import com.padimasso.autocasting.application.castings.dto.response.card.CastingC
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.castings.repository.*;
+import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
@@ -21,7 +22,6 @@ import com.padimasso.autocasting.application.sitemetadata.repository.CastingStat
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -119,18 +119,30 @@ public class CastingServiceImpl implements CastingService {
         var employer = employerContext.getCurrentEmployerOrThrow();
         var employerProfileId = employer.employerProfile().getId();
 
+        var orderBy = incomingFilter.orderBy() != null
+            ? incomingFilter.orderBy()
+            : EmployerCastingsOrderBy.CREATION_DATE_DESC;
+
         var effectiveFilter = new EmployerCastingsFilter(
-            employerProfileId
-            // TODO: Filtering coming from UI
+            employerProfileId,
+            incomingFilter.projectTypeIdTokens(),
+            incomingFilter.statusIdToken(),
+            orderBy
         );
 
         var spec = CastingSpecs.fromFilter(effectiveFilter);
 
-        var pageable = PageRequest.of(
-            page,
-            Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
-            Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
-        );
+        int ps = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+
+        var pageable = orderBy.isDeadlineOrder()
+            ? PageRequest.of(page, ps)
+            : PageRequest.of(page, ps, orderBy.toSort());
+
+        if (orderBy == EmployerCastingsOrderBy.DEADLINE_ASC) {
+            spec = spec.and(CastingSpecs.orderByDeadlineAscNullsLast());
+        } else if (orderBy == EmployerCastingsOrderBy.DEADLINE_DESC) {
+            spec = spec.and(CastingSpecs.orderByDeadlineDescNullsLast());
+        }
 
         var result = castingRepository.findAll(spec, pageable);
 
