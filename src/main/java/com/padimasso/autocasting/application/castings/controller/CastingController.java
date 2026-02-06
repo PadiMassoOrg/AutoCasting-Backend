@@ -60,12 +60,12 @@ public class CastingController {
     @GetMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<List<CastingCardResponse>> getMyCastingsCards(
         @RequestParam(required = false, name = "projectTypeId") List<String> projectTypeIdTokens,
-        @RequestParam(required = false, name = "statusId") String statusIdToken,
+        @RequestParam(required = false, name = "statusId") List<String> statusIdTokens,
         @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingsOrderBy orderBy,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        var filter = new EmployerCastingsFilter(null, projectTypeIdTokens, statusIdToken, orderBy);
+        var filter = new EmployerCastingsFilter(null, projectTypeIdTokens, statusIdTokens, orderBy);
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
     }
 

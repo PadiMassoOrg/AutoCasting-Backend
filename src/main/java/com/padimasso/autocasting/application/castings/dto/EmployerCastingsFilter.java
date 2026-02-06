@@ -8,7 +8,7 @@ import java.util.UUID;
 public record EmployerCastingsFilter(
     UUID employerProfileId,
     List<String> projectTypeIdTokens,
-    String statusIdToken,
+    List<String> statusIdTokens,
     EmployerCastingsOrderBy orderBy
 ) {
 }

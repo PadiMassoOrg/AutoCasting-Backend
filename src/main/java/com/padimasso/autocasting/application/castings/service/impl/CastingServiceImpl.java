@@ -126,7 +126,7 @@ public class CastingServiceImpl implements CastingService {
         var effectiveFilter = new EmployerCastingsFilter(
             employerProfileId,
             incomingFilter.projectTypeIdTokens(),
-            incomingFilter.statusIdToken(),
+            incomingFilter.statusIdTokens(),
             orderBy
         );
 

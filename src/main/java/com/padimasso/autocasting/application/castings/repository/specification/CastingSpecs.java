@@ -21,7 +21,7 @@ public final class CastingSpecs {
         Specification<CastingEntity> spec = null;
 
         spec = and(spec, forEmployer(f.employerProfileId()));
-        spec = and(spec, statusTokenIs(f.statusIdToken()));
+        spec = and(spec, statusInTokens(f.statusIdTokens()));              // ✅ MULTI
         spec = and(spec, projectTypeInTokens(f.projectTypeIdTokens()));
 
         return spec;
@@ -36,19 +36,26 @@ public final class CastingSpecs {
             cb.equal(root.join("employerProfile").get("id"), employerProfileId);
     }
 
-    public static Specification<CastingEntity> statusTokenIs(String token) {
-        if (token == null || token.isBlank()) return null;
+    public static Specification<CastingEntity> statusInTokens(List<String> tokens) {
+        if (tokens == null || tokens.isEmpty()) return null;
+        if (containsNullToken(tokens)) return null;
 
-        String t = token.trim();
-        if ("NULL".equalsIgnoreCase(t)) return null;
+        ParsedTokens parsed = parseUuidOrStringCodes(tokens);
+        if (parsed.ids.isEmpty() && parsed.codes.isEmpty()) return null;
 
         return (root, query, cb) -> {
-            try {
-                UUID id = UUID.fromString(t);
-                return cb.equal(root.get("status").get("id"), id);
-            } catch (IllegalArgumentException ex) {
-                return cb.equal(root.get("status").get("stringCode"), t);
+            var status = root.get("status");
+
+            if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) {
+                return status.get("id").in(parsed.ids);
             }
+            if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) {
+                return status.get("stringCode").in(parsed.codes);
+            }
+            return cb.or(
+                status.get("id").in(parsed.ids),
+                status.get("stringCode").in(parsed.codes)
+            );
         };
     }
 
