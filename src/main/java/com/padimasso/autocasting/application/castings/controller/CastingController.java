@@ -69,7 +69,6 @@ public class CastingController {
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
     }
 
-
     // Casting Statuses:
     @Operation(summary = "PUBLISH Casting", description = "Publica un casting si pertenece al employer, es publishable y su deadline no está vencida.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/publish")
