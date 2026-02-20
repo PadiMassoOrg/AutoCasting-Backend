@@ -3,14 +3,14 @@ package com.padimasso.autocasting.application.castings.repository.specification;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.model.CastingBasicInfoEntity;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
+import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
+import com.padimasso.autocasting.application.castings.model.CastingRolesSectionEntity;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public final class CastingSpecs {
 
@@ -21,7 +21,8 @@ public final class CastingSpecs {
         Specification<CastingEntity> spec = null;
 
         spec = and(spec, forEmployer(f.employerProfileId()));
-        spec = and(spec, statusInTokens(f.statusIdTokens()));              // ✅ MULTI
+        spec = and(spec, searchText(f.search()));
+        spec = and(spec, statusInTokens(f.statusIdTokens()));
         spec = and(spec, projectTypeInTokens(f.projectTypeIdTokens()));
 
         return spec;
@@ -34,6 +35,53 @@ public final class CastingSpecs {
         if (employerProfileId == null) return null;
         return (root, query, cb) ->
             cb.equal(root.join("employerProfile").get("id"), employerProfileId);
+    }
+
+    public static Specification<CastingEntity> searchText(String raw) {
+        if (raw == null) return null;
+
+        List<String> tokens = Arrays.stream(raw.trim().split("\\s+"))
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .limit(6)
+            .toList();
+
+        if (tokens.isEmpty()) return null;
+
+        return (root, query, cb) -> {
+            Join<CastingEntity, CastingBasicInfoEntity> bi = joinOnce(root, "basicInfo", JoinType.LEFT);
+
+            var predicatesPerToken = new ArrayList<jakarta.persistence.criteria.Predicate>();
+
+            for (String t : tokens) {
+                String like = toLikePattern(t);
+
+                var inBasicInfo = cb.or(
+                    cb.like(cb.lower(bi.get("title")), like, '\\'),
+                    cb.like(cb.lower(bi.get("description")), like, '\\')
+                );
+
+                var sq = Objects.requireNonNull(query).subquery(Integer.class);
+                Root<CastingRoleEntity> role = sq.from(CastingRoleEntity.class);
+
+                Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
+                Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
+
+                var inRoles = cb.exists(
+                    sq.select(cb.literal(1)).where(
+                        cb.equal(casting.get("id"), root.get("id")),
+                        cb.or(
+                            cb.like(cb.lower(role.get("roleName")), like, '\\'),
+                            cb.like(cb.lower(role.get("description")), like, '\\')
+                        )
+                    )
+                );
+
+                predicatesPerToken.add(cb.or(inBasicInfo, inRoles));
+            }
+
+            return cb.and(predicatesPerToken.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
     }
 
     public static Specification<CastingEntity> statusInTokens(List<String> tokens) {
@@ -67,7 +115,7 @@ public final class CastingSpecs {
         if (parsed.ids.isEmpty() && parsed.codes.isEmpty()) return null;
 
         return (root, query, cb) -> {
-            Join<CastingEntity, CastingBasicInfoEntity> bi = root.join("basicInfo", JoinType.LEFT);
+            Join<CastingEntity, CastingBasicInfoEntity> bi = joinOnce(root, "basicInfo", JoinType.LEFT);
             var projectType = bi.join("projectType", JoinType.LEFT);
 
             if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) {
@@ -90,7 +138,7 @@ public final class CastingSpecs {
         return (root, query, cb) -> {
             assert query != null;
 
-            Join<CastingEntity, CastingBasicInfoEntity> bi = root.join("basicInfo", JoinType.LEFT);
+            Join<CastingEntity, CastingBasicInfoEntity> bi = joinOnce(root, "basicInfo", JoinType.LEFT);
             var deadline = bi.get("applicationDeadline");
 
             query.orderBy(
@@ -108,7 +156,7 @@ public final class CastingSpecs {
         return (root, query, cb) -> {
             assert query != null;
 
-            Join<CastingEntity, CastingBasicInfoEntity> bi = root.join("basicInfo", JoinType.LEFT);
+            Join<CastingEntity, CastingBasicInfoEntity> bi = joinOnce(root, "basicInfo", JoinType.LEFT);
             var deadline = bi.get("applicationDeadline");
 
             query.orderBy(
@@ -153,6 +201,22 @@ public final class CastingSpecs {
             }
         }
         return new ParsedTokens(ids, codes);
+    }
+
+    private static String toLikePattern(String token) {
+        String s = token.toLowerCase(Locale.ROOT).trim();
+        s = s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return "%" + s + "%";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <X, Y> Join<X, Y> joinOnce(jakarta.persistence.criteria.From<X, ?> from, String attr, JoinType type) {
+        for (var j : from.getJoins()) {
+            if (j.getAttribute() != null && attr.equals(j.getAttribute().getName())) {
+                return (Join<X, Y>) j;
+            }
+        }
+        return from.join(attr, type);
     }
 
     private record ParsedTokens(List<UUID> ids, List<String> codes) {
