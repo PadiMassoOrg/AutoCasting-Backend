@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.castings.repository;
 
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
+import com.padimasso.autocasting.application.castings.repository.projection.CastingCardStatusGateProjection;
 import com.padimasso.autocasting.application.castings.repository.projection.CastingPublishGateProjection;
 import com.padimasso.autocasting.application.castings.repository.projection.EmployerCastingDetailsProjection;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
@@ -85,6 +86,34 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     // Casting Statuses
     @Query("""
         select
+            c.id as id,
+            s.stringCode as castingStatusCode,
+            biSS.stringCode as basicInfoStatusCode,
+            rsSS.stringCode as rolesStatusCode,
+            reqSS.stringCode as requirementsStatusCode,
+            remSS.stringCode as remunerationStatusCode,
+            bi.applicationDeadline as applicationDeadline
+        from CastingEntity c
+            join c.status s
+            left join c.basicInfo bi
+            left join bi.sectionStatus biSS
+            left join c.roles rs
+            left join rs.sectionStatus rsSS
+            left join c.requirements req
+            left join req.sectionStatus reqSS
+            left join c.remuneration rem
+            left join rem.sectionStatus remSS
+        where c.employerProfile.id = :employerProfileId
+          and c.deleted = false
+          and c.id in :castingIds
+        """)
+    List<CastingCardStatusGateProjection> findCardsGateForEmployer(
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("castingIds") List<UUID> castingIds
+    );
+
+    @Query("""
+        select
             s.stringCode as castingStatusCode,
             biSS.stringCode as basicInfoStatusCode,
             rsSS.stringCode as rolesStatusCode,
@@ -164,5 +193,59 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "remuneration",
     })
     Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
+
+    // Internal: FORCE DRAFT is needed
+    @Query("""
+            select
+                s.stringCode as castingStatusCode,
+                biSS.stringCode as basicInfoStatusCode,
+                rsSS.stringCode as rolesStatusCode,
+                reqSS.stringCode as requirementsStatusCode,
+                remSS.stringCode as remunerationStatusCode,
+                bi.applicationDeadline as applicationDeadline
+            from CastingEntity c
+                join c.status s
+                left join c.basicInfo bi
+                left join bi.sectionStatus biSS
+                left join c.roles rs
+                left join rs.sectionStatus rsSS
+                left join c.requirements req
+                left join req.sectionStatus reqSS
+                left join c.remuneration rem
+                left join rem.sectionStatus remSS
+            where c.id = :castingId
+              and c.deleted = false
+        """)
+    Optional<CastingPublishGateProjection> findPublishGateByCastingId(@Param("castingId") UUID castingId);
+
+    @Modifying
+    @Query("""
+        update CastingEntity c
+           set c.status = :draftStatus
+         where c.id = :castingId
+           and c.deleted = false
+           and c.status.stringCode = :publishedCode
+        """)
+    void forceDraftIfPublished(
+        @Param("castingId") UUID castingId,
+        @Param("draftStatus") CastingStatusOptionEntity draftStatus,
+        @Param("publishedCode") String publishedCode
+    );
+
+    @Modifying
+    @Query("""
+        update CastingEntity c
+           set c.status = :nextStatus
+         where c.id = :castingId
+           and c.employerProfile.id = :employerProfileId
+           and c.deleted = false
+           and c.status.stringCode in :allowedCurrentCodes
+        """)
+    int setStatusIfCurrentIn(
+        @Param("castingId") UUID castingId,
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("nextStatus") CastingStatusOptionEntity nextStatus,
+        @Param("allowedCurrentCodes") List<String> allowedCurrentCodes
+    );
 
 }

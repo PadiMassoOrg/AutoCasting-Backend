@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.castings.dto.response.card;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public record CastingCardResponse(
@@ -12,6 +13,7 @@ public record CastingCardResponse(
     LocalDate creationDate,
     LocalDate applicationDeadline,
     SiteMetadataObject projectType,
-    SiteMetadataObject status
+    SiteMetadataObject status,
+    List<String> allowedStatusCodes
 ) {
 }

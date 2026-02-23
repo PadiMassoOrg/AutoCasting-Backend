@@ -61,6 +61,7 @@ public class AppConstants {
 
     // Internal Usage:
     public static final int MAX_PAGE_SIZE = 20;
+
     // Casting
     public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
     public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";

@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingBasicInfoEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingBasicInfoRepository;
 import com.padimasso.autocasting.application.castings.service.CastingBasicInfoService;
+import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingModalityOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptionEntity;
@@ -31,6 +32,7 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
     private final ProjectTypeOptionRepository projectTypeOptionRepository;
     private final CastingModalityOptionRepository castingModalityOptionRepository;
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
+    private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
 
     @Override
@@ -93,6 +95,12 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
         updateSectionStatus(basicInfo);
 
         CastingBasicInfoEntity saved = castingBasicInfoRepository.save(basicInfo);
+
+        UUID castingId = saved.getCasting() != null ? saved.getCasting().getId() : null;
+        if (castingId != null) {
+            castingStatusService.recomputeAfterSectionChange(castingId);
+        }
+
         return castingMapper.toBasicInfoResponse(saved);
     }
 

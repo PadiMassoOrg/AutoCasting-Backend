@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.castings.dto.response.CastingRespon
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
+import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
 import com.padimasso.autocasting.application.castings.service.CastingBasicInfoService;
 import com.padimasso.autocasting.application.castings.service.CastingRoleSearchService;
 import com.padimasso.autocasting.application.castings.service.CastingService;
@@ -58,29 +59,99 @@ public class CastingController {
     @Operation(summary = "Listado de mis Castings", description = "Permite a un Employer ver sus Castings. CARDS")
     @GetMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<List<CastingCardResponse>> getMyCastingsCards(
+        @RequestParam(required = false, name = "q") String q,
+        @RequestParam(required = false, name = "projectTypeId") List<String> projectTypeIdTokens,
+        @RequestParam(required = false, name = "statusId") List<String> statusIdTokens,
+        @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingsOrderBy orderBy,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
     ) {
-        var filter = new EmployerCastingsFilter(null);
+        var filter = new EmployerCastingsFilter(null, q, projectTypeIdTokens, statusIdTokens, orderBy);
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
     }
 
     // Casting Statuses:
-    @Operation(
-        summary = "PUBLISH Casting",
-        description = "Publica un casting si pertenece al employer, es publishable y su deadline no está vencida.",
-        security = @SecurityRequirement(name = "bearerAuth")
-    )
+    @Operation(summary = "PUBLISH Casting", description = "Publica un casting si pertenece al employer, es publishable y su deadline no está vencida.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/publish")
     public ResponseEntity<EmployerCastingResponse> publishCasting(@PathVariable UUID castingId) {
         return ResponseEntity.ok(castingService.publishCasting(castingId));
     }
 
+    // Casting Statuses:
+    @Operation(summary = "Set Casting to DRAFT", description = "Vuelve el casting a DRAFT si pertenece al employer y la transición es válida.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/draft")
+    public ResponseEntity<EmployerCastingResponse> setDraft(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.setDraftCasting(castingId));
+    }
+
+    @Operation(summary = "PAUSE Casting", description = "Pausa un casting publicado.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/pause")
+    public ResponseEntity<EmployerCastingResponse> pause(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.pauseCasting(castingId));
+    }
+
+    @Operation(summary = "CLOSE Casting", description = "Cierra un casting.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/close")
+    public ResponseEntity<EmployerCastingResponse> close(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.closeCasting(castingId));
+    }
+
+    @Operation(summary = "ARCHIVE Casting", description = "Archiva un casting.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/archive")
+    public ResponseEntity<EmployerCastingResponse> archive(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.archiveCasting(castingId));
+    }
+
     // Casting Database
     @Operation(summary = "Listado público de Roles (Casting Database)", description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database.")
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)
-    public SliceResponse<CastingRolePublicCardResponse> searchPublicCastings(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "12") int size, @RequestParam(required = false) String roleName, @RequestParam(required = false) Integer ageMin, @RequestParam(required = false) Integer ageMax, @RequestParam(required = false, name = "genderId") List<String> genderIdTokens, @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens, @RequestParam(required = false, name = "professionId") List<UUID> professionIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode, @RequestParam(required = false) Integer heightMinCm, @RequestParam(required = false) Integer heightMaxCm, @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode, @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode, @RequestParam(required = false) Boolean tattoo, @RequestParam(required = false) Boolean passport, @RequestParam(required = false) Boolean drivingLicense, @RequestParam(required = false, name = "skillId") List<UUID> skillIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode, @RequestParam(required = false, name = "projectTypeId") List<UUID> projectTypeIds, @RequestParam(required = false, name = "castingModalityId") List<UUID> castingModalityIds, @RequestParam(required = false) String locationText) {
-        var filter = new CastingRoleFilter(roleName, ageMin, ageMax, genderIdTokens, ethnicityIdTokens, professionIds, professionsMode, heightMinCm, heightMaxCm, hairColorIds, hairColorIdsMode, eyeColorIds, eyeColorIdsMode, tattoo, passport, drivingLicense, skillIds, skillsMode, projectTypeIds, castingModalityIds, locationText);
+    public SliceResponse<CastingRolePublicCardResponse> searchPublicCastings(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "12") int size,
+        @RequestParam(required = false) String roleName,
+        @RequestParam(required = false) Integer ageMin,
+        @RequestParam(required = false) Integer ageMax,
+        @RequestParam(required = false, name = "genderId") List<String> genderIdTokens,
+        @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens,
+        @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
+        @RequestParam(required = false) Integer heightMinCm,
+        @RequestParam(required = false) Integer heightMaxCm,
+        @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode,
+        @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode,
+        @RequestParam(required = false) Boolean tattoo,
+        @RequestParam(required = false) Boolean passport,
+        @RequestParam(required = false) Boolean drivingLicense,
+        @RequestParam(required = false, name = "skillId") List<UUID> skillIds,
+        @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode,
+        @RequestParam(required = false, name = "projectTypeId") List<UUID> projectTypeIds,
+        @RequestParam(required = false, name = "castingModalityId") List<UUID> castingModalityIds,
+        @RequestParam(required = false) String locationText
+    ) {
+        var filter = new CastingRoleFilter(
+            roleName,
+            ageMin,
+            ageMax,
+            genderIdTokens,
+            ethnicityIdTokens,
+            professionIds,
+            professionsMode,
+            heightMinCm,
+            heightMaxCm,
+            hairColorIds,
+            hairColorIdsMode,
+            eyeColorIds,
+            eyeColorIdsMode,
+            tattoo,
+            passport,
+            drivingLicense,
+            skillIds,
+            skillsMode,
+            projectTypeIds,
+            castingModalityIds,
+            locationText);
 
         return castingRoleSearchService.search(filter, page, size);
     }

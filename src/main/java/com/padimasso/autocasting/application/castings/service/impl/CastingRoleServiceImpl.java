@@ -15,6 +15,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRolesSec
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
+import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.*;
 import com.padimasso.autocasting.application.sitemetadata.repository.*;
 import jakarta.transaction.Transactional;
@@ -48,6 +49,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final CurrencyOptionRepository currencyOptionRepository;
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
     private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
+    private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
 
     @Override
@@ -149,6 +151,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         UUID castingId = foundSection.getCasting() != null ? foundSection.getCasting().getId() : null;
         if (castingId != null) {
             remunerationSectionStatusService.recomputeForCasting(castingId);
+            castingStatusService.recomputeAfterSectionChange(castingId);
         }
 
         return castingMapper.toRoleResponse(saved);
@@ -280,6 +283,15 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         }
 
         CastingRoleEntity saved = castingRoleRepository.save(role);
+
+        UUID castingId = role.getRolesSection() != null && role.getRolesSection().getCasting() != null
+            ? role.getRolesSection().getCasting().getId()
+            : null;
+
+        if (castingId != null) {
+            castingStatusService.recomputeAfterSectionChange(castingId);
+        }
+
         return castingMapper.toRoleResponse(saved);
     }
 
@@ -304,6 +316,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         if (castingId != null) {
             remunerationSectionStatusService.recomputeForCasting(castingId);
+            castingStatusService.recomputeAfterSectionChange(castingId);
         }
     }
 
@@ -323,5 +336,4 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         section.setSectionStatus(status);
         castingRolesSectionRepository.save(section);
     }
-
 }
