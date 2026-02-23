@@ -12,6 +12,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRemunera
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRemunerationRepository;
 import com.padimasso.autocasting.application.castings.service.CastingRemunerationService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
+import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
@@ -41,6 +42,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
     private final PayRateTypeOptionRepository payRateTypeOptionRepository;
     private final CurrencyOptionRepository currencyOptionRepository;
     private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
+    private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
 
     @Override
@@ -99,6 +101,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         UUID castingId = saved.getCasting() != null ? saved.getCasting().getId() : null;
         if (castingId != null) {
             remunerationSectionStatusService.recomputeForCasting(castingId);
+            castingStatusService.recomputeAfterSectionChange(castingId);
         }
 
         return getBySectionId(saved.getId());
@@ -159,6 +162,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         }
         if (castingId != null) {
             remunerationSectionStatusService.recomputeForCasting(castingId);
+            castingStatusService.recomputeAfterSectionChange(castingId);
         }
 
         return castingMapper.toRoleRemunerationResponse(saved);

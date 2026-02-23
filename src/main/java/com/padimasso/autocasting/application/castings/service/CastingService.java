@@ -19,5 +19,14 @@ public interface CastingService {
 
     void deleteCasting(UUID castingId);
 
+    //    Status
     EmployerCastingResponse publishCasting(UUID castingId);
+
+    EmployerCastingResponse setDraftCasting(UUID castingId);
+
+    EmployerCastingResponse pauseCasting(UUID castingId);
+
+    EmployerCastingResponse closeCasting(UUID castingId);
+
+    EmployerCastingResponse archiveCasting(UUID castingId);
 }

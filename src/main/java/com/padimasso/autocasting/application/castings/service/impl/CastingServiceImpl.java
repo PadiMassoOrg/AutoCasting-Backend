@@ -248,6 +248,126 @@ public class CastingServiceImpl implements CastingService {
         return getDetailsForEmployerBySlug(casting.getDefaultCode());
     }
 
+    @Override
+    @Transactional
+    public EmployerCastingResponse setDraftCasting(UUID castingId) {
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        castingStatusTransitionPolicy.assertCanSetDraft(gate);
+
+        CastingStatusOptionEntity draft = castingStatusOptionRepository
+            .findByStringCode(CASTING_STATUS_DRAFT)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+
+        int updated = castingRepository.setStatusIfCurrentIn(
+            castingId,
+            employerProfileId,
+            draft,
+            List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED)
+        );
+
+        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+
+        CastingEntity casting = castingRepository.findById(castingId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+    }
+
+    @Override
+    @Transactional
+    public EmployerCastingResponse pauseCasting(UUID castingId) {
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        castingStatusTransitionPolicy.assertCanPause(gate);
+
+        CastingStatusOptionEntity paused = castingStatusOptionRepository
+            .findByStringCode(CASTING_STATUS_PAUSED)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+
+        int updated = castingRepository.setStatusIfCurrentIn(
+            castingId,
+            employerProfileId,
+            paused,
+            List.of(CASTING_STATUS_PUBLISHED)
+        );
+
+        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+
+        CastingEntity casting = castingRepository.findById(castingId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+    }
+
+    @Override
+    @Transactional
+    public EmployerCastingResponse closeCasting(UUID castingId) {
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        castingStatusTransitionPolicy.assertCanClose(gate);
+
+        CastingStatusOptionEntity closed = castingStatusOptionRepository
+            .findByStringCode(CASTING_STATUS_CLOSED)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+
+        int updated = castingRepository.setStatusIfCurrentIn(
+            castingId,
+            employerProfileId,
+            closed,
+            List.of(CASTING_STATUS_DRAFT, CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED)
+        );
+
+        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+
+        CastingEntity casting = castingRepository.findById(castingId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+    }
+
+    @Override
+    @Transactional
+    public EmployerCastingResponse archiveCasting(UUID castingId) {
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        castingStatusTransitionPolicy.assertCanArchive(gate);
+
+        CastingStatusOptionEntity archived = castingStatusOptionRepository
+            .findByStringCode(CASTING_STATUS_ARCHIVED)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+
+        int updated = castingRepository.setStatusIfCurrentIn(
+            castingId,
+            employerProfileId,
+            archived,
+            List.of(CASTING_STATUS_DRAFT, CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED)
+        );
+
+        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+
+        CastingEntity casting = castingRepository.findById(castingId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+    }
+
     // Public
     @Override
     public CastingResponse getDetailsBySlug(String slug) {

@@ -12,6 +12,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.*;
 
+import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_ARCHIVED;
+import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_CLOSED;
+
+
 public final class CastingSpecs {
 
     private CastingSpecs() {
@@ -22,7 +26,14 @@ public final class CastingSpecs {
 
         spec = and(spec, forEmployer(f.employerProfileId()));
         spec = and(spec, searchText(f.search()));
-        spec = and(spec, statusInTokens(f.statusIdTokens()));
+
+        // Default scope: cuando NO hay filtro explícito de status => excluir CLOSED y ARCHIVED
+        if (f.statusIdTokens() == null || f.statusIdTokens().isEmpty()) {
+            spec = and(spec, excludeStatusCodes(Set.of(CASTING_STATUS_CLOSED, CASTING_STATUS_ARCHIVED)));
+        } else {
+            spec = and(spec, statusInTokens(f.statusIdTokens()));
+        }
+
         spec = and(spec, projectTypeInTokens(f.projectTypeIdTokens()));
 
         return spec;
@@ -104,6 +115,15 @@ public final class CastingSpecs {
                 status.get("id").in(parsed.ids),
                 status.get("stringCode").in(parsed.codes)
             );
+        };
+    }
+
+    public static Specification<CastingEntity> excludeStatusCodes(Set<String> codes) {
+        if (codes == null || codes.isEmpty()) return null;
+
+        return (root, query, cb) -> {
+            var status = root.get("status");
+            return cb.not(status.get("stringCode").in(codes));
         };
     }
 

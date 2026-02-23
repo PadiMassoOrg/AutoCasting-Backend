@@ -60,8 +60,7 @@ public class CastingStatusTransitionPolicy {
     }
 
     /**
-     * Validación única del endpoint publish.
-     * Acá vive TODA la verdad: secciones completas + deadline + transición.
+     * Validaciónes
      */
     public void assertCanPublish(CastingPublishGateProjection gate) {
         if (gate == null) throw new IllegalStateException("castings.not_found");
@@ -88,10 +87,45 @@ public class CastingStatusTransitionPolicy {
         }
     }
 
+    public void assertCanSetDraft(CastingPublishGateProjection gate) {
+        if (gate == null) throw new IllegalStateException("castings.not_found");
+        String s = gate.getCastingStatusCode();
+        // Permitimos volver a DRAFT desde PUBLISHED o PAUSED (según tu policy)
+        if (!(CASTING_STATUS_PUBLISHED.equals(s) || CASTING_STATUS_PAUSED.equals(s))) {
+            throw new IllegalStateException("castings.invalid_status_transition");
+        }
+    }
+
+    public void assertCanPause(CastingPublishGateProjection gate) {
+        if (gate == null) throw new IllegalStateException("castings.not_found");
+        // Pausar solo si está PUBLISHED
+        if (!CASTING_STATUS_PUBLISHED.equals(gate.getCastingStatusCode())) {
+            throw new IllegalStateException("castings.invalid_status_transition");
+        }
+    }
+
+    public void assertCanClose(CastingPublishGateProjection gate) {
+        if (gate == null) throw new IllegalStateException("castings.not_found");
+        // Cerrar si está DRAFT/PUBLISHED/PAUSED (según tu allowedNextStatuses)
+        String s = gate.getCastingStatusCode();
+        if (CASTING_STATUS_ARCHIVED.equals(s) || CASTING_STATUS_CLOSED.equals(s)) {
+            throw new IllegalStateException("castings.invalid_status_transition");
+        }
+        // Si deadline ya pasó, allowedNextStatuses igual habilita CLOSED/ARCHIVED.
+        // Acá NO bloqueamos.
+    }
+
+    public void assertCanArchive(CastingPublishGateProjection gate) {
+        if (gate == null) throw new IllegalStateException("castings.not_found");
+        // Archivar si no está ya ARCHIVED
+        if (CASTING_STATUS_ARCHIVED.equals(gate.getCastingStatusCode())) {
+            throw new IllegalStateException("castings.invalid_status_transition");
+        }
+    }
+
     // =========================
     // Shared internal helpers
     // =========================
-
     private boolean isPublishableSections(GateData g) {
         return !CASTING_SECTION_STATUS_COMPLETED.equals(g.basicInfoStatusCode())
             || !CASTING_SECTION_STATUS_COMPLETED.equals(g.rolesStatusCode())

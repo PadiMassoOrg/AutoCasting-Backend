@@ -77,6 +77,31 @@ public class CastingController {
         return ResponseEntity.ok(castingService.publishCasting(castingId));
     }
 
+    // Casting Statuses:
+    @Operation(summary = "Set Casting to DRAFT", description = "Vuelve el casting a DRAFT si pertenece al employer y la transición es válida.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/draft")
+    public ResponseEntity<EmployerCastingResponse> setDraft(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.setDraftCasting(castingId));
+    }
+
+    @Operation(summary = "PAUSE Casting", description = "Pausa un casting publicado.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/pause")
+    public ResponseEntity<EmployerCastingResponse> pause(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.pauseCasting(castingId));
+    }
+
+    @Operation(summary = "CLOSE Casting", description = "Cierra un casting.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/close")
+    public ResponseEntity<EmployerCastingResponse> close(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.closeCasting(castingId));
+    }
+
+    @Operation(summary = "ARCHIVE Casting", description = "Archiva un casting.", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/archive")
+    public ResponseEntity<EmployerCastingResponse> archive(@PathVariable UUID castingId) {
+        return ResponseEntity.ok(castingService.archiveCasting(castingId));
+    }
+
     // Casting Database
     @Operation(summary = "Listado público de Roles (Casting Database)", description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database.")
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)
