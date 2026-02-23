@@ -64,17 +64,20 @@ public class CastingMapper {
         );
     }
 
-    public CastingCardResponse toCardResponse(CastingEntity c) {
+    public CastingCardResponse toCardResponse(CastingEntity c, List<String> allowedStatusCodes) {
         var bi = c.getBasicInfo();
+
+        List<String> allowed = allowedStatusCodes != null ? allowedStatusCodes : List.of();
 
         return new CastingCardResponse(
             c.getId(),
-            bi.getTitle(),
+            bi != null ? bi.getTitle() : null,
             c.getDefaultCode(),
-            c.getCreatedAt().toLocalDate(),
-            bi.getApplicationDeadline(),
-            mapToSiteMetadataObject(bi.getProjectType()),
-            mapToSiteMetadataObject(c.getStatus())
+            c.getCreatedAt() != null ? c.getCreatedAt().toLocalDate() : null,
+            bi != null ? bi.getApplicationDeadline() : null,
+            mapToSiteMetadataObject(bi != null ? bi.getProjectType() : null),
+            mapToSiteMetadataObject(c.getStatus()),
+            allowed
         );
     }
 

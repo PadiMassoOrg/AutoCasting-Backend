@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.castings.repository;
 
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
+import com.padimasso.autocasting.application.castings.repository.projection.CastingCardStatusGateProjection;
 import com.padimasso.autocasting.application.castings.repository.projection.CastingPublishGateProjection;
 import com.padimasso.autocasting.application.castings.repository.projection.EmployerCastingDetailsProjection;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
@@ -83,6 +84,34 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     Optional<CastingEntity> findPublicDetailsByDefaultCode(String slug);
 
     // Casting Statuses
+    @Query("""
+        select
+            c.id as id,
+            s.stringCode as castingStatusCode,
+            biSS.stringCode as basicInfoStatusCode,
+            rsSS.stringCode as rolesStatusCode,
+            reqSS.stringCode as requirementsStatusCode,
+            remSS.stringCode as remunerationStatusCode,
+            bi.applicationDeadline as applicationDeadline
+        from CastingEntity c
+            join c.status s
+            left join c.basicInfo bi
+            left join bi.sectionStatus biSS
+            left join c.roles rs
+            left join rs.sectionStatus rsSS
+            left join c.requirements req
+            left join req.sectionStatus reqSS
+            left join c.remuneration rem
+            left join rem.sectionStatus remSS
+        where c.employerProfile.id = :employerProfileId
+          and c.deleted = false
+          and c.id in :castingIds
+        """)
+    List<CastingCardStatusGateProjection> findCardsGateForEmployer(
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("castingIds") List<UUID> castingIds
+    );
+
     @Query("""
         select
             s.stringCode as castingStatusCode,
