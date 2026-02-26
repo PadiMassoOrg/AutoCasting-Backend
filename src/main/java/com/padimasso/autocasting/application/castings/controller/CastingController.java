@@ -23,7 +23,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTINGS_URL;
+import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTING_URL;
 
 @RestController
 @RequestMapping
@@ -47,6 +48,16 @@ public class CastingController {
     @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/editor")
     public ResponseEntity<EmployerCastingEditorResponse> getEmployerCastingEditor(@PathVariable String slug) {
         return ResponseEntity.ok(castingService.getCastingEditorBySlug(slug));
+    }
+
+    @Operation(
+        summary = "Employer casting details",
+        description = "Obtiene detalles completos del casting por slug. Solo owner.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/details")
+    public ResponseEntity<CastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getEmployerCastingDetailsBySlug(slug));
     }
 
     @Operation(summary = "DELETE Casting", security = @SecurityRequirement(name = "bearerAuth"))
@@ -153,12 +164,6 @@ public class CastingController {
             locationText);
 
         return castingRoleSearchService.search(filter, page, size);
-    }
-
-    @Operation(summary = "Ver detalles del Casting", description = "Obtiene información del Casting por slug", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(CASTING_DETAILS_URL + "/{slug}")
-    public ResponseEntity<CastingResponse> getCastingDetails(@PathVariable String slug) {
-        return ResponseEntity.ok(castingService.getDetailsBySlug(slug));
     }
 
 }

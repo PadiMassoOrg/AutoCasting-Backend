@@ -202,6 +202,35 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
+    public CastingResponse getEmployerCastingDetailsBySlug(String slug) {
+        if (slug == null || slug.isBlank()) {
+            throw new IllegalArgumentException("general.slug_required");
+        }
+
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        CastingEntity foundCasting = castingRepository
+            .findEmployerDetailsByDefaultCodeAndEmployerProfileId(slug.trim(), employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        Long totalCastings = castingRepository.countByEmployerProfileIdAndDeletedFalse(employerProfileId);
+
+        LocalDate memberSince = foundCasting.getEmployerProfile() != null
+            && foundCasting.getEmployerProfile().getCreatedAt() != null
+            ? foundCasting.getEmployerProfile().getCreatedAt().toLocalDate()
+            : null;
+
+        CastingEmployerInfoResponse employerInfo = castingMapper.toCastingEmployerInfoResponse(
+            foundCasting.getEmployerProfile(),
+            totalCastings,
+            memberSince
+        );
+
+        return castingMapper.toCastingResponse(foundCasting, employerInfo);
+    }
+
+    @Override
     @Transactional
     public void deleteCasting(UUID castingId) {
         CastingEntity casting = castingRepository.findById(castingId)
@@ -366,37 +395,6 @@ public class CastingServiceImpl implements CastingService {
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
         return getCastingEditorBySlug(casting.getDefaultCode());
-    }
-
-    // Public
-    @Override
-    public CastingResponse getDetailsBySlug(String slug) {
-        CastingEntity foundCasting = castingRepository
-            .findPublicDetailsByDefaultCode(slug)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
-
-        UUID employerProfileId = foundCasting.getEmployerProfile() != null ? foundCasting.getEmployerProfile().getId() : null;
-
-        Long totalCastings = null;
-        if (employerProfileId != null) {
-            totalCastings = castingRepository.countPublicCastingsByEmployerProfileId(
-                employerProfileId,
-                List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED)
-            );
-        }
-
-        LocalDate memberSince = null;
-        if (foundCasting.getEmployerProfile() != null && foundCasting.getEmployerProfile().getCreatedAt() != null) {
-            memberSince = foundCasting.getEmployerProfile().getCreatedAt().toLocalDate();
-        }
-
-        CastingEmployerInfoResponse employerInfo = castingMapper.toCastingEmployerInfoResponse(
-            foundCasting.getEmployerProfile(),
-            totalCastings,
-            memberSince
-        );
-
-        return castingMapper.toCastingResponse(foundCasting, employerInfo);
     }
 
     // Helpers

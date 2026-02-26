@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface CastingService {
     String createEmptyCasting();
 
-    CastingResponse getDetailsBySlug(String slug);
+    CastingResponse getEmployerCastingDetailsBySlug(String slug);
 
     List<CastingCardResponse> getMyCastings(EmployerCastingsFilter filter, int page, int size);
 

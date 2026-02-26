@@ -51,7 +51,6 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
 
     @EntityGraph(attributePaths = {
         "status",
-
         "employerProfile",
         "employerProfile.basicInfo",
         "employerProfile.basicInfo.companyType",
@@ -81,7 +80,17 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "remuneration.sectionStatus",
         "remuneration.compensationType"
     })
-    Optional<CastingEntity> findPublicDetailsByDefaultCode(String slug);
+    @Query("""
+          select c
+          from CastingEntity c
+          where c.defaultCode = :slug
+            and c.deleted = false
+            and c.employerProfile.id = :employerProfileId
+        """)
+    Optional<CastingEntity> findEmployerDetailsByDefaultCodeAndEmployerProfileId(
+        @Param("slug") String slug,
+        @Param("employerProfileId") UUID employerProfileId
+    );
 
     // Casting Statuses
     @Query("""
@@ -112,6 +121,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("castingIds") List<UUID> castingIds
     );
 
+
     @Query("""
         select
             s.stringCode as castingStatusCode,
@@ -139,18 +149,6 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("employerProfileId") UUID employerProfileId
     );
 
-    @Query("""
-            select count(c)
-            from CastingEntity c
-            where c.employerProfile.id = :employerProfileId
-              and c.status.stringCode in :statusCodes
-              and c.deleted = false
-        """)
-    long countPublicCastingsByEmployerProfileId(
-        @Param("employerProfileId") UUID employerProfileId,
-        @Param("statusCodes") List<String> statusCodes
-    );
-
     @Modifying
     @Query("""
         update CastingEntity c
@@ -170,16 +168,11 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
 
     @Override
     @EntityGraph(attributePaths = {
-        // Info básica del casting
         "basicInfo",
         "basicInfo.projectType",
         "basicInfo.castingModality",
-
-        // Employer
         "employerProfile",
         "employerProfile.basicInfo",
-
-        // Sección de roles + roles + metadata de roles
         "roles",
         "roles.roles",
         "roles.roles.professions",
@@ -187,9 +180,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "roles.roles.gender",
         "roles.roles.skills",
         "roles.roles.remuneration",
-
         "requirements",
-
         "remuneration",
     })
     Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
@@ -247,5 +238,13 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("nextStatus") CastingStatusOptionEntity nextStatus,
         @Param("allowedCurrentCodes") List<String> allowedCurrentCodes
     );
+
+    @Query("""
+          select count(c)
+          from CastingEntity c
+          where c.deleted = false
+            and c.employerProfile.id = :employerProfileId
+        """)
+    long countByEmployerProfileIdAndDeletedFalse(@Param("employerProfileId") UUID employerProfileId);
 
 }
