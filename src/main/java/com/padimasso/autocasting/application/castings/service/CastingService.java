@@ -29,4 +29,6 @@ public interface CastingService {
     EmployerCastingEditorResponse closeCasting(UUID castingId);
 
     EmployerCastingEditorResponse archiveCasting(UUID castingId);
+
+    CastingResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId);
 }

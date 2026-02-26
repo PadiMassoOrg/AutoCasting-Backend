@@ -92,6 +92,38 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("employerProfileId") UUID employerProfileId
     );
 
+    @Query("""
+            select distinct c
+            from CastingEntity c
+                join fetch c.roles rs
+                join fetch rs.roles r
+                left join fetch r.roleType
+                left join fetch r.gender
+                left join fetch r.professions
+                left join fetch r.skills
+                left join fetch r.remuneration rem
+                left join fetch rem.payRateType
+                left join fetch rem.currency
+                left join fetch c.status
+                left join fetch c.employerProfile ep
+                left join fetch ep.basicInfo
+                left join fetch c.basicInfo bi
+                left join fetch bi.sectionStatus
+                left join fetch c.requirements req
+                left join fetch req.sectionStatus
+                left join fetch c.remuneration ren
+                left join fetch ren.sectionStatus
+            where c.defaultCode = :slug
+              and c.deleted = false
+              and c.status.stringCode in :allowedStatusCodes
+              and r.id = :roleId
+        """)
+    Optional<CastingEntity> findPublicDetailsBySlugAndRoleId(
+        @Param("slug") String slug,
+        @Param("roleId") UUID roleId,
+        @Param("allowedStatusCodes") List<String> allowedStatusCodes
+    );
+
     // Casting Statuses
     @Query("""
         select
@@ -246,5 +278,17 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
             and c.employerProfile.id = :employerProfileId
         """)
     long countByEmployerProfileIdAndDeletedFalse(@Param("employerProfileId") UUID employerProfileId);
+
+    @Query("""
+            select count(c)
+            from CastingEntity c
+            where c.deleted = false
+              and c.employerProfile.id = :employerProfileId
+              and c.status.stringCode in :allowedStatusCodes
+        """)
+    long countPublicCastingsByEmployerProfileId(
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("allowedStatusCodes") List<String> allowedStatusCodes
+    );
 
 }

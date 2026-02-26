@@ -166,4 +166,16 @@ public class CastingController {
         return castingRoleSearchService.search(filter, page, size);
     }
 
+    @Operation(
+        summary = "Public casting details by slug and role",
+        description = "Obtiene detalles del casting por slug pero devuelve SOLO el role seleccionado (en array)."
+    )
+    @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}/roles/{roleId}")
+    public ResponseEntity<CastingResponse> getPublicCastingDetailsBySlugAndRole(
+        @PathVariable String slug,
+        @PathVariable UUID roleId
+    ) {
+        return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlugAndRoleId(slug, roleId));
+    }
+
 }
