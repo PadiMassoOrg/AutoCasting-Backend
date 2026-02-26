@@ -5,7 +5,7 @@ import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingEmployerInfoResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingResponse;
+import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
@@ -171,12 +171,12 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
-    public EmployerCastingResponse getDetailsForEmployerBySlug(String slug) {
+    public EmployerCastingEditorResponse getCastingEditorBySlug(String slug) {
         if (slug == null || slug.isBlank()) {
             throw new IllegalArgumentException("general.slug_required");
         }
 
-        var p = castingRepository.findDetailsProjectionBySlug(slug.trim())
+        var p = castingRepository.findCastingEditorProjectionBySlug(slug.trim())
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
         boolean publishable =
@@ -185,7 +185,7 @@ public class CastingServiceImpl implements CastingService {
                 && isSectionCompleted(p.getRequirementsSectionStatus())
                 && isSectionCompleted(p.getRemunerationSectionStatus());
 
-        return new EmployerCastingResponse(
+        return new EmployerCastingEditorResponse(
             p.getId(),
             p.getDefaultCode(),
             mapToSiteMetadataObject(p.getStatus()),
@@ -213,7 +213,7 @@ public class CastingServiceImpl implements CastingService {
     // Casting Statuses
     @Override
     @Transactional
-    public EmployerCastingResponse publishCasting(UUID castingId) {
+    public EmployerCastingEditorResponse publishCasting(UUID castingId) {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
 
@@ -245,12 +245,12 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findById(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
-        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+        return getCastingEditorBySlug(casting.getDefaultCode());
     }
 
     @Override
     @Transactional
-    public EmployerCastingResponse setDraftCasting(UUID castingId) {
+    public EmployerCastingEditorResponse setDraftCasting(UUID castingId) {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
 
@@ -275,12 +275,12 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findById(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
-        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+        return getCastingEditorBySlug(casting.getDefaultCode());
     }
 
     @Override
     @Transactional
-    public EmployerCastingResponse pauseCasting(UUID castingId) {
+    public EmployerCastingEditorResponse pauseCasting(UUID castingId) {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
 
@@ -305,12 +305,12 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findById(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
-        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+        return getCastingEditorBySlug(casting.getDefaultCode());
     }
 
     @Override
     @Transactional
-    public EmployerCastingResponse closeCasting(UUID castingId) {
+    public EmployerCastingEditorResponse closeCasting(UUID castingId) {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
 
@@ -335,12 +335,12 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findById(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
-        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+        return getCastingEditorBySlug(casting.getDefaultCode());
     }
 
     @Override
     @Transactional
-    public EmployerCastingResponse archiveCasting(UUID castingId) {
+    public EmployerCastingEditorResponse archiveCasting(UUID castingId) {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
 
@@ -365,7 +365,7 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findById(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
-        return getDetailsForEmployerBySlug(casting.getDefaultCode());
+        return getCastingEditorBySlug(casting.getDefaultCode());
     }
 
     // Public

@@ -4,7 +4,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 
 import java.util.UUID;
 
-public record EmployerCastingResponse(
+public record EmployerCastingEditorResponse(
     UUID id,
     String defaultCode,
     SiteMetadataObject castingStatus,

@@ -2,7 +2,7 @@ package com.padimasso.autocasting.application.castings.service;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingResponse;
+import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 
 import java.util.List;
@@ -15,18 +15,18 @@ public interface CastingService {
 
     List<CastingCardResponse> getMyCastings(EmployerCastingsFilter filter, int page, int size);
 
-    EmployerCastingResponse getDetailsForEmployerBySlug(String slug);
+    EmployerCastingEditorResponse getCastingEditorBySlug(String slug);
 
     void deleteCasting(UUID castingId);
 
     //    Status
-    EmployerCastingResponse publishCasting(UUID castingId);
+    EmployerCastingEditorResponse publishCasting(UUID castingId);
 
-    EmployerCastingResponse setDraftCasting(UUID castingId);
+    EmployerCastingEditorResponse setDraftCasting(UUID castingId);
 
-    EmployerCastingResponse pauseCasting(UUID castingId);
+    EmployerCastingEditorResponse pauseCasting(UUID castingId);
 
-    EmployerCastingResponse closeCasting(UUID castingId);
+    EmployerCastingEditorResponse closeCasting(UUID castingId);
 
-    EmployerCastingResponse archiveCasting(UUID castingId);
+    EmployerCastingEditorResponse archiveCasting(UUID castingId);
 }

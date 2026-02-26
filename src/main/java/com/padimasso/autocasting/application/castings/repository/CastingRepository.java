@@ -3,7 +3,7 @@ package com.padimasso.autocasting.application.castings.repository;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.repository.projection.CastingCardStatusGateProjection;
 import com.padimasso.autocasting.application.castings.repository.projection.CastingPublishGateProjection;
-import com.padimasso.autocasting.application.castings.repository.projection.EmployerCastingDetailsProjection;
+import com.padimasso.autocasting.application.castings.repository.projection.EmployerCastingEditorProjection;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 import jakarta.annotation.Nullable;
@@ -47,7 +47,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         where c.defaultCode = :slug
           and c.deleted = false
         """)
-    Optional<EmployerCastingDetailsProjection> findDetailsProjectionBySlug(@Param("slug") String slug);
+    Optional<EmployerCastingEditorProjection> findCastingEditorProjectionBySlug(@Param("slug") String slug);
 
     @EntityGraph(attributePaths = {
         "status",
