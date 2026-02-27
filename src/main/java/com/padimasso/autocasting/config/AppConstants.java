@@ -29,11 +29,14 @@ public class AppConstants {
     public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
+    public static final String TALENT_CASTING_APPLICATION_URL = BASE_API_URL + "/apply";
 
     // Employer
     public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
     public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
     public static final String EMPLOYER_CASTING_URL = BASE_API_URL + "/employer/casting";
+
+    // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
@@ -77,6 +80,12 @@ public class AppConstants {
     public static final String CASTING_COMPENSATION_TYPE_COLLABORATIVE = "sitemetadata.compensation_type.collaborative";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
+    // Application
+    public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";
+    public static final String CASTING_APPLICATION_STATUS_VIEWED = "sitemetadata.application_status.viewed";
+    public static final String CASTING_APPLICATION_STATUS_PRESELECTED = "sitemetadata.application_status.preselected";
+    public static final String CASTING_APPLICATION_STATUS_SELECTED = "sitemetadata.application_status.selected";
+    public static final String CASTING_APPLICATION_STATUS_NOT_PROCEEDING = "sitemetadata.application_status.not_proceeding";
 
     private AppConstants() {
         throw new IllegalStateException("Utility class");

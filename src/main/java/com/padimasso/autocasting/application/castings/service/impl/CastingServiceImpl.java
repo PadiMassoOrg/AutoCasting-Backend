@@ -7,6 +7,7 @@ import com.padimasso.autocasting.application.castings.dto.response.CastingEmploy
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.*;
 import com.padimasso.autocasting.application.castings.repository.*;
@@ -260,7 +261,28 @@ public class CastingServiceImpl implements CastingService {
             memberSince
         );
 
-        return castingMapper.toCastingResponse(casting, employerInfo);
+        var response = castingMapper.toCastingResponse(casting, employerInfo);
+
+        var filtered = response.requirementsSection().requirements().stream()
+            .filter(r -> roleId.equals(r.roleId()))
+            .toList();
+
+        var newReqSection = new CastingRequirementsSectionResponse(
+            response.requirementsSection().id(),
+            response.requirementsSection().sectionStatus(),
+            filtered
+        );
+
+        return new CastingResponse(
+            response.id(),
+            response.defaultCode(),
+            response.castingStatus(),
+            response.employerInfo(),
+            response.basicInfoSection(),
+            response.rolesSection(),
+            newReqSection,
+            response.remunerationSection()
+        );
     }
 
     @Override
