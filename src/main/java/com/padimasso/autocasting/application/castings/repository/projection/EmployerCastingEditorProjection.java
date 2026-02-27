@@ -5,7 +5,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOpt
 
 import java.util.UUID;
 
-public interface EmployerCastingDetailsProjection {
+public interface EmployerCastingEditorProjection {
     UUID getId();
 
     String getDefaultCode();

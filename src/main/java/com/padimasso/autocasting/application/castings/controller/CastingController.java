@@ -3,7 +3,8 @@ package com.padimasso.autocasting.application.castings.controller;
 import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingResponse;
+import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
+import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
@@ -23,7 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTINGS_URL;
+import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTING_URL;
 
 @RestController
 @RequestMapping
@@ -43,10 +45,20 @@ public class CastingController {
         return ResponseEntity.ok(castingService.createEmptyCasting());
     }
 
-    @Operation(summary = "Ver detalles del Casting para Employer", description = "Obtiene información del Casting por slug para un Employer", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}")
-    public ResponseEntity<EmployerCastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
-        return ResponseEntity.ok(castingService.getDetailsForEmployerBySlug(slug));
+    @Operation(summary = "Casting editor bootstrap", description = "Devuelve IDs de secciones y estado para editar un casting", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/editor")
+    public ResponseEntity<EmployerCastingEditorResponse> getEmployerCastingEditor(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getCastingEditorBySlug(slug));
+    }
+
+    @Operation(
+        summary = "Employer casting details",
+        description = "Obtiene detalles completos del casting por slug. Solo owner.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/details")
+    public ResponseEntity<CastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getEmployerCastingDetailsBySlug(slug));
     }
 
     @Operation(summary = "DELETE Casting", security = @SecurityRequirement(name = "bearerAuth"))
@@ -73,32 +85,31 @@ public class CastingController {
     // Casting Statuses:
     @Operation(summary = "PUBLISH Casting", description = "Publica un casting si pertenece al employer, es publishable y su deadline no está vencida.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/publish")
-    public ResponseEntity<EmployerCastingResponse> publishCasting(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> publishCasting(@PathVariable UUID castingId) {
         return ResponseEntity.ok(castingService.publishCasting(castingId));
     }
 
-    // Casting Statuses:
     @Operation(summary = "Set Casting to DRAFT", description = "Vuelve el casting a DRAFT si pertenece al employer y la transición es válida.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/draft")
-    public ResponseEntity<EmployerCastingResponse> setDraft(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> setDraft(@PathVariable UUID castingId) {
         return ResponseEntity.ok(castingService.setDraftCasting(castingId));
     }
 
     @Operation(summary = "PAUSE Casting", description = "Pausa un casting publicado.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/pause")
-    public ResponseEntity<EmployerCastingResponse> pause(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> pause(@PathVariable UUID castingId) {
         return ResponseEntity.ok(castingService.pauseCasting(castingId));
     }
 
     @Operation(summary = "CLOSE Casting", description = "Cierra un casting.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/close")
-    public ResponseEntity<EmployerCastingResponse> close(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> close(@PathVariable UUID castingId) {
         return ResponseEntity.ok(castingService.closeCasting(castingId));
     }
 
     @Operation(summary = "ARCHIVE Casting", description = "Archiva un casting.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/archive")
-    public ResponseEntity<EmployerCastingResponse> archive(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> archive(@PathVariable UUID castingId) {
         return ResponseEntity.ok(castingService.archiveCasting(castingId));
     }
 
@@ -156,10 +167,16 @@ public class CastingController {
         return castingRoleSearchService.search(filter, page, size);
     }
 
-    @Operation(summary = "Ver detalles del Casting", description = "Obtiene información del Casting por slug", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(CASTING_DETAILS_URL + "/{slug}")
-    public ResponseEntity<CastingResponse> getCastingDetails(@PathVariable String slug) {
-        return ResponseEntity.ok(castingService.getDetailsBySlug(slug));
+    @Operation(
+        summary = "Public casting details by slug and role",
+        description = "Obtiene detalles del casting por slug pero devuelve SOLO el role seleccionado (en array)."
+    )
+    @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}/roles/{roleId}")
+    public ResponseEntity<PublicCastingDetailsResponse> getPublicCastingDetailsBySlugAndRole(
+        @PathVariable String slug,
+        @PathVariable UUID roleId
+    ) {
+        return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlugAndRoleId(slug, roleId));
     }
 
 }

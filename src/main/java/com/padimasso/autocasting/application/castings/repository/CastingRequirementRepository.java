@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface CastingRequirementRepository extends SoftDeleteRepository<CastingRequirementEntity, UUID> {
@@ -26,4 +27,8 @@ public interface CastingRequirementRepository extends SoftDeleteRepository<Casti
         UUID sectionId,
         Collection<UUID> roleIds
     );
+
+    List<CastingRequirementEntity> findAllByCastingRole_IdAndDeletedFalse(UUID roleId);
+
+    List<CastingRequirementEntity> findAllByCastingRole_IdAndIdInAndDeletedFalse(UUID roleId, Set<UUID> submittedIds);
 }
