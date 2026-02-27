@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
+import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
@@ -171,7 +172,7 @@ public class CastingController {
         description = "Obtiene detalles del casting por slug pero devuelve SOLO el role seleccionado (en array)."
     )
     @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}/roles/{roleId}")
-    public ResponseEntity<CastingResponse> getPublicCastingDetailsBySlugAndRole(
+    public ResponseEntity<PublicCastingDetailsResponse> getPublicCastingDetailsBySlugAndRole(
         @PathVariable String slug,
         @PathVariable UUID roleId
     ) {

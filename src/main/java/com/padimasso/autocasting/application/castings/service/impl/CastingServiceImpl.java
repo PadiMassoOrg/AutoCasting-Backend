@@ -1,11 +1,15 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
+import com.padimasso.autocasting.application.applications.repository.CastingApplicationRepository;
+import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
+import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingEmployerInfoResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
+import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
@@ -22,6 +26,8 @@ import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOpt
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingCompensationTypeOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
+import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +50,8 @@ public class CastingServiceImpl implements CastingService {
     private static final String CASTING_NOT_FOUND = "castings.not_found";
     private static final String CASTING_SECTION_NOT_FOUND = "castings.section.not_found";
 
+    private final AuthContext authContext;
+    private final TalentProfileRepository talentProfileRepository;
     private final EmployerContext employerContext;
     private final CastingRepository castingRepository;
     private final CastingBasicInfoRepository castingBasicInfoRepository;
@@ -54,6 +62,7 @@ public class CastingServiceImpl implements CastingService {
     private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
     private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
     private final CastingStatusTransitionPolicy castingStatusTransitionPolicy;
+    private final CastingApplicationRepository castingApplicationRepository;
     private final CastingMapper castingMapper;
 
     @Override
@@ -232,7 +241,7 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
-    public CastingResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId) {
+    public PublicCastingDetailsResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId) {
         if (slug == null || slug.isBlank()) throw new IllegalArgumentException("general.slug_required");
         if (roleId == null) throw new IllegalArgumentException("general.role_id_required");
 
@@ -273,7 +282,7 @@ public class CastingServiceImpl implements CastingService {
             filtered
         );
 
-        return new CastingResponse(
+        var publicCasting = new CastingResponse(
             response.id(),
             response.defaultCode(),
             response.castingStatus(),
@@ -283,6 +292,18 @@ public class CastingServiceImpl implements CastingService {
             newReqSection,
             response.remunerationSection()
         );
+
+        boolean alreadyApplied = false;
+
+        UserEntity user = authContext.getCurrentUserOrThrow();
+        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+
+        if (profile.getId() != null) {
+            alreadyApplied = castingApplicationRepository.existsByTalentProfileIdAndRoleId(profile.getId(), roleId);
+        }
+
+        return new PublicCastingDetailsResponse(publicCasting, alreadyApplied);
     }
 
     @Override
