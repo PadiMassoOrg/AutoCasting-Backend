@@ -4,7 +4,6 @@ import com.padimasso.autocasting.application.applications.repository.CastingAppl
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
-import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
 import com.padimasso.autocasting.application.castings.dto.response.CastingEmployerInfoResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
@@ -26,7 +25,6 @@ import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOpt
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingCompensationTypeOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
 import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
-import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -293,15 +291,10 @@ public class CastingServiceImpl implements CastingService {
             response.remunerationSection()
         );
 
-        boolean alreadyApplied = false;
-
-        UserEntity user = authContext.getCurrentUserOrThrow();
-        TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
-
-        if (profile.getId() != null) {
-            alreadyApplied = castingApplicationRepository.existsByTalentProfileIdAndRoleId(profile.getId(), roleId);
-        }
+        boolean alreadyApplied = authContext.getCurrentUserOptional()
+            .flatMap(u -> talentProfileRepository.findByUserId(u.getId()))
+            .map(p -> castingApplicationRepository.existsByTalentProfileIdAndRoleId(p.getId(), roleId))
+            .orElse(false);
 
         return new PublicCastingDetailsResponse(publicCasting, alreadyApplied);
     }
