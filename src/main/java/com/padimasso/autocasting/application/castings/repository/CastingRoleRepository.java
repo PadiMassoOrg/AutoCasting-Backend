@@ -76,7 +76,7 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
           )
         """)
     boolean existsIncompleteRemunerationByCastingId(
-        @Param("castingId") UUID castingId,
+        @Param("castingSlug") UUID castingId,
         @Param("unpaidCode") String unpaidCode
     );
 

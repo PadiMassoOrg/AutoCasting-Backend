@@ -177,7 +177,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
           and c.deleted = false
         """)
     Optional<CastingPublishGateProjection> findPublishGateForEmployer(
-        @Param("castingId") UUID castingId,
+        @Param("castingSlug") UUID castingId,
         @Param("employerProfileId") UUID employerProfileId
     );
 
@@ -191,7 +191,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
            and (c.status.stringCode = :draftCode or c.status.stringCode = :pausedCode)
         """)
     int publishIfAllowed(
-        @Param("castingId") UUID castingId,
+        @Param("castingSlug") UUID castingId,
         @Param("employerProfileId") UUID employerProfileId,
         @Param("publishedStatus") CastingStatusOptionEntity publishedStatus,
         @Param("draftCode") String draftCode,
@@ -239,7 +239,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
             where c.id = :castingId
               and c.deleted = false
         """)
-    Optional<CastingPublishGateProjection> findPublishGateByCastingId(@Param("castingId") UUID castingId);
+    Optional<CastingPublishGateProjection> findPublishGateByCastingId(@Param("castingSlug") UUID castingId);
 
     @Modifying
     @Query("""
@@ -250,7 +250,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
            and c.status.stringCode = :publishedCode
         """)
     void forceDraftIfPublished(
-        @Param("castingId") UUID castingId,
+        @Param("castingSlug") UUID castingId,
         @Param("draftStatus") CastingStatusOptionEntity draftStatus,
         @Param("publishedCode") String publishedCode
     );
@@ -265,7 +265,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
            and c.status.stringCode in :allowedCurrentCodes
         """)
     int setStatusIfCurrentIn(
-        @Param("castingId") UUID castingId,
+        @Param("castingSlug") UUID castingId,
         @Param("employerProfileId") UUID employerProfileId,
         @Param("nextStatus") CastingStatusOptionEntity nextStatus,
         @Param("allowedCurrentCodes") List<String> allowedCurrentCodes

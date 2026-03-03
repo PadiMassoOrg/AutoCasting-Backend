@@ -27,10 +27,10 @@ public class AppConstants {
 
     // Talent
     public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
+    public static final String TALENT_CASTING_APPLICATIONS_URL = TALENT_PROFILE_API_URL + "/applications";
     public static final String CREDIT_API_URL = BASE_API_URL + "/credit";
     public static final String EDUCATION_API_URL = BASE_API_URL + "/education";
     public static final String TALENT_CASTING_APPLICATION_URL = BASE_API_URL + "/apply";
-
     // Employer
     public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
     public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
