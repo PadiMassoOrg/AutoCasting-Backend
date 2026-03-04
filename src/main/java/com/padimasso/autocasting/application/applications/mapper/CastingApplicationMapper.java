@@ -47,22 +47,35 @@ public class CastingApplicationMapper {
     ) {
         var tp = a.getTalentProfile();
         var tbi = tp != null ? tp.getBasicInfo() : null;
+        var contact = tp != null ? tp.getContact() : null;
         var media = tp != null ? tp.getMedia() : null;
         var role = a.getCastingRole();
-
-        SiteMetadataObject status = a.getStatus() != null
-            ? new SiteMetadataObject(a.getStatus().getId(), a.getStatus().getStringCode(), a.getStatus().getCategoryStringCode())
+        var casting = (role != null && role.getRolesSection() != null)
+            ? role.getRolesSection().getCasting()
             : null;
+        var castingBasic = casting != null ? casting.getBasicInfo() : null;
+        SiteMetadataObject status = a.getStatus() != null
+            ? new SiteMetadataObject(
+            a.getStatus().getId(),
+            a.getStatus().getStringCode(),
+            a.getStatus().getCategoryStringCode()
+        ) : null;
 
         return new EmployerCastingApplicantCardResponse(
             a.getId().toString(),
-            tp != null ? tp.getId().toString() : null,
+            // Talent
+            tp != null ? tp.getPublicSlug() : null,
             media != null ? media.getHeadshotImageUrl() : null,
             tbi != null ? tbi.getStageName() : null,
             professions,
+            contact != null ? contact.getEmail() : null,
+            contact != null ? contact.getPhoneNumber() : null,
+            // Casting / Role
+            castingBasic != null ? castingBasic.getTitle() : null,
             role != null ? role.getRoleName() : null,
             role != null ? role.getId().toString() : null,
-            role != null ? role.getRolesSection().getCasting().getDefaultCode() : null,
+            casting != null ? casting.getDefaultCode() : null,
+            // Application
             status,
             submissions
         );

@@ -6,10 +6,13 @@ import java.util.List;
 
 public record EmployerCastingApplicantCardResponse(
     String applicationId,
-    String talentProfileId,
+    String talentPublicSlug,
     String talentHeadshotImageUrl,
     String talentStageName,
     List<SiteMetadataObject> talentProfessions,
+    String talentEmail,
+    String talentPhoneNumber,
+    String castingTitle,
     String castingRoleName,
     String castingRoleId,
     String castingSlug,

@@ -19,6 +19,7 @@ import com.padimasso.autocasting.application.applications.repository.specificati
 import com.padimasso.autocasting.application.applications.service.CastingApplicationService;
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
+import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRequirementEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
@@ -39,8 +40,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.padimasso.autocasting.config.AppConstants.CASTING_APPLICATION_STATUS_BLANK;
-import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
+import static com.padimasso.autocasting.config.AppConstants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -84,6 +84,27 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
         if (s == null) return null;
         var t = s.trim();
         return t.isBlank() ? null : t;
+    }
+
+    private void setEmployerOwnedApplicationStatus(UUID applicationId, String statusStringCode) {
+        if (applicationId == null) throw new IllegalArgumentException("applications.id_required");
+        if (statusStringCode == null || statusStringCode.isBlank()) {
+            throw new IllegalArgumentException("applications.status_required");
+        }
+
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        CastingApplicationStatusOptionEntity status = statusOptionRepository
+            .findByStringCode(statusStringCode)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.application_status.not_found"));
+
+        int updated = castingApplicationRepository.setStatusIfOwned(applicationId, employerProfileId, status);
+
+        if (updated == 0) {
+            // 0 = no existe, no pertenece al employer, o está deleted
+            throw new IllegalArgumentException("applications.not_found_or_forbidden");
+        }
     }
 
     // ======================
@@ -224,7 +245,6 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             employerProfileId,
             castingSlug,
             safeTrim(filter.search()),
-            filter.roleIds(),
             filter.applicationStatusIdTokens(),
             filter.professionIds(),
             filter.orderBy()
@@ -275,6 +295,39 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             pageResult.getNumber(),
             pageResult.getSize()
         );
+    }
+    // ======================
+    // Employer - Application Status actions
+    // ======================
+
+    @Override
+    @Transactional
+    public void preselectCastingApplication(UUID applicationId) {
+        setEmployerOwnedApplicationStatus(applicationId, CASTING_APPLICATION_STATUS_PRESELECTED);
+    }
+
+    @Override
+    @Transactional
+    public void selectCastingApplication(UUID applicationId) {
+        setEmployerOwnedApplicationStatus(applicationId, CASTING_APPLICATION_STATUS_SELECTED);
+    }
+
+    @Override
+    @Transactional
+    public void viewCastingApplication(UUID applicationId) {
+        setEmployerOwnedApplicationStatus(applicationId, CASTING_APPLICATION_STATUS_VIEWED);
+    }
+
+    @Override
+    @Transactional
+    public void notProceedingCastingApplication(UUID applicationId) {
+        setEmployerOwnedApplicationStatus(applicationId, CASTING_APPLICATION_STATUS_NOT_PROCEEDING);
+    }
+
+    @Override
+    @Transactional
+    public void blankCastingApplication(UUID applicationId) {
+        setEmployerOwnedApplicationStatus(applicationId, CASTING_APPLICATION_STATUS_BLANK);
     }
 
     // ======================

@@ -9,7 +9,6 @@ public record EmployerCastingApplicantsFilter(
     UUID employerProfileId,
     String castingSlug,
     String search,
-    List<UUID> roleIds,
     List<String> applicationStatusIdTokens,
     List<UUID> professionIds,
     EmployerCastingApplicantsOrderBy orderBy

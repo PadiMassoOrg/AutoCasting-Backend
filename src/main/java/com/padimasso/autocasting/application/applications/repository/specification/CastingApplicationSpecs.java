@@ -13,6 +13,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOpt
 import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptionEntity;
 import com.padimasso.autocasting.application.talent.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,27 +30,22 @@ public final class CastingApplicationSpecs {
     // ======================
     public static Specification<CastingApplicationEntity> fromTalentFilter(TalentCastingApplicationsFilter f) {
         Specification<CastingApplicationEntity> spec = null;
-
         spec = and(spec, deletedFalse());
         spec = and(spec, forTalentProfile(f.talentProfileId()));
         spec = and(spec, talentSearchText(f.search()));
         spec = and(spec, castingStatusInTokens(f.castingStatusIdTokens()));
         spec = and(spec, projectTypeInTokens(f.projectTypeIdTokens()));
         spec = and(spec, modalityInTokens(f.modalityIdTokens()));
-
         return spec;
     }
 
     public static Specification<CastingApplicationEntity> fromEmployerFilter(EmployerCastingApplicantsFilter f) {
         Specification<CastingApplicationEntity> spec = null;
-
         spec = and(spec, deletedFalse());
-        spec = and(spec, forEmployerAndCastingSlug(f.employerProfileId(), f.castingSlug())); // <---
-        spec = and(spec, employerSearchText(f.search()));
-        spec = and(spec, roleIdIn(f.roleIds()));
+        spec = and(spec, forEmployerAndCastingSlug(f.employerProfileId(), f.castingSlug()));
+        spec = and(spec, employerSearchText(f.search())); // UPDATED
         spec = and(spec, applicationStatusInTokens(f.applicationStatusIdTokens()));
         spec = and(spec, professionIdIn(f.professionIds()));
-
         return spec;
     }
 
@@ -65,7 +61,6 @@ public final class CastingApplicationSpecs {
         return (root, query, cb) -> cb.equal(root.join("talentProfile").get("id"), talentProfileId);
     }
 
-    // ✅ SLUG BASED
     public static Specification<CastingApplicationEntity> forEmployerAndCastingSlug(UUID employerProfileId, String castingSlug) {
         String slug = safeTrim(castingSlug);
         if (employerProfileId == null || slug == null) return null;
@@ -76,7 +71,7 @@ public final class CastingApplicationSpecs {
             Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
 
             return cb.and(
-                cb.equal(casting.get("defaultCode"), slug), // <--- SLUG
+                cb.equal(casting.get("defaultCode"), slug),
                 cb.equal(casting.join("employerProfile").get("id"), employerProfileId)
             );
         };
@@ -88,15 +83,12 @@ public final class CastingApplicationSpecs {
     public static Specification<CastingApplicationEntity> talentSearchText(String raw) {
         String q = safeTrim(raw);
         if (q == null) return null;
-
         return (root, query, cb) -> {
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
             Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
             Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
             Join<CastingEntity, CastingBasicInfoEntity> bi = casting.join("basicInfo", JoinType.LEFT);
-
             String like = toLikePattern(q);
-
             return cb.or(
                 cb.like(cb.lower(role.get("roleName")), like, '\\'),
                 cb.like(cb.lower(bi.get("title")), like, '\\')
@@ -104,20 +96,42 @@ public final class CastingApplicationSpecs {
         };
     }
 
+    /**
+     * Employer search must filter by:
+     * - roleName (CastingRoleEntity.roleName)
+     * - talent stageName (TalentProfileEntity.basicInfo.stageName)
+     * - casting description (CastingBasicInfoEntity.description)
+     * - role description (CastingRoleEntity.description)
+     */
     public static Specification<CastingApplicationEntity> employerSearchText(String raw) {
         String q = safeTrim(raw);
         if (q == null) return null;
 
         return (root, query, cb) -> {
+            assert query != null;
+            query.distinct(true);
+
+            // Talent
             Join<CastingApplicationEntity, TalentProfileEntity> tp = joinOnce(root, "talentProfile", JoinType.INNER);
             Join<TalentProfileEntity, BasicInfoEntity> tbi = tp.join("basicInfo", JoinType.LEFT);
-            Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
 
+            // Role + Casting + BasicInfo
+            Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
+            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
+            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
+            Join<CastingEntity, CastingBasicInfoEntity> cbi = casting.join("basicInfo", JoinType.LEFT);
             String like = toLikePattern(q);
 
+            Expression<String> stageName = tbi.get("stageName").as(String.class);
+            Expression<String> roleName = role.get("roleName").as(String.class);
+            Expression<String> castingDescription = cbi.get("description").as(String.class);
+            Expression<String> roleDescription = role.get("description").as(String.class);
+
             return cb.or(
-                cb.like(cb.lower(tbi.get("stageName")), like, '\\'),
-                cb.like(cb.lower(role.get("roleName")), like, '\\')
+                cb.like(cb.lower(stageName), like, '\\'),
+                cb.like(cb.lower(roleName), like, '\\'),
+                cb.like(cb.lower(castingDescription), like, '\\'),
+                cb.like(cb.lower(roleDescription), like, '\\')
             );
         };
     }
@@ -203,11 +217,6 @@ public final class CastingApplicationSpecs {
     // ======================
     // Filters by ids
     // ======================
-    public static Specification<CastingApplicationEntity> roleIdIn(List<UUID> roleIds) {
-        if (roleIds == null || roleIds.isEmpty()) return null;
-        return (root, query, cb) -> root.join("castingRole").get("id").in(roleIds);
-    }
-
     public static Specification<CastingApplicationEntity> professionIdIn(List<UUID> professionIds) {
         if (professionIds == null || professionIds.isEmpty()) return null;
 
@@ -226,8 +235,10 @@ public final class CastingApplicationSpecs {
     // ======================
     // Helpers
     // ======================
-    private static Specification<CastingApplicationEntity> and(Specification<CastingApplicationEntity> base,
-                                                               Specification<CastingApplicationEntity> next) {
+    private static Specification<CastingApplicationEntity> and(
+        Specification<CastingApplicationEntity> base,
+        Specification<CastingApplicationEntity> next
+    ) {
         if (next == null) return base;
         return (base == null) ? next : base.and(next);
     }

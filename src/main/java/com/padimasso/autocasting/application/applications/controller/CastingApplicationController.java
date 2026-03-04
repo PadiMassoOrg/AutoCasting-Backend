@@ -80,7 +80,6 @@ public class CastingApplicationController {
     public SliceResponse<EmployerCastingApplicantCardResponse> getApplicantsByCasting(
         @PathVariable String slug,
         @RequestParam(required = false, name = "q") String q,
-        @RequestParam(required = false, name = "roleId") List<UUID> roleIds,
         @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
         @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
         @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
@@ -91,12 +90,67 @@ public class CastingApplicationController {
             null,
             slug,
             q,
-            roleIds,
             applicationStatusIdTokens,
             professionIds,
             orderBy
         );
         return castingApplicationService.getEmployerCastingApplicants(filter, page, size);
+    }
+
+    // Casting Application Statuses
+    @Operation(
+        summary = "Set application to PRESELECTED",
+        description = "Marca la Application como PRESELECTED (solo owner employer y transición válida).",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/preselect")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void preselect(@PathVariable UUID applicationId) {
+        castingApplicationService.preselectCastingApplication(applicationId);
+    }
+
+    @Operation(
+        summary = "Set application to SELECTED",
+        description = "Marca la Application como SELECTED (solo owner employer y transición válida).",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/select")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void select(@PathVariable UUID applicationId) {
+        castingApplicationService.selectCastingApplication(applicationId);
+    }
+
+    @Operation(
+        summary = "Set application to VIEWED",
+        description = "Marca la Application como VIEWED (solo owner employer).",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/view")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void view(@PathVariable UUID applicationId) {
+        castingApplicationService.viewCastingApplication(applicationId);
+    }
+
+    @Operation(
+        summary = "Set application to NOT_PROCEEDING",
+        description = "Marca la Application como NOT_PROCEEDING (solo owner employer y transición válida).",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/not-proceeding")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void notProceeding(@PathVariable UUID applicationId) {
+        castingApplicationService.notProceedingCastingApplication(applicationId);
+    }
+
+    @Operation(
+        summary = "Reset application status to BLANK",
+        description = "Resetea la Application a BLANK (solo owner employer y transición válida).",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/blank")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void blank(@PathVariable UUID applicationId) {
+        castingApplicationService.blankCastingApplication(applicationId);
     }
 
 }

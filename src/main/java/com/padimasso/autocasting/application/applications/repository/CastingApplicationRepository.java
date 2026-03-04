@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.applications.repository;
 
 import com.padimasso.autocasting.application.applications.model.CastingApplicationEntity;
 import com.padimasso.autocasting.application.applications.repository.projection.ApplicationProfessionProjection;
+import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -52,6 +54,7 @@ public interface CastingApplicationRepository
         "talentProfile",
         "talentProfile.basicInfo",
         "talentProfile.basicInfo.professions",
+        "talentProfile.contact",
         "talentProfile.media"
     })
     Page<CastingApplicationEntity> findAll(@Nullable Specification<CastingApplicationEntity> spec, Pageable pageable);
@@ -72,5 +75,19 @@ public interface CastingApplicationRepository
         """)
     List<ApplicationProfessionProjection> findProfessionsByApplicationIds(
         @Param("applicationIds") List<UUID> applicationIds
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update CastingApplicationEntity a
+               set a.status = :status
+             where a.id = :applicationId
+               and a.castingRole.rolesSection.casting.employerProfile.id = :employerProfileId
+               and a.deleted = false
+        """)
+    int setStatusIfOwned(
+        @Param("applicationId") UUID applicationId,
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("status") CastingApplicationStatusOptionEntity status
     );
 }

@@ -15,4 +15,14 @@ public interface CastingApplicationService {
     SliceResponse<EmployerCastingApplicantCardResponse> getEmployerCastingApplicants(EmployerCastingApplicantsFilter filter, int page, int size);
 
     SliceResponse<TalentCastingApplicationCardResponse> getTalentCastingApplications(TalentCastingApplicationsFilter filter, int page, int size);
+    
+    void preselectCastingApplication(UUID applicationId);
+
+    void selectCastingApplication(UUID applicationId);
+
+    void viewCastingApplication(UUID applicationId);
+
+    void notProceedingCastingApplication(UUID applicationId);
+
+    void blankCastingApplication(UUID applicationId);
 }
