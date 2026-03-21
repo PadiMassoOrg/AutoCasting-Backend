@@ -36,24 +36,17 @@ public class CastingStatusTransitionPolicy {
         boolean publishAllowedNow = isPublishAllowedNow(g);
 
         return switch (g.castingStatusCode()) {
-            case CASTING_STATUS_DRAFT -> publishAllowedNow ? List.of(CASTING_STATUS_PUBLISHED) : List.of();
 
             case CASTING_STATUS_CLOSED -> List.of(CASTING_STATUS_ARCHIVED);
 
-            case CASTING_STATUS_PUBLISHED ->
-                List.of(CASTING_STATUS_DRAFT, CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED, CASTING_STATUS_ARCHIVED);
+            case CASTING_STATUS_PUBLISHED -> List.of(CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED);
 
             case CASTING_STATUS_PAUSED -> {
                 var out = new ArrayList<String>();
-                // Paused -> Published solo si publishAllowedNow
                 if (publishAllowedNow) out.add(CASTING_STATUS_PUBLISHED);
-                out.add(CASTING_STATUS_DRAFT);
                 out.add(CASTING_STATUS_CLOSED);
-                out.add(CASTING_STATUS_ARCHIVED);
                 yield out;
             }
-
-            case CASTING_STATUS_ARCHIVED -> List.of();
 
             default -> List.of();
         };
