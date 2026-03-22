@@ -43,12 +43,17 @@ public interface CastingApplicationRepository
 
         // Role + Casting
         "castingRole",
+        "castingRole.gender",
+        "castingRole.professions",
+        "castingRole.roleType",
         "castingRole.rolesSection",
         "castingRole.rolesSection.casting",
         "castingRole.rolesSection.casting.basicInfo",
         "castingRole.rolesSection.casting.basicInfo.projectType",
         "castingRole.rolesSection.casting.basicInfo.castingModality",
         "castingRole.rolesSection.casting.status",
+        "castingRole.rolesSection.casting.employerProfile",
+        "castingRole.rolesSection.casting.employerProfile.basicInfo",
 
         // Talent
         "talentProfile",
@@ -58,7 +63,7 @@ public interface CastingApplicationRepository
         "talentProfile.media"
     })
     Page<CastingApplicationEntity> findAll(@Nullable Specification<CastingApplicationEntity> spec, Pageable pageable);
-
+    
     // ===== Employer =====
     @Query("""
         select
