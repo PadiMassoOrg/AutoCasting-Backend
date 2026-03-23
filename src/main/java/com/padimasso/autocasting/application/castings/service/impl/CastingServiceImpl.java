@@ -5,10 +5,7 @@ import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
-import com.padimasso.autocasting.application.castings.dto.response.CastingEmployerInfoResponse;
-import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
-import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
+import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
@@ -300,7 +297,7 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
-    public CastingResponse getPublicCastingDetailsBySlug(String slug) {
+    public PublicCastingOverviewResponse getPublicCastingDetailsBySlug(String slug) {
         if (slug == null || slug.isBlank()) {
             throw new IllegalArgumentException("general.slug_required");
         }
@@ -330,7 +327,14 @@ public class CastingServiceImpl implements CastingService {
             memberSince
         );
 
-        return castingMapper.toCastingResponse(casting, employerInfo);
+        CastingResponse response = castingMapper.toCastingResponse(casting, employerInfo);
+
+        List<UUID> appliedRoleIds = authContext.getCurrentUserOptional()
+            .flatMap(u -> talentProfileRepository.findByUserId(u.getId()))
+            .map(p -> castingApplicationRepository.findAppliedRoleIdsByTalentProfileIdAndCastingId(p.getId(), casting.getId()))
+            .orElse(List.of());
+
+        return new PublicCastingOverviewResponse(response, appliedRoleIds);
     }
 
     @Override

@@ -36,6 +36,18 @@ public interface CastingApplicationRepository
         @Param("roleId") UUID roleId
     );
 
+    @Query("""
+        select ca.castingRole.id
+        from CastingApplicationEntity ca
+        where ca.deleted = false
+          and ca.talentProfile.id = :talentProfileId
+          and ca.castingRole.rolesSection.casting.id = :castingId
+        """)
+    List<UUID> findAppliedRoleIdsByTalentProfileIdAndCastingId(
+        @Param("talentProfileId") UUID talentProfileId,
+        @Param("castingId") UUID castingId
+    );
+
     @Override
     @EntityGraph(attributePaths = {
         // Application
@@ -63,7 +75,7 @@ public interface CastingApplicationRepository
         "talentProfile.media"
     })
     Page<CastingApplicationEntity> findAll(@Nullable Specification<CastingApplicationEntity> spec, Pageable pageable);
-    
+
     // ===== Employer =====
     @Query("""
         select
@@ -84,11 +96,11 @@ public interface CastingApplicationRepository
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-            update CastingApplicationEntity a
-               set a.status = :status
-             where a.id = :applicationId
-               and a.castingRole.rolesSection.casting.employerProfile.id = :employerProfileId
-               and a.deleted = false
+        update CastingApplicationEntity a
+           set a.status = :status
+         where a.id = :applicationId
+           and a.castingRole.rolesSection.casting.employerProfile.id = :employerProfileId
+           and a.deleted = false
         """)
     int setStatusIfOwned(
         @Param("applicationId") UUID applicationId,

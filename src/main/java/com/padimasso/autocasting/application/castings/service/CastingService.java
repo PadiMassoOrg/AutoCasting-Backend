@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
 import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
+import com.padimasso.autocasting.application.castings.dto.response.PublicCastingOverviewResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 
 import java.util.List;
@@ -32,5 +33,5 @@ public interface CastingService {
 
     PublicCastingDetailsResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId);
 
-    CastingResponse getPublicCastingDetailsBySlug(String slug);
+    PublicCastingOverviewResponse getPublicCastingDetailsBySlug(String slug);
 }
