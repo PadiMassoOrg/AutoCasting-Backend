@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
 import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
+import com.padimasso.autocasting.application.castings.dto.response.PublicCastingOverviewResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
@@ -177,6 +178,15 @@ public class CastingController {
         @PathVariable UUID roleId
     ) {
         return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlugAndRoleId(slug, roleId));
+    }
+
+    @Operation(
+        summary = "Public casting details by slug",
+        description = "Obtiene detalles públicos completos del casting por slug, devolviendo todos los roles."
+    )
+    @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}")
+    public ResponseEntity<PublicCastingOverviewResponse> getPublicCastingDetailsBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlug(slug));
     }
 
 }

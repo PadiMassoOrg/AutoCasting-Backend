@@ -5,10 +5,7 @@ import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
-import com.padimasso.autocasting.application.castings.dto.response.CastingEmployerInfoResponse;
-import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
-import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
+import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
@@ -297,6 +294,47 @@ public class CastingServiceImpl implements CastingService {
             .orElse(false);
 
         return new PublicCastingDetailsResponse(publicCasting, alreadyApplied);
+    }
+
+    @Override
+    public PublicCastingOverviewResponse getPublicCastingDetailsBySlug(String slug) {
+        if (slug == null || slug.isBlank()) {
+            throw new IllegalArgumentException("general.slug_required");
+        }
+
+        var allowed = List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED);
+
+        CastingEntity casting = castingRepository
+            .findPublicDetailsBySlug(slug.trim(), allowed)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        UUID employerProfileId = casting.getEmployerProfile() != null
+            ? casting.getEmployerProfile().getId()
+            : null;
+
+        Long totalCastings = employerProfileId != null
+            ? castingRepository.countPublicCastingsByEmployerProfileId(employerProfileId, allowed)
+            : null;
+
+        LocalDate memberSince = casting.getEmployerProfile() != null
+            && casting.getEmployerProfile().getCreatedAt() != null
+            ? casting.getEmployerProfile().getCreatedAt().toLocalDate()
+            : null;
+
+        CastingEmployerInfoResponse employerInfo = castingMapper.toCastingEmployerInfoResponse(
+            casting.getEmployerProfile(),
+            totalCastings,
+            memberSince
+        );
+
+        CastingResponse response = castingMapper.toCastingResponse(casting, employerInfo);
+
+        List<UUID> appliedRoleIds = authContext.getCurrentUserOptional()
+            .flatMap(u -> talentProfileRepository.findByUserId(u.getId()))
+            .map(p -> castingApplicationRepository.findAppliedRoleIdsByTalentProfileIdAndCastingId(p.getId(), casting.getId()))
+            .orElse(List.of());
+
+        return new PublicCastingOverviewResponse(response, appliedRoleIds);
     }
 
     @Override

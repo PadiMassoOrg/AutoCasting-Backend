@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter
 import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
 import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
 import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
+import com.padimasso.autocasting.application.castings.dto.response.PublicCastingOverviewResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 
 import java.util.List;
@@ -20,7 +21,6 @@ public interface CastingService {
 
     void deleteCasting(UUID castingId);
 
-    //    Status
     EmployerCastingEditorResponse publishCasting(UUID castingId);
 
     EmployerCastingEditorResponse setDraftCasting(UUID castingId);
@@ -32,4 +32,6 @@ public interface CastingService {
     EmployerCastingEditorResponse archiveCasting(UUID castingId);
 
     PublicCastingDetailsResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId);
+
+    PublicCastingOverviewResponse getPublicCastingDetailsBySlug(String slug);
 }
