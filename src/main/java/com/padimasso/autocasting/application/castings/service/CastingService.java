@@ -20,7 +20,6 @@ public interface CastingService {
 
     void deleteCasting(UUID castingId);
 
-    //    Status
     EmployerCastingEditorResponse publishCasting(UUID castingId);
 
     EmployerCastingEditorResponse setDraftCasting(UUID castingId);
@@ -32,4 +31,6 @@ public interface CastingService {
     EmployerCastingEditorResponse archiveCasting(UUID castingId);
 
     PublicCastingDetailsResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId);
+
+    CastingResponse getPublicCastingDetailsBySlug(String slug);
 }

@@ -179,4 +179,13 @@ public class CastingController {
         return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlugAndRoleId(slug, roleId));
     }
 
+    @Operation(
+        summary = "Public casting details by slug",
+        description = "Obtiene detalles públicos completos del casting por slug, devolviendo todos los roles."
+    )
+    @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}")
+    public ResponseEntity<CastingResponse> getPublicCastingDetailsBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlug(slug));
+    }
+
 }

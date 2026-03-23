@@ -300,6 +300,40 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
+    public CastingResponse getPublicCastingDetailsBySlug(String slug) {
+        if (slug == null || slug.isBlank()) {
+            throw new IllegalArgumentException("general.slug_required");
+        }
+
+        var allowed = List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED);
+
+        CastingEntity casting = castingRepository
+            .findPublicDetailsBySlug(slug.trim(), allowed)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        UUID employerProfileId = casting.getEmployerProfile() != null
+            ? casting.getEmployerProfile().getId()
+            : null;
+
+        Long totalCastings = employerProfileId != null
+            ? castingRepository.countPublicCastingsByEmployerProfileId(employerProfileId, allowed)
+            : null;
+
+        LocalDate memberSince = casting.getEmployerProfile() != null
+            && casting.getEmployerProfile().getCreatedAt() != null
+            ? casting.getEmployerProfile().getCreatedAt().toLocalDate()
+            : null;
+
+        CastingEmployerInfoResponse employerInfo = castingMapper.toCastingEmployerInfoResponse(
+            casting.getEmployerProfile(),
+            totalCastings,
+            memberSince
+        );
+
+        return castingMapper.toCastingResponse(casting, employerInfo);
+    }
+
+    @Override
     @Transactional
     public void deleteCasting(UUID castingId) {
         CastingEntity casting = castingRepository.findById(castingId)
