@@ -49,6 +49,8 @@ public interface CastingApplicationRepository
     );
 
     @Override
+    Page<CastingApplicationEntity> findAll(@Nullable Specification<CastingApplicationEntity> spec, Pageable pageable);
+
     @EntityGraph(attributePaths = {
         // Application
         "status",
@@ -65,16 +67,16 @@ public interface CastingApplicationRepository
         "castingRole.rolesSection.casting.basicInfo.castingModality",
         "castingRole.rolesSection.casting.status",
         "castingRole.rolesSection.casting.employerProfile",
-        "castingRole.rolesSection.casting.employerProfile.basicInfo",
-
-        // Talent
-        "talentProfile",
-        "talentProfile.basicInfo",
-        "talentProfile.basicInfo.professions",
-        "talentProfile.contact",
-        "talentProfile.media"
+        "castingRole.rolesSection.casting.employerProfile.basicInfo"
     })
-    Page<CastingApplicationEntity> findAll(@Nullable Specification<CastingApplicationEntity> spec, Pageable pageable);
+    @Query("""
+        select distinct a
+        from CastingApplicationEntity a
+        where a.id in :ids
+        """)
+    List<CastingApplicationEntity> findAllForTalentCardsByIdIn(
+        @Param("ids") List<UUID> ids
+    );
 
     // ===== Employer =====
     @Query("""

@@ -17,7 +17,6 @@ spring:
         properties:
             hibernate:
                 default_schema: public
-                dialect: org.hibernate.dialect.PostgreSQLDialect
 
     flyway:
         enabled: true

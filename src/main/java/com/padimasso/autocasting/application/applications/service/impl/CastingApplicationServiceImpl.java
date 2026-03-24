@@ -194,7 +194,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
 
         var pageable = PageRequest.of(page, ps, orderBy.toSort());
 
-        var f = new TalentCastingApplicationsFilter(
+        var normalizedFilter = new TalentCastingApplicationsFilter(
             profile.getId(),
             safeTrim(filter.search()),
             filter.castingStatusIdTokens(),
@@ -203,17 +203,45 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             filter.orderBy()
         );
 
-        var spec = CastingApplicationSpecs.fromTalentFilter(f);
-        var result = castingApplicationRepository.findAll(spec, pageable);
-        var items = result.getContent().stream()
+        var spec = CastingApplicationSpecs.fromTalentFilter(normalizedFilter);
+
+        // 1) Página liviana, sin entity graph con colecciones
+        var pageResult = castingApplicationRepository.findAll(spec, pageable);
+
+        var ids = pageResult.getContent().stream()
+            .map(CastingApplicationEntity::getId)
+            .toList();
+
+        if (ids.isEmpty()) {
+            return new SliceResponse<>(
+                List.of(),
+                pageResult.hasNext(),
+                pageResult.getNumber(),
+                pageResult.getSize()
+            );
+        }
+
+        // 2) Rehidratación sólo de los elementos de la página
+        var hydratedEntities = castingApplicationRepository.findAllForTalentCardsByIdIn(ids);
+
+        var byId = hydratedEntities.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                CastingApplicationEntity::getId,
+                java.util.function.Function.identity()
+            ));
+
+        // 3) Preservar el orden original de la página
+        var items = ids.stream()
+            .map(byId::get)
+            .filter(java.util.Objects::nonNull)
             .map(castingApplicationMapper::toTalentCardFromEntity)
             .toList();
 
         return new SliceResponse<>(
             items,
-            result.hasNext(),
-            result.getNumber(),
-            result.getSize()
+            pageResult.hasNext(),
+            pageResult.getNumber(),
+            pageResult.getSize()
         );
     }
 
