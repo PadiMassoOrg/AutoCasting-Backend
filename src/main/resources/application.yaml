@@ -1,27 +1,31 @@
 spring:
     application:
         name: Auto Casting
+
     datasource:
         url: ${DATABASE_URL}
         username: ${DATABASE_USERNAME}
         password: ${DATABASE_PASSWORD}
         hikari:
             connection-timeout: 20000
-            maximum-pool-size: 10
+            maximum-pool-size: 5
+            minimum-idle: 1
+
     jpa:
         hibernate:
             ddl-auto: validate
         properties:
             hibernate:
-                hibernate.default_schema: public
+                default_schema: public
                 dialect: org.hibernate.dialect.PostgreSQLDialect
-                format_sql: true
+
     flyway:
         enabled: true
         baseline-on-migrate: true
         locations: classpath:db/migration
         default-schema: public
         schemas: public
+
     security:
         oauth2:
             client:
@@ -36,6 +40,7 @@ spring:
                         token-uri: https://oauth2.googleapis.com/token
                         user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
                         user-name-attribute: email
+
     mail:
         host: smtp.gmail.com
         port: 587
@@ -55,6 +60,10 @@ app:
 
 server:
     port: ${PORT:8080}
+    tomcat:
+        threads:
+            max: 20
+            min-spare: 5
 
 logging:
     level:
