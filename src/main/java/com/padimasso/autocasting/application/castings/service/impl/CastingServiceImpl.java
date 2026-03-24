@@ -257,6 +257,23 @@ public class CastingServiceImpl implements CastingService {
     }
 
     @Override
+    @Transactional
+    public EmployerCastingCheckoutSummaryResponse getEmployerCastingCheckoutSummary(UUID castingId) {
+        if (castingId == null) {
+            throw new IllegalArgumentException("casting.id_required");
+        }
+
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        CastingEntity foundCasting = castingRepository
+            .findEmployerCheckoutSummaryByIdAndEmployerProfileId(castingId, employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+
+        return castingMapper.toEmployerCastingCheckoutSummaryResponse(foundCasting);
+    }
+
+    @Override
     public PublicCastingDetailsResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId) {
         if (slug == null || slug.isBlank()) throw new IllegalArgumentException("general.slug_required");
         if (roleId == null) throw new IllegalArgumentException("general.role_id_required");

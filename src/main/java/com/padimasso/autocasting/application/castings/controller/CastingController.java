@@ -2,10 +2,7 @@ package com.padimasso.autocasting.application.castings.controller;
 
 import com.padimasso.autocasting.application.castings.dto.CastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
-import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
-import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
-import com.padimasso.autocasting.application.castings.dto.response.PublicCastingOverviewResponse;
+import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
@@ -60,6 +57,18 @@ public class CastingController {
     @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/details")
     public ResponseEntity<CastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
         return ResponseEntity.ok(castingService.getEmployerCastingDetailsBySlug(slug));
+    }
+
+    @Operation(
+        summary = "Employer casting checkout summary",
+        description = "Obtiene el resumen mínimo del casting para checkout/publicación. Solo owner.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(EMPLOYER_CASTING_URL + "/{id}/checkout-summary")
+    public ResponseEntity<EmployerCastingCheckoutSummaryResponse> getEmployerCastingCheckoutSummary(
+        @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(castingService.getEmployerCastingCheckoutSummary(id));
     }
 
     @Operation(summary = "DELETE Casting", security = @SecurityRequirement(name = "bearerAuth"))
