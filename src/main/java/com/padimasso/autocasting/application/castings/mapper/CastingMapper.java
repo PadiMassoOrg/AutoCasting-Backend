@@ -391,6 +391,46 @@ public class CastingMapper {
         );
     }
 
+    // =========================
+    // Checkout
+    // =========================
+    public EmployerCastingCheckoutSummaryResponse toEmployerCastingCheckoutSummaryResponse(CastingEntity casting) {
+        if (casting == null) return null;
+
+        var basicInfo = casting.getBasicInfo();
+        var rolesSection = casting.getRoles();
+
+        List<EmployerCastingCheckoutRoleResponse> roles =
+            rolesSection == null || rolesSection.getRoles() == null
+                ? List.of()
+                : rolesSection.getRoles().stream()
+                .filter(role -> role != null && !isSoftDeleted(role.isDeleted()))
+                .map(this::toEmployerCastingCheckoutRoleResponse)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return new EmployerCastingCheckoutSummaryResponse(
+            casting.getId(),
+            casting.getDefaultCode(),
+            basicInfo != null ? basicInfo.getTitle() : null,
+            basicInfo != null ? mapToSiteMetadataObject(basicInfo.getProjectType()) : null,
+            basicInfo != null ? mapToSiteMetadataObject(basicInfo.getCastingModality()) : null,
+            basicInfo != null ? basicInfo.getApplicationDeadline() : null,
+            roles
+        );
+    }
+
+    public EmployerCastingCheckoutRoleResponse toEmployerCastingCheckoutRoleResponse(CastingRoleEntity role) {
+        if (role == null) return null;
+        if (isSoftDeleted(role.isDeleted())) return null;
+
+        return new EmployerCastingCheckoutRoleResponse(
+            role.getId(),
+            role.getRoleName(),
+            mapToSiteMetadataObject(role.getRoleType())
+        );
+    }
+
     private boolean isSoftDeleted(Boolean deleted) {
         return Boolean.TRUE.equals(deleted);
     }

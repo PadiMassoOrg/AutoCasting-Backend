@@ -92,6 +92,26 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("employerProfileId") UUID employerProfileId
     );
 
+    @EntityGraph(attributePaths = {
+        "basicInfo",
+        "basicInfo.projectType",
+        "basicInfo.castingModality",
+        "roles",
+        "roles.roles",
+        "roles.roles.roleType"
+    })
+    @Query("""
+        select c
+        from CastingEntity c
+        where c.id = :castingId
+          and c.deleted = false
+          and c.employerProfile.id = :employerProfileId
+        """)
+    Optional<CastingEntity> findEmployerCheckoutSummaryByIdAndEmployerProfileId(
+        @Param("castingId") UUID castingId,
+        @Param("employerProfileId") UUID employerProfileId
+    );
+
     @Query("""
             select distinct c
             from CastingEntity c

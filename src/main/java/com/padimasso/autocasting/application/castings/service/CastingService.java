@@ -1,10 +1,7 @@
 package com.padimasso.autocasting.application.castings.service;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingsFilter;
-import com.padimasso.autocasting.application.castings.dto.response.CastingResponse;
-import com.padimasso.autocasting.application.castings.dto.response.EmployerCastingEditorResponse;
-import com.padimasso.autocasting.application.castings.dto.response.PublicCastingDetailsResponse;
-import com.padimasso.autocasting.application.castings.dto.response.PublicCastingOverviewResponse;
+import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 
 import java.util.List;
@@ -14,6 +11,8 @@ public interface CastingService {
     String createEmptyCasting();
 
     CastingResponse getEmployerCastingDetailsBySlug(String slug);
+
+    EmployerCastingCheckoutSummaryResponse getEmployerCastingCheckoutSummary(UUID castingId);
 
     List<CastingCardResponse> getMyCastings(EmployerCastingsFilter filter, int page, int size);
 
