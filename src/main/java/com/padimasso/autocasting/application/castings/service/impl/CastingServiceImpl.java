@@ -343,6 +343,14 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findById(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
 
+        CastingStatusOptionEntity closedStatus = castingStatusOptionRepository
+            .findByStringCode(CASTING_STATUS_CLOSED)
+            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+
+        casting.setStatus(closedStatus);
+        castingRepository.save(casting);
+        castingRepository.flush();
+
         castingRepository.deleteById(castingId);
     }
 
