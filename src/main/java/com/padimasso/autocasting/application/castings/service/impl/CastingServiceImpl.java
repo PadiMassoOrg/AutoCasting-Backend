@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -126,6 +127,7 @@ public class CastingServiceImpl implements CastingService {
     @Override
     @Transactional
     public List<CastingCardResponse> getMyCastings(EmployerCastingsFilter incomingFilter, int page, int size) {
+
         var employer = employerContext.getCurrentEmployerOrThrow();
         var employerProfileId = employer.employerProfile().getId();
 
@@ -155,18 +157,37 @@ public class CastingServiceImpl implements CastingService {
             spec = spec.and(CastingSpecs.orderByDeadlineDescNullsLast());
         }
 
+        // 1) Página liviana
         var result = castingRepository.findAll(spec, pageable);
-        var castings = result.getContent();
+        var pageEntities = result.getContent();
 
-        var ids = castings.stream().map(CastingEntity::getId).toList();
+        var ids = pageEntities.stream()
+            .map(CastingEntity::getId)
+            .toList();
 
-        var gateById = ids.isEmpty()
-            ? java.util.Map.<UUID, CastingCardStatusGateProjection>of()
-            : castingRepository.findCardsGateForEmployer(employerProfileId, ids)
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        // 2) Rehidratación de solo los castings visibles en la página
+        var hydrated = castingRepository.findAllForEmployerCardsByIdIn(ids);
+
+        var byId = hydrated.stream()
+            .collect(Collectors.toMap(
+                CastingEntity::getId,
+                Function.identity()
+            ));
+
+        var orderedCastings = ids.stream()
+            .map(byId::get)
+            .filter(Objects::nonNull)
+            .toList();
+
+        var gateById = castingRepository.findCardsGateForEmployer(employerProfileId, ids)
             .stream()
             .collect(Collectors.toMap(CastingCardStatusGateProjection::getId, Function.identity()));
 
-        return castings.stream()
+        return orderedCastings.stream()
             .map(c -> {
                 var gate = gateById.get(c.getId());
                 var allowed = castingStatusTransitionPolicy.allowedNextStatuses(gate);

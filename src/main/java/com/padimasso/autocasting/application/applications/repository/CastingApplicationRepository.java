@@ -79,6 +79,31 @@ public interface CastingApplicationRepository
     );
 
     // ===== Employer =====
+    @EntityGraph(attributePaths = {
+        // Application
+        "status",
+
+        // Role + Casting
+        "castingRole",
+        "castingRole.rolesSection",
+        "castingRole.rolesSection.casting",
+        "castingRole.rolesSection.casting.basicInfo",
+
+        // Talent
+        "talentProfile",
+        "talentProfile.basicInfo",
+        "talentProfile.contact",
+        "talentProfile.media"
+    })
+    @Query("""
+        select distinct a
+        from CastingApplicationEntity a
+        where a.id in :ids
+        """)
+    List<CastingApplicationEntity> findAllForEmployerApplicantCardsByIdIn(
+        @Param("ids") List<UUID> ids
+    );
+
     @Query("""
         select
             a.id as applicationId,

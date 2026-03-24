@@ -124,7 +124,6 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("allowedStatusCodes") List<String> allowedStatusCodes
     );
 
-    // Casting Statuses
     @Query("""
         select
             c.id as id,
@@ -152,7 +151,6 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("employerProfileId") UUID employerProfileId,
         @Param("castingIds") List<UUID> castingIds
     );
-
 
     @Query("""
         select
@@ -199,7 +197,10 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     );
 
     @Override
+    Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
+
     @EntityGraph(attributePaths = {
+        "status",
         "basicInfo",
         "basicInfo.projectType",
         "basicInfo.castingModality",
@@ -213,11 +214,15 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "roles.roles.skills",
         "roles.roles.remuneration",
         "requirements",
-        "remuneration",
+        "remuneration"
     })
-    Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
+    @Query("""
+        select distinct c
+        from CastingEntity c
+        where c.id in :ids
+        """)
+    List<CastingEntity> findAllForEmployerCardsByIdIn(@Param("ids") List<UUID> ids);
 
-    // Internal: FORCE DRAFT is needed
     @Query("""
             select
                 s.stringCode as castingStatusCode,
@@ -323,5 +328,4 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("slug") String slug,
         @Param("allowedStatusCodes") List<String> allowedStatusCodes
     );
-
 }

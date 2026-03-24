@@ -20,6 +20,8 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
     long countByRolesSectionIdAndDeletedFalse(UUID rolesSectionId);
 
     @Override
+    Page<CastingRoleEntity> findAll(@Nullable Specification<CastingRoleEntity> spec, Pageable pageable);
+
     @EntityGraph(attributePaths = {
         // Sección y casting padre
         "rolesSection",
@@ -36,19 +38,24 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
         "gender",
         "skills",
         "remuneration",
+        "remuneration.currency",
+        "remuneration.payRateType",
 
         // Subentidades del rol
         "characteristics",
         "characteristics.hairColor",
         "characteristics.eyeColor",
         "characteristics.ethnicity",
-        "characteristics.dietOption",
-
-        "remuneration",
-        "remuneration.currency",
-        "remuneration.payRateType"
+        "characteristics.dietOption"
     })
-    Page<CastingRoleEntity> findAll(@Nullable Specification<CastingRoleEntity> spec, Pageable pageable);
+    @Query("""
+        select distinct r
+        from CastingRoleEntity r
+        where r.id in :ids
+        """)
+    List<CastingRoleEntity> findAllPublicCardsByIdIn(
+        @Param("ids") List<UUID> ids
+    );
 
     List<CastingRoleEntity> findAllByRolesSection_Casting_IdAndIdInAndDeletedFalse(
         UUID castingId,

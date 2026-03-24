@@ -8,7 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,13 +21,23 @@ public interface TalentProfileRepository extends SoftDeleteRepository<TalentProf
     Optional<TalentProfileEntity> findByDefaultSlugOrPremiumSlug(String slug, String slug1);
 
     @Override
+    Page<TalentProfileEntity> findAll(@Nullable Specification<TalentProfileEntity> spec, Pageable pageable);
+
     @EntityGraph(attributePaths = {
-        "basicInfo", "basicInfo.professions",
+        "basicInfo",
+        "basicInfo.professions",
         "contact",
         "media",
         "plan"
     })
-    Page<TalentProfileEntity> findAll(@Nullable Specification<TalentProfileEntity> spec, Pageable pageable);
+    @Query("""
+        select distinct t
+        from TalentProfileEntity t
+        where t.id in :ids
+        """)
+    List<TalentProfileEntity> findAllForTalentCardsByIdIn(
+        @Param("ids") List<UUID> ids
+    );
 }
 
 

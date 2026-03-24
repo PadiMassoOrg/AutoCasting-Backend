@@ -269,7 +269,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
 
         var pageable = PageRequest.of(page, ps, orderBy.toSort());
 
-        var f = new EmployerCastingApplicantsFilter(
+        var effectiveFilter = new EmployerCastingApplicantsFilter(
             employerProfileId,
             castingSlug,
             safeTrim(filter.search()),
@@ -278,38 +278,61 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             filter.orderBy()
         );
 
-        var spec = CastingApplicationSpecs.fromEmployerFilter(f);
+        var spec = CastingApplicationSpecs.fromEmployerFilter(effectiveFilter);
+
+        // 1) Página liviana
         var pageResult = castingApplicationRepository.findAll(spec, pageable);
-        List<CastingApplicationEntity> apps = pageResult.getContent();
-        List<UUID> appIds = apps.stream().map(CastingApplicationEntity::getId).toList();
+        List<CastingApplicationEntity> pageApps = pageResult.getContent();
 
-        // 1) Submissions
-        Map<UUID, List<ApplicantRequirementSubmissionRow>> subsByAppId =
-            appIds.isEmpty() ? Map.of() : groupSubmissions(appIds);
+        List<UUID> appIds = pageApps.stream()
+            .map(CastingApplicationEntity::getId)
+            .toList();
 
-        // 2) Professions
-        Map<UUID, List<SiteMetadataObject>> professionsByAppId;
-        if (!appIds.isEmpty()) {
-            var profRows = castingApplicationRepository.findProfessionsByApplicationIds(appIds);
-
-            professionsByAppId = profRows.stream()
-                .filter(r -> r.getProfessionId() != null)
-                .collect(Collectors.groupingBy(
-                    ApplicationProfessionProjection::getApplicationId,
-                    Collectors.mapping(
-                        r -> new SiteMetadataObject(
-                            r.getProfessionId(),
-                            r.getProfessionCode(),
-                            r.getProfessionCategoryStringCode()
-                        ),
-                        Collectors.toList()
-                    )
-                ));
-        } else {
-            professionsByAppId = Map.of();
+        if (appIds.isEmpty()) {
+            return new SliceResponse<>(
+                List.of(),
+                pageResult.hasNext(),
+                pageResult.getNumber(),
+                pageResult.getSize()
+            );
         }
 
-        var items = apps.stream()
+        // 2) Rehidratación solo de la página visible
+        var hydratedApps = castingApplicationRepository.findAllForEmployerApplicantCardsByIdIn(appIds);
+
+        var byId = hydratedApps.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                CastingApplicationEntity::getId,
+                java.util.function.Function.identity()
+            ));
+
+        var orderedApps = appIds.stream()
+            .map(byId::get)
+            .filter(java.util.Objects::nonNull)
+            .toList();
+
+        // 3) Submissions
+        Map<UUID, List<ApplicantRequirementSubmissionRow>> subsByAppId =
+            groupSubmissions(appIds);
+
+        // 4) Professions
+        var profRows = castingApplicationRepository.findProfessionsByApplicationIds(appIds);
+
+        Map<UUID, List<SiteMetadataObject>> professionsByAppId = profRows.stream()
+            .filter(r -> r.getProfessionId() != null)
+            .collect(Collectors.groupingBy(
+                ApplicationProfessionProjection::getApplicationId,
+                Collectors.mapping(
+                    r -> new SiteMetadataObject(
+                        r.getProfessionId(),
+                        r.getProfessionCode(),
+                        r.getProfessionCategoryStringCode()
+                    ),
+                    Collectors.toList()
+                )
+            ));
+
+        var items = orderedApps.stream()
             .map(a -> castingApplicationMapper.toEmployerApplicantCardFromEntity(
                 a,
                 professionsByAppId.getOrDefault(a.getId(), List.of()),
@@ -324,10 +347,10 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             pageResult.getSize()
         );
     }
+
     // ======================
     // Employer - Application Status actions
     // ======================
-
     @Override
     @Transactional
     public void preselectCastingApplication(UUID applicationId) {
@@ -362,8 +385,13 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     // Internal grouping
     // ======================
     private Map<UUID, List<ApplicantRequirementSubmissionRow>> groupSubmissions(List<UUID> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Map.of();
+        }
+
         List<ApplicationRequirementSubmissionProjection> subs =
             castingApplicationRequirementSubmissionRepository.findAllByApplicationIds(applicationIds);
+
         return subs.stream()
             .collect(Collectors.groupingBy(
                 ApplicationRequirementSubmissionProjection::getApplicationId,
