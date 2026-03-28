@@ -13,6 +13,7 @@ public record CastingEmployerInfoResponse(
     String imageUrl,
     SocialMediaResponse socialMedia,
     Long totalCastings,
-    LocalDate memberSince
+    LocalDate memberSince,
+    String websiteUrl
 ) {
 }

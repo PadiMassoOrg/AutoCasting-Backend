@@ -60,7 +60,8 @@ public class CastingMapper {
                 bi.getSocialMediaLinks() == null ? List.of() : bi.getSocialMediaLinks().stream().toList()
             ) : null,
             totalCastings,
-            memberSince
+            memberSince,
+            bi != null ? bi.getWebsiteUrl() : null
         );
     }
 
@@ -92,8 +93,8 @@ public class CastingMapper {
             role.getProfessions() == null
                 ? List.<SiteMetadataObject>of()
                 : role.getProfessions().stream()
-                .map(TalentProfileMapper::mapToSiteMetadataObject)
-                .toList();
+                  .map(TalentProfileMapper::mapToSiteMetadataObject)
+                  .toList();
 
         return new CastingRolePublicCardResponse(
             role.getId(),
@@ -119,14 +120,14 @@ public class CastingMapper {
             role.getProfessions() == null
                 ? List.<SiteMetadataObject>of()
                 : role.getProfessions().stream()
-                .map(TalentProfileMapper::mapToSiteMetadataObject)
-                .toList();
+                  .map(TalentProfileMapper::mapToSiteMetadataObject)
+                  .toList();
         List<SiteMetadataObject> skills =
             role.getSkills() == null
                 ? List.of()
                 : role.getSkills().stream()
-                .map(TalentProfileMapper::mapToSiteMetadataObject)
-                .toList();
+                  .map(TalentProfileMapper::mapToSiteMetadataObject)
+                  .toList();
 
         return new CastingRoleEmployerCardResponse(
             role.getId(),
@@ -180,9 +181,9 @@ public class CastingMapper {
             entity.getRoles() == null
                 ? List.of()
                 : entity.getRoles().stream()
-                .filter(r -> !isSoftDeleted(r.isDeleted()))
-                .map(this::toRoleResponse)
-                .toList();
+                  .filter(r -> !isSoftDeleted(r.isDeleted()))
+                  .map(this::toRoleResponse)
+                  .toList();
 
         return new CastingRolesSectionResponse(
             entity.getId(),
@@ -202,15 +203,15 @@ public class CastingMapper {
             entity.getProfessions() == null
                 ? List.of()
                 : entity.getProfessions().stream()
-                .map(TalentProfileMapper::mapToSiteMetadataObject)
-                .toList();
+                  .map(TalentProfileMapper::mapToSiteMetadataObject)
+                  .toList();
 
         List<SiteMetadataObject> skills =
             entity.getSkills() == null
                 ? List.of()
                 : entity.getSkills().stream()
-                .map(TalentProfileMapper::mapToSiteMetadataObject)
-                .toList();
+                  .map(TalentProfileMapper::mapToSiteMetadataObject)
+                  .toList();
 
         CharacteristicsResponse characteristics =
             toRoleCharacteristicsResponse(entity.getCharacteristics());
@@ -272,9 +273,9 @@ public class CastingMapper {
             entity.getRequirements() == null
                 ? List.of()
                 : entity.getRequirements().stream()
-                .filter(r -> !isSoftDeleted(r.isDeleted()))
-                .map(this::toRequirementResponse)
-                .toList();
+                  .filter(r -> !isSoftDeleted(r.isDeleted()))
+                  .map(this::toRequirementResponse)
+                  .toList();
 
         return new CastingRequirementsSectionResponse(
             entity.getId(),
@@ -346,11 +347,11 @@ public class CastingMapper {
             casting.getRoles() == null || casting.getRoles().getRoles() == null
                 ? List.of()
                 : casting.getRoles().getRoles().stream()
-                .filter(r -> r != null && !isSoftDeleted(r.isDeleted()))
-                .map(CastingRoleEntity::getRemuneration)
-                .map(this::toRoleRemunerationRowResponse)
-                .filter(Objects::nonNull)
-                .toList();
+                  .filter(r -> r != null && !isSoftDeleted(r.isDeleted()))
+                  .map(CastingRoleEntity::getRemuneration)
+                  .map(this::toRoleRemunerationRowResponse)
+                  .filter(Objects::nonNull)
+                  .toList();
 
         return toRemunerationsSectionResponse(section, rows);
     }
@@ -404,10 +405,10 @@ public class CastingMapper {
             rolesSection == null || rolesSection.getRoles() == null
                 ? List.of()
                 : rolesSection.getRoles().stream()
-                .filter(role -> role != null && !isSoftDeleted(role.isDeleted()))
-                .map(this::toEmployerCastingCheckoutRoleResponse)
-                .filter(Objects::nonNull)
-                .toList();
+                  .filter(role -> role != null && !isSoftDeleted(role.isDeleted()))
+                  .map(this::toEmployerCastingCheckoutRoleResponse)
+                  .filter(Objects::nonNull)
+                  .toList();
 
         return new EmployerCastingCheckoutSummaryResponse(
             casting.getId(),

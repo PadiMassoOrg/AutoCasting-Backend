@@ -54,6 +54,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "employerProfile",
         "employerProfile.basicInfo",
         "employerProfile.basicInfo.companyType",
+        "employerProfile.basicInfo.websiteUrl",
 
         "basicInfo",
         "basicInfo.sectionStatus",
