@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.auth.context;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +19,7 @@ public class AuthContext {
     public UserEntity getCurrentUserOrThrow() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("auth.not_authenticated");
+            throw ApiException.unauthorized("auth.not_authenticated");
         }
 
         Object principal = authentication.getPrincipal();
@@ -32,11 +33,11 @@ public class AuthContext {
         }
 
         if (username == null) {
-            throw new IllegalStateException("auth.invalid_principal");
+            throw ApiException.unauthorized("auth.invalid_principal");
         }
 
         return userRepository.findByEmail(username)
-            .orElseThrow(() -> new IllegalArgumentException("auth.user_not_found"));
+            .orElseThrow(() -> ApiException.notFound("auth.user_not_found"));
     }
 
     public Optional<UserEntity> getCurrentUserOptional() {

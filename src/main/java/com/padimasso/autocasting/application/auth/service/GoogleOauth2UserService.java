@@ -16,11 +16,16 @@ public class GoogleOauth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest req) throws OAuth2AuthenticationException {
-        OAuth2User oauth = new DefaultOAuth2UserService().loadUser(req);
+        try {
+            OAuth2User oauth = new DefaultOAuth2UserService().loadUser(req);
 
-        provision.ensureUser(oauth.getAttribute("email"),
-            oauth.getName());
+            provision.ensureUser(oauth.getAttribute("email"), oauth.getName());
 
-        return oauth;
+            return oauth;
+        } catch (OAuth2AuthenticationException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new OAuth2AuthenticationException("oauth.google.failure");
+        }
     }
 }

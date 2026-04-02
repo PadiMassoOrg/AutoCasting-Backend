@@ -56,12 +56,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {
             SecurityContextHolder.clearContext();
-            request.setAttribute("auth_error_code", "token_expired");
+            request.setAttribute("auth_error_code", "auth.token_expired");
             authenticationEntryPoint.commence(request, response,
                 new InsufficientAuthenticationException("token expired", ex));
         } catch (JwtException ex) {
             SecurityContextHolder.clearContext();
-            request.setAttribute("auth_error_code", "invalid_token");
+            request.setAttribute("auth_error_code", "auth.invalid_token");
             authenticationEntryPoint.commence(request, response,
                 new InsufficientAuthenticationException("invalid token", ex));
         }
