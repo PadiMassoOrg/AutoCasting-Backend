@@ -12,6 +12,8 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -35,11 +37,12 @@ public class ApiErrorFactory {
                                   Object[] args,
                                   String path,
                                   Locale locale,
-                                  Map<String, String> errors) {
+                                  Map<String, ApiErrorMessage> errors) {
         return ApiErrorResponse.builder()
             .timestamp(LocalDateTime.now())
             .status(status.value())
             .message(resolveErrorCode(messageKey))
+            .messageArgs(resolveMessageArgs(args))
             .errors(errors)
             .path(path)
             .build();
@@ -64,7 +67,7 @@ public class ApiErrorFactory {
                       HttpStatus status,
                       String messageKey,
                       Object[] args,
-                      Map<String, String> errors) throws IOException {
+                      Map<String, ApiErrorMessage> errors) throws IOException {
         Locale locale = RequestContextUtils.getLocale(request);
         ApiErrorResponse body = build(status, messageKey, args, request.getRequestURI(), locale, errors);
 
@@ -74,10 +77,24 @@ public class ApiErrorFactory {
     }
 
     public String resolveErrorCode(String messageKey) {
-        if (messageKey == null || messageKey.isBlank()) {
-            return "general.unexpected";
+        String safeMessageKey = (messageKey == null || messageKey.isBlank())
+            ? "general.unexpected"
+            : messageKey;
+
+        return messageSource.getMessage(safeMessageKey, null, safeMessageKey, Locale.ROOT);
+    }
+
+    public ApiErrorMessage buildMessage(String messageKey, Object[] args) {
+        return new ApiErrorMessage(resolveErrorCode(messageKey), resolveMessageArgs(args));
+    }
+
+    private List<String> resolveMessageArgs(Object[] args) {
+        if (args == null || args.length == 0) {
+            return List.of();
         }
 
-        return messageSource.getMessage(messageKey, null, messageKey, Locale.ROOT);
+        return Arrays.stream(args)
+            .map(String::valueOf)
+            .toList();
     }
 }

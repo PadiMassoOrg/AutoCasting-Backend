@@ -179,7 +179,7 @@ public class AuthServiceImpl implements AuthService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("auth.invalid_credentials");
+            throw new IllegalArgumentException("auth.current_password_mismatch");
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));

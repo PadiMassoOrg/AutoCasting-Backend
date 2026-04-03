@@ -8,7 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -25,13 +25,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleValidationExceptions(MethodArgumentNotValidException exception,
                                                                        HttpServletRequest request,
                                                                        Locale locale) {
-        Map<String, String> fieldErrors = new HashMap<>();
+        Map<String, ApiErrorMessage> fieldErrors = new LinkedHashMap<>();
 
         exception.getBindingResult().getFieldErrors().forEach(error -> {
             String messageKey = error.getDefaultMessage();
-            fieldErrors.put(
+            fieldErrors.putIfAbsent(
                 error.getField(),
-                apiErrorFactory.resolveErrorCode(messageKey)
+                apiErrorFactory.buildMessage(messageKey, null)
             );
         });
 

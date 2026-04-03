@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.BadCredentialsException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 class ApiExceptionClassifierTest {
 
@@ -31,5 +32,14 @@ class ApiExceptionClassifierTest {
 
         assertEquals(500, exception.getStatus().value());
         assertEquals("Cannot compute sitemetadata version", exception.getMessageKey());
+    }
+
+    @Test
+    void parsesDelimitedArgumentsFromKeyedMessages() {
+        ApiException exception = classifier.classify(new IllegalArgumentException("auth.user_not_found|test@example.com"));
+
+        assertEquals(400, exception.getStatus().value());
+        assertEquals("auth.user_not_found", exception.getMessageKey());
+        assertArrayEquals(new Object[]{"test@example.com"}, exception.getArgs());
     }
 }

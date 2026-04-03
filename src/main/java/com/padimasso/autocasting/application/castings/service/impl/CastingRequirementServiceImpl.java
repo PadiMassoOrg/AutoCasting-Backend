@@ -14,6 +14,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRequirem
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRequirementSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRequirementService;
+import com.padimasso.autocasting.exception.ApiException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -93,8 +94,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
         List<UUID> missingRoleIds = roleIds.stream().filter(id -> !foundRoleIds.contains(id)).toList();
 
         if (!missingRoleIds.isEmpty()) {
-            String message = "castings.role.mismatch";
-            throw new IllegalArgumentException(message + missingRoleIds);
+            throw ApiException.badRequest("castings.role.mismatch", missingRoleIds);
         }
 
         Map<UUID, String> roleNameById = roles.stream()
@@ -106,9 +106,8 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
 
         if (!existing.isEmpty()) {
             UUID conflictRoleId = existing.getFirst().getCastingRole().getId();
-            String message = "casting.role.requirement.already_exists";
             String roleName = roleNameById.getOrDefault(conflictRoleId, conflictRoleId.toString());
-            throw new IllegalArgumentException(message + roleName);
+            throw ApiException.conflict("casting.role.requirement.already_exists", roleName);
         }
 
         String description = readNullableTrimmed(request.description());
