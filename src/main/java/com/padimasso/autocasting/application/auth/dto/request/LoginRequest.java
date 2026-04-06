@@ -6,7 +6,10 @@ import jakarta.validation.constraints.Size;
 
 public record LoginRequest(@NotBlank(message = "auth.required_field")
                            @Pattern(regexp = "^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$",
-                               message = "auth.email_invalid") String email,
+                               message = "auth.email_invalid")
+                           @Size(max = 255, message = "auth.email_max_length")
+                           String email,
                            @NotBlank(message = "auth.required_field")
-                           @Size(min = 6, message = "auth.password_length") String password) {
+                           @Size(min = 6, max = 255, message = "auth.password_length")
+                           String password) {
 }
