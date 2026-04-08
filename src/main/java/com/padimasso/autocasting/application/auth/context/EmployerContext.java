@@ -8,11 +8,11 @@ import com.padimasso.autocasting.application.employer.repository.EmployerProfile
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Component
 @RequiredArgsConstructor
 public class EmployerContext {
-
-    private static final String PROFILE_NOT_FOUND = "profile.not_found";
 
     private final AuthContext authContext;
     private final EmployerProfileRepository employerProfileRepository;
@@ -27,4 +27,3 @@ public class EmployerContext {
         return new EmployerPrincipal(user, profile);
     }
 }
-

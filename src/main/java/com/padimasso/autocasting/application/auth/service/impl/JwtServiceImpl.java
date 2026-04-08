@@ -4,6 +4,8 @@ import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.JwtService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -20,6 +22,8 @@ import java.util.Map;
 
 import static com.padimasso.autocasting.config.AppConstants.ISSUER;
 import static com.padimasso.autocasting.config.AppConstants.SECRET;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_INVALID_TOKEN;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_TOKEN_EXPIRED;
 
 @Service
 @SuppressWarnings("unused")
@@ -69,7 +73,13 @@ public class JwtServiceImpl implements JwtService {
 
 
     public String extractEmail(String token) {
-        return getClaims(token).getPayload().getSubject();
+        try {
+            return getClaims(token).getPayload().getSubject();
+        } catch (ExpiredJwtException ex) {
+            throw new IllegalArgumentException(AUTH_TOKEN_EXPIRED);
+        } catch (JwtException ex) {
+            throw new IllegalArgumentException(AUTH_INVALID_TOKEN);
+        }
     }
 
     @Override
@@ -89,4 +99,3 @@ public class JwtServiceImpl implements JwtService {
             .parseSignedClaims(token);
     }
 }
-

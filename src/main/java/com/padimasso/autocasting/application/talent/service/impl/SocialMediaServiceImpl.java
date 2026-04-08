@@ -5,8 +5,8 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
-import com.padimasso.autocasting.application.sitemetadata.model.SocialMediaOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.SocialMediaOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.dto.request.SocialMediaLinkDto;
 import com.padimasso.autocasting.application.talent.dto.request.SocialMediaPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.SocialMediaResponse;
@@ -20,6 +20,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -29,7 +31,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
     private final TalentProfileRepository talentProfileRepository;
     private final EmployerProfileRepository employerProfileRepository;
     private final ProfileSocialMediaLinkRepository linkRepository;
-    private final SocialMediaOptionRepository optionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
 
     @Transactional
     @Override
@@ -37,7 +39,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         if (request.links() != null) {
             for (SocialMediaLinkDto rawDto : request.links()) {
@@ -58,8 +60,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
                 } else {
                     // "upsert": reusamos si existe, incluso si estaba deleted
                     ProfileSocialMediaLinkEntity entity = existingIncl.orElseGet(() -> {
-                        SocialMediaOptionEntity option = optionRepository.findById(rawDto.optionId())
-                            .orElseThrow(() -> new IllegalArgumentException("social_media_option.not_found"));
+                        var option = siteMetadataResolver.resolveSocialMediaOptionOrThrow(rawDto.optionId());
                         return ProfileSocialMediaLinkEntity.builder()
                             .talentProfile(profile)
                             .option(option)
@@ -85,7 +86,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         EmployerProfileEntity profile = employerProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         EmployerBasicInfoEntity basicInfo = profile.getBasicInfo();
 
@@ -108,8 +109,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
                 } else {
                     // "upsert": reusamos si existe, incluso si estaba deleted
                     ProfileSocialMediaLinkEntity entity = existingIncl.orElseGet(() -> {
-                        SocialMediaOptionEntity option = optionRepository.findById(rawDto.optionId())
-                            .orElseThrow(() -> new IllegalArgumentException("social_media_option.not_found"));
+                        var option = siteMetadataResolver.resolveSocialMediaOptionOrThrow(rawDto.optionId());
                         return ProfileSocialMediaLinkEntity.builder()
                             .employerBasicInfo(basicInfo)
                             .option(option)
@@ -130,8 +130,6 @@ public class SocialMediaServiceImpl implements SocialMediaService {
     }
 
     private String normalizeUrl(String value) {
-        if (value == null) return null;
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return TextNormalizer.normalizeNullable(value);
     }
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Component
 public class CastingStatusTransitionPolicy {
@@ -56,63 +57,63 @@ public class CastingStatusTransitionPolicy {
      * Validaciónes
      */
     public void assertCanPublish(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException("castings.not_found");
+        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
 
         GateData g = GateData.from(gate);
 
         if (isPublishableSections(g)) {
-            throw new IllegalStateException("castings.not_publishable");
+            throw new IllegalStateException(CASTINGS_NOT_PUBLISHABLE);
         }
 
         if (g.applicationDeadline() == null) {
-            throw new IllegalStateException("castings.deadline_required");
+            throw new IllegalStateException(CASTINGS_DEADLINE_REQUIRED);
         }
 
         if (isDeadlinePassed(g)) {
-            throw new IllegalStateException("castings.deadline_passed");
+            throw new IllegalStateException(CASTINGS_DEADLINE_PASSED);
         }
 
         boolean canPublishFromStatus =
             CASTING_STATUS_DRAFT.equals(g.castingStatusCode()) || CASTING_STATUS_PAUSED.equals(g.castingStatusCode());
 
         if (!canPublishFromStatus) {
-            throw new IllegalStateException("castings.invalid_status_transition");
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
     public void assertCanSetDraft(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException("castings.not_found");
+        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
         String s = gate.getCastingStatusCode();
         // Permitimos volver a DRAFT desde PUBLISHED o PAUSED (según tu policy)
         if (!(CASTING_STATUS_PUBLISHED.equals(s) || CASTING_STATUS_PAUSED.equals(s))) {
-            throw new IllegalStateException("castings.invalid_status_transition");
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
     public void assertCanPause(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException("castings.not_found");
+        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
         // Pausar solo si está PUBLISHED
         if (!CASTING_STATUS_PUBLISHED.equals(gate.getCastingStatusCode())) {
-            throw new IllegalStateException("castings.invalid_status_transition");
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
     public void assertCanClose(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException("castings.not_found");
+        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
         // Cerrar si está DRAFT/PUBLISHED/PAUSED (según tu allowedNextStatuses)
         String s = gate.getCastingStatusCode();
         if (CASTING_STATUS_ARCHIVED.equals(s) || CASTING_STATUS_CLOSED.equals(s)) {
-            throw new IllegalStateException("castings.invalid_status_transition");
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
         // Si deadline ya pasó, allowedNextStatuses igual habilita CLOSED/ARCHIVED.
         // Acá NO bloqueamos.
     }
 
     public void assertCanArchive(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException("castings.not_found");
+        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
         // Archivar si no está ya ARCHIVED
         if (CASTING_STATUS_ARCHIVED.equals(gate.getCastingStatusCode())) {
-            throw new IllegalStateException("castings.invalid_status_transition");
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 

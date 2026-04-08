@@ -7,7 +7,7 @@ public record ResetPasswordRequest(
     @NotBlank(message = "auth.required_field")
     String token,
     @NotBlank(message = "auth.required_field")
-    @Size(min = 6, message = "auth.password_length")
+    @Size(min = 6, max = 255, message = "auth.password_length")
     String newPassword
 ) {
 }

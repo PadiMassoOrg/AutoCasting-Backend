@@ -8,9 +8,11 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
+import com.padimasso.autocasting.exception.ApiErrorFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -25,13 +27,18 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     private final UserRepository userRepo;
     private final TalentProfileRepository talentProfileRepository;
     private final EmployerProfileRepository employerProfileRepository;
+    private final ApiErrorFactory apiErrorFactory;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws IOException {
         OAuth2User principal = (OAuth2User) auth.getPrincipal();
         String email = principal.getAttribute("email");
 
-        UserEntity user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("oauth.google.user_missing_email"));
+        UserEntity user = userRepo.findByEmail(email).orElse(null);
+        if (user == null) {
+            apiErrorFactory.write(req, res, HttpStatus.UNAUTHORIZED, "oauth.google.user_missing_email", null);
+            return;
+        }
 
         var profileOpt = talentProfileRepository.findByUserId(user.getId());
         String talentProfileSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);

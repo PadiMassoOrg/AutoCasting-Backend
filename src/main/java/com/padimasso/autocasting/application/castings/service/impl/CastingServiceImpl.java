@@ -19,9 +19,7 @@ import com.padimasso.autocasting.application.castings.service.internal.CastingSt
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingCompensationTypeOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -37,14 +35,12 @@ import java.util.stream.Collectors;
 
 import static com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper.mapToSiteMetadataObject;
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CastingServiceImpl implements CastingService {
-
-    private static final String CASTING_NOT_FOUND = "castings.not_found";
-    private static final String CASTING_SECTION_NOT_FOUND = "castings.section.not_found";
 
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
@@ -54,9 +50,7 @@ public class CastingServiceImpl implements CastingService {
     private final CastingRolesSectionRepository castingRolesSectionRepository;
     private final CastingRequirementsSectionRepository castingActingRepository;
     private final CastingRemunerationsSectionRepository castingRemunerationsSectionRepository;
-    private final CastingStatusOptionRepository castingStatusOptionRepository;
-    private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
-    private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingStatusTransitionPolicy castingStatusTransitionPolicy;
     private final CastingApplicationRepository castingApplicationRepository;
     private final CastingMapper castingMapper;
@@ -66,25 +60,20 @@ public class CastingServiceImpl implements CastingService {
     public String createEmptyCasting() {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
 
-        CastingStatusOptionEntity draftStatus = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_DRAFT)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity draftStatus =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_DRAFT);
 
-        CastingSectionStatusOptionEntity notStartedStatus = castingSectionStatusOptionRepository
-            .findByStringCode(CASTING_SECTION_STATUS_NOT_STARTED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
+        CastingSectionStatusOptionEntity notStartedStatus =
+            siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(CASTING_SECTION_STATUS_NOT_STARTED);
 
-        CastingSectionStatusOptionEntity inProgressStatus = castingSectionStatusOptionRepository
-            .findByStringCode(CASTING_SECTION_STATUS_IN_PROGRESS)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
+        CastingSectionStatusOptionEntity inProgressStatus =
+            siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(CASTING_SECTION_STATUS_IN_PROGRESS);
 
-        CastingSectionStatusOptionEntity completedStatus = castingSectionStatusOptionRepository
-            .findByStringCode(CASTING_SECTION_STATUS_COMPLETED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
+        CastingSectionStatusOptionEntity completedStatus =
+            siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(CASTING_SECTION_STATUS_COMPLETED);
 
-        CastingCompensationTypeOptionEntity compensationPaid = castingCompensationTypeOptionRepository
-            .findByStringCode(CASTING_COMPENSATION_TYPE_PAID)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_compensation_type.not_found"));
+        CastingCompensationTypeOptionEntity compensationPaid =
+            siteMetadataResolver.resolveCastingCompensationTypeByCodeOrThrow(CASTING_COMPENSATION_TYPE_PAID);
 
         CastingEntity casting = CastingEntity.builder()
             .employerProfile(employer.employerProfile())
@@ -199,11 +188,11 @@ public class CastingServiceImpl implements CastingService {
     @Override
     public EmployerCastingEditorResponse getCastingEditorBySlug(String slug) {
         if (slug == null || slug.isBlank()) {
-            throw new IllegalArgumentException("general.slug_required");
+            throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
         }
 
         var p = castingRepository.findCastingEditorProjectionBySlug(slug.trim())
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         boolean publishable =
             isSectionCompleted(p.getBasicInfoSectionStatus())
@@ -230,7 +219,7 @@ public class CastingServiceImpl implements CastingService {
     @Override
     public CastingResponse getEmployerCastingDetailsBySlug(String slug) {
         if (slug == null || slug.isBlank()) {
-            throw new IllegalArgumentException("general.slug_required");
+            throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
         }
 
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
@@ -238,7 +227,7 @@ public class CastingServiceImpl implements CastingService {
 
         CastingEntity foundCasting = castingRepository
             .findEmployerDetailsByDefaultCodeAndEmployerProfileId(slug.trim(), employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         Long totalCastings = castingRepository.countByEmployerProfileIdAndDeletedFalse(employerProfileId);
 
@@ -260,7 +249,7 @@ public class CastingServiceImpl implements CastingService {
     @Transactional
     public EmployerCastingCheckoutSummaryResponse getEmployerCastingCheckoutSummary(UUID castingId) {
         if (castingId == null) {
-            throw new IllegalArgumentException("casting.id_required");
+            throw new IllegalArgumentException(CASTING_ID_REQUIRED);
         }
 
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
@@ -268,21 +257,21 @@ public class CastingServiceImpl implements CastingService {
 
         CastingEntity foundCasting = castingRepository
             .findEmployerCheckoutSummaryByIdAndEmployerProfileId(castingId, employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return castingMapper.toEmployerCastingCheckoutSummaryResponse(foundCasting);
     }
 
     @Override
     public PublicCastingDetailsResponse getPublicCastingDetailsBySlugAndRoleId(String slug, UUID roleId) {
-        if (slug == null || slug.isBlank()) throw new IllegalArgumentException("general.slug_required");
-        if (roleId == null) throw new IllegalArgumentException("general.role_id_required");
+        if (slug == null || slug.isBlank()) throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
+        if (roleId == null) throw new IllegalArgumentException(GENERAL_ROLE_ID_REQUIRED);
 
         var allowed = List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED);
 
         CastingEntity casting = castingRepository
             .findPublicDetailsBySlugAndRoleId(slug.trim(), roleId, allowed)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         UUID employerProfileId = casting.getEmployerProfile() != null
             ? casting.getEmployerProfile().getId()
@@ -337,14 +326,14 @@ public class CastingServiceImpl implements CastingService {
     @Override
     public PublicCastingOverviewResponse getPublicCastingDetailsBySlug(String slug) {
         if (slug == null || slug.isBlank()) {
-            throw new IllegalArgumentException("general.slug_required");
+            throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
         }
 
         var allowed = List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED);
 
         CastingEntity casting = castingRepository
             .findPublicDetailsBySlug(slug.trim(), allowed)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         UUID employerProfileId = casting.getEmployerProfile() != null
             ? casting.getEmployerProfile().getId()
@@ -379,11 +368,10 @@ public class CastingServiceImpl implements CastingService {
     @Transactional
     public void deleteCasting(UUID castingId) {
         CastingEntity casting = castingRepository.findById(castingId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
-        CastingStatusOptionEntity closedStatus = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_CLOSED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity closedStatus =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_CLOSED);
 
         casting.setStatus(closedStatus);
         castingRepository.save(casting);
@@ -401,14 +389,13 @@ public class CastingServiceImpl implements CastingService {
 
         // 1) Gate ultra-liviano: ownership + estados + deadline + status actual
         var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         // 2) Validaiton
         castingStatusTransitionPolicy.assertCanPublish(gate);
 
-        CastingStatusOptionEntity published = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_PUBLISHED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity published =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PUBLISHED);
 
         // 3) Update condicionado
         int updated = castingRepository.publishIfAllowed(
@@ -421,11 +408,11 @@ public class CastingServiceImpl implements CastingService {
 
         if (updated == 0) {
             // alguien lo cambió entre gate y update, o no pertenece al employer
-            throw new IllegalStateException("castings.invalid_status_transition");
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
 
         CastingEntity casting = castingRepository.findById(castingId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return getCastingEditorBySlug(casting.getDefaultCode());
     }
@@ -437,13 +424,12 @@ public class CastingServiceImpl implements CastingService {
         UUID employerProfileId = employer.employerProfile().getId();
 
         var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         castingStatusTransitionPolicy.assertCanSetDraft(gate);
 
-        CastingStatusOptionEntity draft = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_DRAFT)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity draft =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_DRAFT);
 
         int updated = castingRepository.setStatusIfCurrentIn(
             castingId,
@@ -452,10 +438,10 @@ public class CastingServiceImpl implements CastingService {
             List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED)
         );
 
-        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+        if (updated == 0) throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
 
         CastingEntity casting = castingRepository.findById(castingId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return getCastingEditorBySlug(casting.getDefaultCode());
     }
@@ -467,13 +453,12 @@ public class CastingServiceImpl implements CastingService {
         UUID employerProfileId = employer.employerProfile().getId();
 
         var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         castingStatusTransitionPolicy.assertCanPause(gate);
 
-        CastingStatusOptionEntity paused = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_PAUSED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity paused =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PAUSED);
 
         int updated = castingRepository.setStatusIfCurrentIn(
             castingId,
@@ -482,10 +467,10 @@ public class CastingServiceImpl implements CastingService {
             List.of(CASTING_STATUS_PUBLISHED)
         );
 
-        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+        if (updated == 0) throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
 
         CastingEntity casting = castingRepository.findById(castingId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return getCastingEditorBySlug(casting.getDefaultCode());
     }
@@ -497,13 +482,12 @@ public class CastingServiceImpl implements CastingService {
         UUID employerProfileId = employer.employerProfile().getId();
 
         var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         castingStatusTransitionPolicy.assertCanClose(gate);
 
-        CastingStatusOptionEntity closed = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_CLOSED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity closed =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_CLOSED);
 
         int updated = castingRepository.setStatusIfCurrentIn(
             castingId,
@@ -512,10 +496,10 @@ public class CastingServiceImpl implements CastingService {
             List.of(CASTING_STATUS_DRAFT, CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED)
         );
 
-        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+        if (updated == 0) throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
 
         CastingEntity casting = castingRepository.findById(castingId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return getCastingEditorBySlug(casting.getDefaultCode());
     }
@@ -527,13 +511,12 @@ public class CastingServiceImpl implements CastingService {
         UUID employerProfileId = employer.employerProfile().getId();
 
         var gate = castingRepository.findPublishGateForEmployer(castingId, employerProfileId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         castingStatusTransitionPolicy.assertCanArchive(gate);
 
-        CastingStatusOptionEntity archived = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_ARCHIVED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+        CastingStatusOptionEntity archived =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_ARCHIVED);
 
         int updated = castingRepository.setStatusIfCurrentIn(
             castingId,
@@ -542,10 +525,10 @@ public class CastingServiceImpl implements CastingService {
             List.of(CASTING_STATUS_DRAFT, CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED)
         );
 
-        if (updated == 0) throw new IllegalStateException("castings.invalid_status_transition");
+        if (updated == 0) throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
 
         CastingEntity casting = castingRepository.findById(castingId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_NOT_FOUND));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return getCastingEditorBySlug(casting.getDefaultCode());
     }

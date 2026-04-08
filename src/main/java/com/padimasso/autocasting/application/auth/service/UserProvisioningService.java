@@ -25,6 +25,9 @@ import java.util.Set;
 import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
 import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
 import static com.padimasso.autocasting.application.auth.service.impl.AuthServiceImpl.normalizeUser;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_INVALID_PLAN;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_INVALID_ROLE;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_USER_NOT_FOUND;
 
 @Component
 @RequiredArgsConstructor
@@ -41,17 +44,17 @@ class UserProvisioningService {
     @Transactional
     void ensureUser(String email, String name) {
         if (email == null) {
-            throw new OAuth2AuthenticationException("auth.user_not_found");
+            throw new OAuth2AuthenticationException(AUTH_USER_NOT_FOUND);
         }
 
         // Roles base: TALENT + EMPLOYER
         Set<RoleEntity> baseRoles = new HashSet<>(
             roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
-                .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role"))
+                .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE))
         );
 
         final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
-            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+            .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
 
         // User (nuevo o existente)
         UserEntity user = userRepository.findByEmail(email).orElseGet(() -> UserEntity.builder()

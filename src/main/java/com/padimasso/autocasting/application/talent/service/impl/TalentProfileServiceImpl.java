@@ -4,7 +4,7 @@ import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
-import com.padimasso.autocasting.application.sitemetadata.repository.SkillRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.dto.request.SkillsPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.TalentProfileResponse;
@@ -17,20 +17,20 @@ import com.padimasso.autocasting.application.talent.service.TalentProfileService
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class TalentProfileServiceImpl implements TalentProfileService {
 
-    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final UserRepository userRepository;
-    private final SkillRepository skillRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CreditRepository creditRepository;
     private final TalentProfileMapper talentProfileMapper;
     private final EducationRepository educationRepository;
@@ -66,11 +66,7 @@ public class TalentProfileServiceImpl implements TalentProfileService {
             if (ids.isEmpty()) {
                 foundProfile.getSkills().clear();
             } else {
-                var found = new HashSet<>(skillRepository.findAllByIdIn(ids));
-                if (found.size() != ids.size()) {
-                    throw new IllegalArgumentException("sitemetadata.skill.invalid_ids");
-                }
-                foundProfile.setSkills(found);
+                foundProfile.setSkills(siteMetadataResolver.resolveSkillsOrThrow(ids));
             }
         }
 

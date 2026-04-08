@@ -5,6 +5,9 @@ import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticat
 import com.padimasso.autocasting.application.auth.service.*;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
+import com.padimasso.autocasting.exception.ApiAccessDeniedHandler;
+import com.padimasso.autocasting.exception.ApiAuthenticationFailureHandler;
+import com.padimasso.autocasting.exception.ApiErrorFactory;
 import com.padimasso.autocasting.exception.JwtAuthEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -52,7 +55,10 @@ public class SecurityConfig {
                                                    ClientRegistrationRepository clientRegistrationRepository,
                                                    GoogleOidcUserService oidcSrv,
                                                    GoogleOauth2UserService oauthSrv,
-                                                   JwtAuthEntryPoint jwtAuthEntryPoint) throws Exception {
+                                                   JwtAuthEntryPoint jwtAuthEntryPoint,
+                                                   ApiAccessDeniedHandler apiAccessDeniedHandler,
+                                                   ApiAuthenticationFailureHandler apiAuthenticationFailureHandler,
+                                                   ApiErrorFactory apiErrorFactory) throws Exception {
         http.authorizeHttpRequests(
                 request -> request
                     // Test Endpoints
@@ -105,10 +111,13 @@ public class SecurityConfig {
                 .userInfoEndpoint(ui -> ui
                     .oidcUserService(oidcSrv)   // OIDC
                     .userService(oauthSrv))     // OAuth2
-                .successHandler(customOAuth2SuccessHandler()))
+                .successHandler(customOAuth2SuccessHandler(apiErrorFactory))
+                .failureHandler(apiAuthenticationFailureHandler))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthEntryPoint))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(jwtAuthEntryPoint)
+                .accessDeniedHandler(apiAccessDeniedHandler))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -127,8 +136,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler customOAuth2SuccessHandler() {
-        return new CustomOAuth2SuccessHandler(appProperties, jwtService, userRepository, talentProfileRepository, employerProfileRepository);
+    public AuthenticationSuccessHandler customOAuth2SuccessHandler(ApiErrorFactory apiErrorFactory) {
+        return new CustomOAuth2SuccessHandler(
+            appProperties,
+            jwtService,
+            userRepository,
+            talentProfileRepository,
+            employerProfileRepository,
+            apiErrorFactory
+        );
     }
 
     @Bean

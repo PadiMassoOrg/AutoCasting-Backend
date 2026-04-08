@@ -19,6 +19,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_INVALID_TOKEN;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_TOKEN_EXPIRED;
+
 @Component
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -56,12 +59,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {
             SecurityContextHolder.clearContext();
-            request.setAttribute("auth_error_code", "token_expired");
+            request.setAttribute("auth_error_code", AUTH_TOKEN_EXPIRED);
             authenticationEntryPoint.commence(request, response,
                 new InsufficientAuthenticationException("token expired", ex));
         } catch (JwtException ex) {
             SecurityContextHolder.clearContext();
-            request.setAttribute("auth_error_code", "invalid_token");
+            request.setAttribute("auth_error_code", AUTH_INVALID_TOKEN);
             authenticationEntryPoint.commence(request, response,
                 new InsufficientAuthenticationException("invalid token", ex));
         }

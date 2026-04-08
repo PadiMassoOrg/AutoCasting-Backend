@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.auth.service.impl;
 
 import com.padimasso.autocasting.application.auth.service.EmailService;
+import com.padimasso.autocasting.exception.ApiException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class EmailServiceImpl implements EmailService {
             log.info("Email sent to {}", to);
         } catch (MessagingException e) {
             log.error("Error sending email", e);
-            throw new RuntimeException("Failed to send email");
+            throw ApiException.internal(e, "mail.send_failed");
         }
     }
 }

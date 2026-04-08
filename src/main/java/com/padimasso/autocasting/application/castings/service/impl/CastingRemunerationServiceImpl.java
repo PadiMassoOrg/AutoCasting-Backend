@@ -13,14 +13,12 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRemu
 import com.padimasso.autocasting.application.castings.service.CastingRemunerationService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingCompensationTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingCompensationTypeOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.CurrencyOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.PayRateTypeOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +28,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_SECTION_NOT_FOUND;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTING_ROLE_REMUNERATION_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -37,10 +37,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
     private final CastingRemunerationsSectionRepository castingRemunerationsSectionRepository;
     private final CastingRoleRemunerationRepository castingRoleRemunerationRepository;
-    private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
-    private final CastingCompensationTypeOptionRepository castingCompensationTypeOptionRepository;
-    private final PayRateTypeOptionRepository payRateTypeOptionRepository;
-    private final CurrencyOptionRepository currencyOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
     private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
@@ -48,7 +45,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
     @Override
     public CastingRemunerationsSectionResponse getBySectionId(UUID sectionId) {
         CastingRemunerationEntity foundSection = castingRemunerationsSectionRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
 
         List<CastingRoleRemunerationEntity> entities =
             castingRoleRemunerationRepository.findAllByRemunerationSectionId(sectionId);
@@ -65,13 +62,12 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
     @Transactional
     public CastingRemunerationsSectionResponse patchSectionRemuneration(CastingRemunerationsSectionPatchRequest request) {
         CastingRemunerationEntity section = castingRemunerationsSectionRepository.findById(request.id())
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
 
         String prevCode = section.getCompensationType() != null ? section.getCompensationType().getStringCode() : null;
 
-        CastingCompensationTypeOptionEntity nextType = castingCompensationTypeOptionRepository
-            .findById(request.castingCompensationTypeId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_compensation_type.not_found"));
+        CastingCompensationTypeOptionEntity nextType =
+            siteMetadataResolver.resolveCastingCompensationTypeOrThrow(request.castingCompensationTypeId());
 
         String nextCode = nextType.getStringCode();
 
@@ -83,7 +79,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         if (typeChanged && (request.notes() == null || !request.notes().isPresent())) {
             section.setNotes(null);
         } else if (request.notes() != null && request.notes().isPresent()) {
-            section.setNotes(request.notes().orElse(null));
+            section.setNotes(TextNormalizer.normalizeNullable(request.notes().orElse(null)));
         }
 
         CastingRemunerationEntity saved = castingRemunerationsSectionRepository.save(section);
@@ -111,7 +107,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
     @Transactional
     public CastingRoleRemunerationResponse patchRoleRemuneration(CastingRoleRemunerationPatchRequest request) {
         CastingRoleRemunerationEntity remuneration = castingRoleRemunerationRepository.findById(request.id())
-            .orElseThrow(() -> new IllegalArgumentException("casting.role.remuneration.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_REMUNERATION_NOT_FOUND));
 
         CastingRemunerationEntity section = resolveSection(remuneration);
         boolean isCollaborative = section != null
@@ -120,14 +116,12 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         if (!isCollaborative) {
             if (request.payRateTypeId() != null) {
-                PayRateTypeOptionEntity found = payRateTypeOptionRepository.findById(request.payRateTypeId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.pay_rate_type.not_found"));
+                PayRateTypeOptionEntity found = siteMetadataResolver.resolvePayRateTypeOrThrow(request.payRateTypeId());
                 remuneration.setPayRateType(found);
             }
 
             if (request.currencyId() != null) {
-                CurrencyOptionEntity found = currencyOptionRepository.findById(request.currencyId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.currency.not_found"));
+                CurrencyOptionEntity found = siteMetadataResolver.resolveCurrencyOrThrow(request.currencyId());
                 remuneration.setCurrency(found);
             }
 
@@ -137,7 +131,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         }
 
         if (request.notes() != null && request.notes().isPresent()) {
-            remuneration.setNotes(request.notes().orElse(null));
+            remuneration.setNotes(TextNormalizer.normalizeNullable(request.notes().orElse(null)));
         }
 
         if (isCollaborative) {
@@ -179,11 +173,9 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         if (active.isEmpty()) return;
 
-        PayRateTypeOptionEntity unpaid = payRateTypeOptionRepository.findByStringCode(PAY_RATE_TYPE_UNPAID)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.pay_rate_type.not_found"));
+        PayRateTypeOptionEntity unpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
 
-        CurrencyOptionEntity ars = currencyOptionRepository.findByStringCode(CURRENCY_ARS)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.currency.not_found"));
+        CurrencyOptionEntity ars = siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS);
 
         List<CastingRoleRemunerationEntity> next = active.stream().map(r -> {
             r.setPayRateType(unpaid);
@@ -207,21 +199,18 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
     private void ensureDefaults(CastingRoleRemunerationEntity remuneration) {
         if (remuneration.getPayRateType() == null) {
-            PayRateTypeOptionEntity unpaid = payRateTypeOptionRepository.findByStringCode(PAY_RATE_TYPE_UNPAID)
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.pay_rate_type.not_found"));
+            PayRateTypeOptionEntity unpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
             remuneration.setPayRateType(unpaid);
         }
 
         if (remuneration.getCurrency() == null) {
-            CurrencyOptionEntity ars = currencyOptionRepository.findByStringCode(CURRENCY_ARS)
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.currency.not_found"));
+            CurrencyOptionEntity ars = siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS);
             remuneration.setCurrency(ars);
         }
     }
 
     private void forceUnpaid(CastingRoleRemunerationEntity remuneration) {
-        PayRateTypeOptionEntity unpaid = payRateTypeOptionRepository.findByStringCode(PAY_RATE_TYPE_UNPAID)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.pay_rate_type.not_found"));
+        PayRateTypeOptionEntity unpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
         remuneration.setPayRateType(unpaid);
         remuneration.setAmount(null);
         remuneration.setComplete(true);
@@ -246,7 +235,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
     private void updateSectionStatus(UUID sectionId) {
         CastingRemunerationEntity section = castingRemunerationsSectionRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
 
         List<CastingRoleRemunerationEntity> entities =
             castingRoleRemunerationRepository.findAllByRemunerationSectionId(sectionId);
@@ -263,8 +252,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
             nextStatusCode = allComplete ? CASTING_SECTION_STATUS_COMPLETED : CASTING_SECTION_STATUS_IN_PROGRESS;
         }
 
-        CastingSectionStatusOptionEntity status = castingSectionStatusOptionRepository.findByStringCode(nextStatusCode)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_section_status.not_found"));
+        CastingSectionStatusOptionEntity status = siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(nextStatusCode);
 
         section.setSectionStatus(status);
         castingRemunerationsSectionRepository.save(section);
@@ -280,11 +268,9 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         if (active.isEmpty()) return;
 
-        PayRateTypeOptionEntity unpaid = payRateTypeOptionRepository.findByStringCode(PAY_RATE_TYPE_UNPAID)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.pay_rate_type.not_found"));
+        PayRateTypeOptionEntity unpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
 
-        CurrencyOptionEntity ars = currencyOptionRepository.findByStringCode(CURRENCY_ARS)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.currency.not_found"));
+        CurrencyOptionEntity ars = siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS);
 
         List<CastingRoleRemunerationEntity> next = active.stream().map(r -> {
             r.setNotes(null);

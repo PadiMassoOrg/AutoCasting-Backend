@@ -2,7 +2,8 @@ package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.ProductionTypeRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
 import com.padimasso.autocasting.application.talent.dto.response.CreditResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -26,7 +29,7 @@ public class CreditServiceImpl implements CreditService {
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final CreditRepository creditRepository;
-    private final ProductionTypeRepository productionTypeRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final TalentProfileMapper talentProfileMapper;
 
     @Override
@@ -34,16 +37,15 @@ public class CreditServiceImpl implements CreditService {
     public CreditResponse createCredit(CreditRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
-        var foundProductionType = productionTypeRepository.findById(request.productionTypeId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        var foundProductionType = siteMetadataResolver.resolveProductionTypeOrThrow(request.productionTypeId());
 
         var newCredit = CreditEntity.builder()
             .productionType(foundProductionType)
-            .projectName(request.projectName())
-            .producerName(request.producerName())
-            .role(request.role())
-            .year(request.year())
+            .projectName(TextNormalizer.normalizeNullable(request.projectName()))
+            .producerName(TextNormalizer.normalizeNullable(request.producerName()))
+            .role(TextNormalizer.normalizeNullable(request.role()))
+            .year(TextNormalizer.normalizeNullable(request.year()))
             .talentProfile(foundProfile)
             .build();
 
@@ -72,15 +74,13 @@ public class CreditServiceImpl implements CreditService {
         CreditEntity credit = getOwnedCreditOrThrow(id);
 
         if (request.productionTypeId() != null) {
-            var prodType = productionTypeRepository.findById(request.productionTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.production_type.not_found"));
-            credit.setProductionType(prodType);
+            credit.setProductionType(siteMetadataResolver.resolveProductionTypeOrThrow(request.productionTypeId()));
         }
 
-        if (request.projectName() != null) credit.setProjectName(request.projectName());
-        if (request.producerName() != null) credit.setProducerName(request.producerName());
-        if (request.role() != null) credit.setRole(request.role());
-        if (request.year() != null) credit.setYear(request.year());
+        if (request.projectName() != null) credit.setProjectName(TextNormalizer.normalizeNullable(request.projectName()));
+        if (request.producerName() != null) credit.setProducerName(TextNormalizer.normalizeNullable(request.producerName()));
+        if (request.role() != null) credit.setRole(TextNormalizer.normalizeNullable(request.role()));
+        if (request.year() != null) credit.setYear(TextNormalizer.normalizeNullable(request.year()));
 
         return talentProfileMapper.toCreditResponse(creditRepository.save(credit));
     }
@@ -98,7 +98,7 @@ public class CreditServiceImpl implements CreditService {
     private TalentProfileEntity getMyProfileOrThrow() {
         UserEntity user = authContext.getCurrentUserOrThrow();
         return talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
     }
 
     private CreditEntity getOwnedCreditOrThrow(UUID creditId) {

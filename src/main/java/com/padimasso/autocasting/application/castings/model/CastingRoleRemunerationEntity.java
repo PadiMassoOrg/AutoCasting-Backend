@@ -42,7 +42,7 @@ public class CastingRoleRemunerationEntity extends AuditableEntity {
     @Column(precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column
+    @Column(columnDefinition = "text")
     private String notes;
 
 }

@@ -11,12 +11,15 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaService;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -33,15 +36,15 @@ public class MediaServiceImpl implements MediaService {
     public MediaResponse patchMyMedia(MediaPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         MediaEntity media = mediaRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> mediaRepository.save(MediaEntity.builder().talentProfile(profile).build()));
 
         if (request.headshotImageUrl().isPresent()) {
-            media.setHeadshotImageUrl(request.headshotImageUrl().orElse(null));
+            media.setHeadshotImageUrl(TextNormalizer.normalizeNullable(request.headshotImageUrl().orElse(null)));
         }
         if (request.fullBodyImageUrl().isPresent()) {
-            media.setFullBodyImageUrl(request.fullBodyImageUrl().orElse(null));
+            media.setFullBodyImageUrl(TextNormalizer.normalizeNullable(request.fullBodyImageUrl().orElse(null)));
         }
         if (request.otherPictures() != null) {
             List<String> list = media.getOtherPicturesUrl();
@@ -50,15 +53,15 @@ public class MediaServiceImpl implements MediaService {
                 int idx = op.index();
                 // expandir con nulls si hace falta
                 while (list.size() <= idx) list.add(null);
-                list.set(idx, op.url());
+                list.set(idx, TextNormalizer.normalizeNullable(op.url()));
             }
             media.setOtherPicturesUrl(list);
         }
         if (request.introductionVideoUrl().isPresent()) {
-            media.setIntroductionVideoUrl(request.introductionVideoUrl().orElse(null));
+            media.setIntroductionVideoUrl(TextNormalizer.normalizeNullable(request.introductionVideoUrl().orElse(null)));
         }
         if (request.showReelVideoUrl().isPresent()) {
-            media.setShowReelVideoUrl(request.showReelVideoUrl().orElse(null));
+            media.setShowReelVideoUrl(TextNormalizer.normalizeNullable(request.showReelVideoUrl().orElse(null)));
         }
 
         return talentProfileMapper.toMediaResponse(mediaRepository.save(media));

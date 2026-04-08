@@ -10,9 +10,12 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.ContactRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.ContactService;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -29,12 +32,12 @@ public class ContactServiceImpl implements ContactService {
     public ContactResponse patchMyContact(ContactPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         ContactEntity contact = contactRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> contactRepository.save(ContactEntity.builder().talentProfile(profile).build()));
 
         if (request.phoneNumber() != null) {
-            contact.setPhoneNumber(request.phoneNumber());
+            contact.setPhoneNumber(TextNormalizer.normalizeNullable(request.phoneNumber()));
         }
 
         return talentProfileMapper.toContactResponse(contactRepository.save(contact));

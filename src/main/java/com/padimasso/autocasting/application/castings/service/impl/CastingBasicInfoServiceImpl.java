@@ -8,11 +8,9 @@ import com.padimasso.autocasting.application.castings.repository.CastingBasicInf
 import com.padimasso.autocasting.application.castings.service.CastingBasicInfoService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingModalityOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingModalityOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.ProjectTypeOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,25 +18,23 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_NOT_FOUND;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_SECTION_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
 
-    private static final String CASTING_MODALITY_ON_SITE = "sitemetadata.casting_modality.on_site";
-
     private final CastingBasicInfoRepository castingBasicInfoRepository;
-    private final ProjectTypeOptionRepository projectTypeOptionRepository;
-    private final CastingModalityOptionRepository castingModalityOptionRepository;
-    private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
 
     @Override
     public CastingBasicInfoResponse getBySectionId(UUID sectionId) {
         CastingBasicInfoEntity foundSection = castingBasicInfoRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
         return castingMapper.toBasicInfoResponse(foundSection);
     }
 
@@ -46,26 +42,24 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
     @Transactional
     public CastingBasicInfoResponse patchCastingBasicInfo(CastingBasicInfoPatchRequest request) {
         CastingBasicInfoEntity basicInfo = castingBasicInfoRepository.findById(request.id())
-            .orElseThrow(() -> new IllegalArgumentException("castings.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         if (request.title() != null) {
-            basicInfo.setTitle(request.title().trim());
+            basicInfo.setTitle(TextNormalizer.normalizeNullable(request.title()));
         }
 
         if (request.projectTypeId() != null) {
-            ProjectTypeOptionEntity projectType = projectTypeOptionRepository.findById(request.projectTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.project_type.not_found"));
+            ProjectTypeOptionEntity projectType = siteMetadataResolver.resolveProjectTypeOrThrow(request.projectTypeId());
             basicInfo.setProjectType(projectType);
         }
 
         if (request.castingModalityId() != null) {
-            CastingModalityOptionEntity castingModality = castingModalityOptionRepository.findById(request.castingModalityId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_modality.not_found"));
+            CastingModalityOptionEntity castingModality = siteMetadataResolver.resolveCastingModalityOrThrow(request.castingModalityId());
             basicInfo.setCastingModality(castingModality);
         }
 
         if (request.castingModalityText() != null && request.castingModalityText().isPresent()) {
-            basicInfo.setCastingModalityText(request.castingModalityText().orElse(null));
+            basicInfo.setCastingModalityText(TextNormalizer.normalizeNullable(request.castingModalityText().orElse(null)));
         }
 
         if (request.applicationDeadline() != null) {
@@ -77,7 +71,7 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
         }
 
         if (request.wardrobeFittingText() != null && request.wardrobeFittingText().isPresent()) {
-            basicInfo.setWardrobeFittingText(request.wardrobeFittingText().orElse(null));
+            basicInfo.setWardrobeFittingText(TextNormalizer.normalizeNullable(request.wardrobeFittingText().orElse(null)));
         }
 
         if (request.shootingStartDate() != null && request.shootingStartDate().isPresent()) {
@@ -89,7 +83,7 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
         }
 
         if (request.description() != null && request.description().isPresent()) {
-            basicInfo.setDescription(request.description().orElse(null));
+            basicInfo.setDescription(TextNormalizer.normalizeNullable(request.description().orElse(null)));
         }
 
         updateSectionStatus(basicInfo);
@@ -106,11 +100,7 @@ public class CastingBasicInfoServiceImpl implements CastingBasicInfoService {
 
     private void updateSectionStatus(CastingBasicInfoEntity basicInfo) {
         String nextStatusCode = computeNextStatusCode(basicInfo);
-
-        CastingSectionStatusOptionEntity status = castingSectionStatusOptionRepository.findByStringCode(nextStatusCode)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_section_status.not_found"));
-
-        basicInfo.setSectionStatus(status);
+        basicInfo.setSectionStatus(siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(nextStatusCode));
     }
 
     private String computeNextStatusCode(CastingBasicInfoEntity basicInfo) {

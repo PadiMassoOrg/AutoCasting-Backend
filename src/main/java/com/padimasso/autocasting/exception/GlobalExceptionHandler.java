@@ -2,107 +2,64 @@ package com.padimasso.autocasting.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
-import org.springframework.context.MessageSource;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class GlobalExceptionHandler {
 
-    private final MessageSource messageSource;
+    private final ApiErrorFactory apiErrorFactory;
+    private final ApiExceptionClassifier apiExceptionClassifier;
 
-    // Authentication
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex,
+    public ResponseEntity<ApiErrorResponse> handleValidationExceptions(MethodArgumentNotValidException exception,
                                                                        HttpServletRequest request,
                                                                        Locale locale) {
+        Map<String, ApiErrorMessage> fieldErrors = new LinkedHashMap<>();
 
-        Map<String, String> fieldErrors = new HashMap<>();
-
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            String field = error.getField();
-            String key = error.getDefaultMessage();
-            assert key != null;
-            String message = messageSource.getMessage(key, null, locale);
-            fieldErrors.put(field, message);
+        exception.getBindingResult().getFieldErrors().forEach(error -> {
+            String messageKey = error.getDefaultMessage();
+            fieldErrors.putIfAbsent(
+                error.getField(),
+                apiErrorFactory.buildMessage(messageKey, null)
+            );
         });
 
-        var error = ApiErrorResponse.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .message("Validation Error")
-            .path(request.getRequestURI())
-            .errors(fieldErrors)
-            .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
-
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
-                                                               HttpServletRequest request,
-                                                               Locale locale) {
-        var error = ApiErrorResponse.builder()
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .message("Missing required parameter: " + ex.getParameterName())
-            .path(request.getRequestURI())
-            .build();
-
-        return ResponseEntity.badRequest().body(error);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
-                                                                  HttpServletRequest request,
-                                                                  Locale locale) {
-        // Ejemplo de mensaje: "user.exists|test@email.com"
-        String[] parts = ex.getMessage().split("\\|");
-        String key = parts[0];
-        Object[] args = Arrays.copyOfRange(parts, 1, parts.length);
-
-        return buildResponse(HttpStatus.CONFLICT, key, args, request, locale);
-    }
-
-    // General
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleAnyException(Exception ex,
-                                                               HttpServletRequest request,
-                                                               Locale locale) {
-        return buildResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "general.unexpected",
-            new Object[]{ex.getMessage()},
-            request,
-            locale
+        ApiErrorResponse body = apiErrorFactory.build(
+            org.springframework.http.HttpStatus.BAD_REQUEST,
+            "general.validation_failed",
+            null,
+            request.getRequestURI(),
+            locale,
+            fieldErrors
         );
+
+        return ResponseEntity.badRequest().body(body);
     }
 
-    private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status,
-                                                           String messageKey,
-                                                           Object[] args,
-                                                           HttpServletRequest request,
-                                                           Locale locale) {
-        String message = messageSource.getMessage(messageKey, args, locale);
-        var error = ApiErrorResponse.builder()
-            .timestamp(LocalDateTime.now())
-            .status(status.value())
-            .message(message)
-            .path(request.getRequestURI())
-            .build();
-        return ResponseEntity.status(status).body(error);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleAnyException(Exception exception,
+                                                               HttpServletRequest request,
+                                                               Locale locale) {
+        ApiException apiException = apiExceptionClassifier.classify(exception);
+
+        if (apiException.getStatus().is5xxServerError()) {
+            log.error("Unhandled exception at {} -> {}", request.getRequestURI(), exception.getMessage(), exception);
+        } else {
+            log.debug("Handled exception at {} -> {}", request.getRequestURI(), exception.getMessage());
+        }
+
+        ApiErrorResponse body = apiErrorFactory.build(apiException, request.getRequestURI(), locale);
+        return ResponseEntity.status(apiException.getStatus()).body(body);
     }
 }

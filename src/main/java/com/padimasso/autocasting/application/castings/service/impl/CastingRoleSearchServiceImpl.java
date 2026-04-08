@@ -9,7 +9,7 @@ import com.padimasso.autocasting.application.castings.repository.specification.C
 import com.padimasso.autocasting.application.castings.service.CastingRoleSearchService;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -27,7 +27,7 @@ import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 public class CastingRoleSearchServiceImpl implements CastingRoleSearchService {
 
     private final CastingRoleRepository castingRoleRepository;
-    private final CastingStatusOptionRepository castingStatusOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingMapper castingMapper;
     
     @Override
@@ -41,9 +41,8 @@ public class CastingRoleSearchServiceImpl implements CastingRoleSearchService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        CastingStatusOptionEntity publishedStatus = castingStatusOptionRepository
-            .findByStringCode(CASTING_STATUS_PUBLISHED)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_modality.not_found"));
+        CastingStatusOptionEntity publishedStatus =
+            siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PUBLISHED);
 
         var spec = CastingRoleSpecs.fromFilter(filter, publishedStatus.getId());
 

@@ -2,12 +2,17 @@ package com.padimasso.autocasting.application.auth.context;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_INVALID_PRINCIPAL;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_NOT_AUTHENTICATED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_USER_NOT_FOUND;
 
 @Component
 @RequiredArgsConstructor
@@ -18,7 +23,7 @@ public class AuthContext {
     public UserEntity getCurrentUserOrThrow() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalStateException("auth.not_authenticated");
+            throw ApiException.unauthorized(AUTH_NOT_AUTHENTICATED);
         }
 
         Object principal = authentication.getPrincipal();
@@ -32,11 +37,11 @@ public class AuthContext {
         }
 
         if (username == null) {
-            throw new IllegalStateException("auth.invalid_principal");
+            throw ApiException.unauthorized(AUTH_INVALID_PRINCIPAL);
         }
 
         return userRepository.findByEmail(username)
-            .orElseThrow(() -> new IllegalArgumentException("auth.user_not_found"));
+            .orElseThrow(() -> ApiException.notFound(AUTH_USER_NOT_FOUND));
     }
 
     public Optional<UserEntity> getCurrentUserOptional() {

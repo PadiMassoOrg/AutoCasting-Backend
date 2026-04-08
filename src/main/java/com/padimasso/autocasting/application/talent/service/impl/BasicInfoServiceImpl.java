@@ -2,9 +2,8 @@ package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.GenderOptionRepository;
-import com.padimasso.autocasting.application.sitemetadata.repository.ProfessionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.dto.request.BasicInfoPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.BasicInfoResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
@@ -17,9 +16,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +29,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final BasicInfoRepository basicInfoRepository;
-    private final ProfessionRepository professionRepository;
-    private final GenderOptionRepository genderOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final TalentProfileMapper talentProfileMapper;
 
     @Transactional
@@ -38,17 +37,15 @@ public class BasicInfoServiceImpl implements BasicInfoService {
     public BasicInfoResponse patchMyBasicInfo(BasicInfoPatchRequest req) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         BasicInfoEntity basicInfo = basicInfoRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> basicInfoRepository.save(BasicInfoEntity.builder().talentProfile(profile).build()));
 
         if (req.stageName() != null) {
-            basicInfo.setStageName(req.stageName().trim());
+            basicInfo.setStageName(TextNormalizer.normalizeNullable(req.stageName()));
         }
         if (req.genderId() != null) {
-            GenderOptionEntity gender = genderOptionRepository.findById(req.genderId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
-            basicInfo.setGender(gender);
+            basicInfo.setGender(siteMetadataResolver.resolveGenderOrThrow(req.genderId()));
         }
         if (req.birthDate() != null) {
             basicInfo.setBirthDate(req.birthDate());
@@ -58,11 +55,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
             if (ids.isEmpty()) {
                 basicInfo.getProfessions().clear();
             } else {
-                var found = new HashSet<>(professionRepository.findAllByIdIn(ids));
-                if (found.size() != ids.size()) {
-                    throw new IllegalArgumentException("sitemetadata.profession.invalid_ids");
-                }
-                basicInfo.setProfessions(found);
+                basicInfo.setProfessions(siteMetadataResolver.resolveProfessionsOrThrow(ids));
             }
         }
 

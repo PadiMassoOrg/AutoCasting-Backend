@@ -7,6 +7,7 @@ import com.padimasso.autocasting.application.legal.model.LegalDocumentType;
 import com.padimasso.autocasting.application.legal.service.LegalDocumentRenderer;
 import com.padimasso.autocasting.application.legal.service.LegalService;
 import com.padimasso.autocasting.config.AppConstants;
+import com.padimasso.autocasting.exception.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class LegalController {
         @RequestParam String locale
     ) {
         LegalDocument doc = legalService.getCurrent(type, locale)
-            .orElseThrow(() -> new IllegalStateException("No hay documento vigente para " + type + " / " + locale));
+            .orElseThrow(() -> ApiException.notFound("legal.current_document.not_found", type, locale));
 
         String html = renderer.renderHtml(doc);
 

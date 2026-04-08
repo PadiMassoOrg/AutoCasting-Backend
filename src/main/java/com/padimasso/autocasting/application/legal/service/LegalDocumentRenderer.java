@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.legal.service;
 
 import com.padimasso.autocasting.application.legal.model.LegalDocument;
+import com.padimasso.autocasting.exception.ApiException;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -33,6 +34,8 @@ public class LegalDocumentRenderer {
             StringBuilder sb = new StringBuilder();
             for (byte b : d) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) { throw new RuntimeException(e); }
+        } catch (Exception e) {
+            throw ApiException.internal(e, "legal.hash_generation_failed");
+        }
     }
 }
