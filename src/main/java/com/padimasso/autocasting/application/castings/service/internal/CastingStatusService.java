@@ -3,7 +3,7 @@ package com.padimasso.autocasting.application.castings.service.internal;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.projection.CastingPublishGateProjection;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingStatusOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,7 @@ import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PUBLI
 public class CastingStatusService {
 
     private final CastingRepository castingRepository;
-    private final CastingStatusOptionRepository castingStatusOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingStatusTransitionPolicy transitionPolicy;
 
     /**
@@ -40,9 +40,8 @@ public class CastingStatusService {
         boolean publishAllowedNow = isPublishAllowedNow(gate);
 
         if (!publishAllowedNow) {
-            CastingStatusOptionEntity draftStatus = castingStatusOptionRepository
-                .findByStringCode(CASTING_STATUS_DRAFT)
-                .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_status.not_found"));
+            CastingStatusOptionEntity draftStatus =
+                siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_DRAFT);
 
             castingRepository.forceDraftIfPublished(
                 castingId,
