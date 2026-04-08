@@ -4,7 +4,7 @@ import com.padimasso.autocasting.application.castings.model.CastingRemunerationE
 import com.padimasso.autocasting.application.castings.repository.CastingRemunerationsSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingSectionStatusOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingSectionStatusOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_SECTION_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class CastingRemunerationSectionStatusService {
 
     private final CastingRemunerationsSectionRepository remunerationsSectionRepository;
     private final CastingRoleRepository castingRoleRepository;
-    private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
 
     /**
      * Recalcula el sectionStatus de la sección Remuneración del casting.
@@ -37,7 +38,7 @@ public class CastingRemunerationSectionStatusService {
     public void recomputeForCasting(UUID castingId) {
         CastingRemunerationEntity section = remunerationsSectionRepository
             .findByCastingIdAndDeletedFalse(castingId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
 
         long activeRoles = castingRoleRepository.countByRolesSection_Casting_IdAndDeletedFalse(castingId);
 
@@ -62,8 +63,8 @@ public class CastingRemunerationSectionStatusService {
             }
         }
 
-        CastingSectionStatusOptionEntity next = castingSectionStatusOptionRepository.findByStringCode(nextStatusCode)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.casting_section_status.not_found"));
+        CastingSectionStatusOptionEntity next =
+            siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(nextStatusCode);
 
         section.setSectionStatus(next);
         remunerationsSectionRepository.save(section);
