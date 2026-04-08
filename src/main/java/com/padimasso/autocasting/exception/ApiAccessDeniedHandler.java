@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_ACCESS_DENIED;
+
 @Component
 @RequiredArgsConstructor
 public class ApiAccessDeniedHandler implements AccessDeniedHandler {
@@ -20,6 +22,6 @@ public class ApiAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
-        apiErrorFactory.write(request, response, HttpStatus.FORBIDDEN, "auth.access_denied", null);
+        apiErrorFactory.write(request, response, HttpStatus.FORBIDDEN, AUTH_ACCESS_DENIED, null);
     }
 }

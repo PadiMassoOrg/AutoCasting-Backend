@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_NOT_AUTHENTICATED;
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
@@ -22,7 +24,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
                          AuthenticationException authException) throws IOException {
         String messageKey = (String) request.getAttribute("auth_error_code");
         if (messageKey == null || messageKey.isBlank()) {
-            messageKey = "auth.not_authenticated";
+            messageKey = AUTH_NOT_AUTHENTICATED;
         }
 
         apiErrorFactory.write(request, response, HttpStatus.UNAUTHORIZED, messageKey, null);

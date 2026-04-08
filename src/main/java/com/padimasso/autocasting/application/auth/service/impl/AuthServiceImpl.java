@@ -39,6 +39,7 @@ import java.util.Set;
 
 import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
 import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Service
 @RequiredArgsConstructor
@@ -86,14 +87,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         var user = userRepository.findByEmail(request.email())
-            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_credentials"));
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new IllegalArgumentException("auth.invalid_credentials");
+            throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
         }
 
         Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
-            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role")));
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE)));
 
         normalizeUser(user, roles);
         userRepository.save(user);
@@ -117,10 +118,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ForgotPasswordResponse sendResetPasswordEmail(ForgotPasswordRequest request) {
         var user = userRepository.findByEmail(request.email())
-            .orElseThrow(() -> new IllegalArgumentException("auth.user_not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_USER_NOT_FOUND));
 
         if (user.getUserAccountProvider() != UserAccountProvider.LOCAL) {
-            throw new IllegalArgumentException("auth.password_reset_external");
+            throw new IllegalArgumentException(AUTH_PASSWORD_RESET_EXTERNAL);
         }
 
         var profileOpt = talentProfileRepository.findByUserId(user.getId());
@@ -163,10 +164,10 @@ public class AuthServiceImpl implements AuthService {
         String email = jwtService.extractEmail(request.token());
 
         var user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("auth.user_not_found|" + email));
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_USER_NOT_FOUND + "|" + email));
 
         if (!jwtService.isTokenValid(request.token(), user)) {
-            throw new IllegalArgumentException("auth.invalid_token");
+            throw new IllegalArgumentException(AUTH_INVALID_TOKEN);
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
@@ -179,7 +180,7 @@ public class AuthServiceImpl implements AuthService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("auth.current_password_mismatch");
+            throw new IllegalArgumentException(AUTH_CURRENT_PASSWORD_MISMATCH);
         }
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
@@ -192,14 +193,14 @@ public class AuthServiceImpl implements AuthService {
         boolean exists = userRepository.existsByEmail(request.email());
 
         if (exists) {
-            throw new IllegalArgumentException("auth.user_exists");
+            throw new IllegalArgumentException(AUTH_USER_EXISTS);
         }
 
         Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
-            .orElseThrow(() -> new IllegalArgumentException("auth.invalid_role")));
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE)));
 
         final PlanEntity freePlan = planRepository.findByCode("FREE")
-            .orElseThrow(() -> new IllegalStateException("auth.invalid_plan"));
+            .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
 
         // 1) User
         UserEntity user = UserEntity.builder()

@@ -22,6 +22,8 @@ import java.util.Map;
 
 import static com.padimasso.autocasting.config.AppConstants.ISSUER;
 import static com.padimasso.autocasting.config.AppConstants.SECRET;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_INVALID_TOKEN;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_TOKEN_EXPIRED;
 
 @Service
 @SuppressWarnings("unused")
@@ -74,9 +76,9 @@ public class JwtServiceImpl implements JwtService {
         try {
             return getClaims(token).getPayload().getSubject();
         } catch (ExpiredJwtException ex) {
-            throw new IllegalArgumentException("auth.token_expired");
+            throw new IllegalArgumentException(AUTH_TOKEN_EXPIRED);
         } catch (JwtException ex) {
-            throw new IllegalArgumentException("auth.invalid_token");
+            throw new IllegalArgumentException(AUTH_INVALID_TOKEN);
         }
     }
 
@@ -97,4 +99,3 @@ public class JwtServiceImpl implements JwtService {
             .parseSignedClaims(token);
     }
 }
-

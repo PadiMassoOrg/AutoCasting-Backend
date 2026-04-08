@@ -21,22 +21,24 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
+
 @Component
 public class ApiExceptionClassifier {
 
     private static final Set<String> CONFLICT_EXACT_KEYS = Set.of(
-        "auth.user_exists",
-        "auth.password_reset_external",
-        "applications.already_applied",
-        "castings.invalid_status_transition",
-        "castings.not_publishable",
-        "castings.deadline_passed",
-        "casting.role.requirement.already_exists"
+        AUTH_USER_EXISTS,
+        AUTH_PASSWORD_RESET_EXTERNAL,
+        APPLICATIONS_ALREADY_APPLIED,
+        CASTINGS_INVALID_STATUS_TRANSITION,
+        CASTINGS_NOT_PUBLISHABLE,
+        CASTINGS_DEADLINE_PASSED,
+        CASTING_ROLE_REQUIREMENT_ALREADY_EXISTS
     );
 
     private static final Set<String> INTERNAL_EXACT_KEYS = Set.of(
-        "auth.invalid_plan",
-        "auth.invalid_role",
+        AUTH_INVALID_PLAN,
+        AUTH_INVALID_ROLE,
         "mail.send_failed",
         "legal.hash_generation_failed"
     );
@@ -54,7 +56,7 @@ public class ApiExceptionClassifier {
         }
 
         if (exception instanceof BadCredentialsException || exception instanceof UsernameNotFoundException) {
-            return ApiException.unauthorized("auth.invalid_credentials");
+            return ApiException.unauthorized(AUTH_INVALID_CREDENTIALS);
         }
 
         if (exception instanceof InsufficientAuthenticationException insufficientAuthenticationException) {
@@ -62,46 +64,46 @@ public class ApiExceptionClassifier {
         }
 
         if (exception instanceof AuthenticationException) {
-            return ApiException.unauthorized("auth.not_authenticated");
+            return ApiException.unauthorized(AUTH_NOT_AUTHENTICATED);
         }
 
         if (exception instanceof AccessDeniedException) {
-            return ApiException.forbidden("auth.access_denied");
+            return ApiException.forbidden(AUTH_ACCESS_DENIED);
         }
 
         if (exception instanceof MissingServletRequestParameterException missingParameterException) {
-            return ApiException.badRequest("general.missing_parameter", missingParameterException.getParameterName());
+            return ApiException.badRequest(GENERAL_MISSING_PARAMETER, missingParameterException.getParameterName());
         }
 
         if (exception instanceof MethodArgumentTypeMismatchException mismatchException) {
-            return ApiException.badRequest("general.invalid_parameter", mismatchException.getName());
+            return ApiException.badRequest(GENERAL_INVALID_PARAMETER, mismatchException.getName());
         }
 
         if (exception instanceof HttpMessageNotReadableException) {
-            return ApiException.badRequest("general.invalid_request_body");
+            return ApiException.badRequest(GENERAL_INVALID_REQUEST_BODY);
         }
 
         if (exception instanceof HttpRequestMethodNotSupportedException methodNotSupportedException) {
-            return new ApiException(HttpStatus.METHOD_NOT_ALLOWED, "general.method_not_allowed", methodNotSupportedException.getMethod());
+            return new ApiException(HttpStatus.METHOD_NOT_ALLOWED, GENERAL_METHOD_NOT_ALLOWED, methodNotSupportedException.getMethod());
         }
 
         if (exception instanceof NoResourceFoundException) {
-            return ApiException.notFound("general.endpoint_not_found");
+            return ApiException.notFound(GENERAL_ENDPOINT_NOT_FOUND);
         }
 
         if (exception instanceof NoSuchElementException) {
-            return ApiException.notFound("general.resource_not_found");
+            return ApiException.notFound(GENERAL_RESOURCE_NOT_FOUND);
         }
 
         if (exception instanceof DataIntegrityViolationException) {
-            return ApiException.conflict("general.data_integrity_violation");
+            return ApiException.conflict(GENERAL_DATA_INTEGRITY_VIOLATION);
         }
 
         if (exception instanceof ResponseStatusException responseStatusException) {
             HttpStatusCode statusCode = responseStatusException.getStatusCode();
             HttpStatus status = HttpStatus.resolve(statusCode.value());
             String reason = responseStatusException.getReason();
-            String messageKey = (reason == null || reason.isBlank()) ? "general.unexpected" : reason;
+            String messageKey = (reason == null || reason.isBlank()) ? GENERAL_UNEXPECTED : reason;
             Object[] args = reason == null || reason.isBlank()
                 ? new Object[]{safeMessage(exception)}
                 : new Object[0];
@@ -117,7 +119,7 @@ public class ApiExceptionClassifier {
         }
 
         String message = safeMessage(exception);
-        return ApiException.internal("general.unexpected", message);
+        return ApiException.internal(GENERAL_UNEXPECTED, message);
     }
 
     private ApiException classifyKeyedException(String rawMessage, HttpStatus keyedFallback, HttpStatus plainTextFallback) {
@@ -135,11 +137,11 @@ public class ApiExceptionClassifier {
             return fallbackStatus;
         }
 
-        if (messageKey.equals("auth.not_authenticated")
-            || messageKey.equals("auth.invalid_principal")
-            || messageKey.equals("auth.invalid_credentials")
-            || messageKey.equals("auth.invalid_token")
-            || messageKey.equals("auth.token_expired")
+        if (messageKey.equals(AUTH_NOT_AUTHENTICATED)
+            || messageKey.equals(AUTH_INVALID_PRINCIPAL)
+            || messageKey.equals(AUTH_INVALID_CREDENTIALS)
+            || messageKey.equals(AUTH_INVALID_TOKEN)
+            || messageKey.equals(AUTH_TOKEN_EXPIRED)
             || messageKey.equals("oauth.google.failure")
             || messageKey.equals("oauth.google.user_missing_email")
             || messageKey.equals("unauthorized")) {
@@ -148,7 +150,7 @@ public class ApiExceptionClassifier {
 
         if (messageKey.endsWith(".forbidden")
             || messageKey.contains(".forbidden.")
-            || messageKey.equals("auth.access_denied")) {
+            || messageKey.equals(AUTH_ACCESS_DENIED)) {
             return HttpStatus.FORBIDDEN;
         }
 
@@ -158,8 +160,8 @@ public class ApiExceptionClassifier {
 
         if (messageKey.endsWith(".not_found")
             || messageKey.contains(".not_found.")
-            || messageKey.equals("general.resource_not_found")
-            || messageKey.equals("general.endpoint_not_found")
+            || messageKey.equals(GENERAL_RESOURCE_NOT_FOUND)
+            || messageKey.equals(GENERAL_ENDPOINT_NOT_FOUND)
             || messageKey.endsWith(".not_found_or_forbidden")) {
             return HttpStatus.NOT_FOUND;
         }
@@ -184,17 +186,17 @@ public class ApiExceptionClassifier {
     private String resolveAuthenticationMessage(InsufficientAuthenticationException exception) {
         String message = exception.getMessage();
         if ("token expired".equalsIgnoreCase(message)) {
-            return "auth.token_expired";
+            return AUTH_TOKEN_EXPIRED;
         }
         if ("invalid token".equalsIgnoreCase(message)) {
-            return "auth.invalid_token";
+            return AUTH_INVALID_TOKEN;
         }
-        return "auth.not_authenticated";
+        return AUTH_NOT_AUTHENTICATED;
     }
 
     private ParsedMessage parseMessage(String rawMessage) {
         if (rawMessage == null || rawMessage.isBlank()) {
-            return new ParsedMessage("general.unexpected", new Object[]{"No message available"});
+            return new ParsedMessage(GENERAL_UNEXPECTED, new Object[]{"No message available"});
         }
 
         String[] parts = rawMessage.split("\\|");

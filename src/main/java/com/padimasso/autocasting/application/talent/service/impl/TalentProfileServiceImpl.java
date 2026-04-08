@@ -20,12 +20,13 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class TalentProfileServiceImpl implements TalentProfileService {
 
-    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final UserRepository userRepository;
