@@ -28,7 +28,8 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CastingApplicationStatusOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
@@ -54,7 +55,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     private final CastingApplicationRequirementSubmissionRepository castingApplicationRequirementSubmissionRepository;
     private final CastingRoleRepository castingRoleRepository;
     private final CastingRequirementRepository castingRequirementRepository;
-    private final CastingApplicationStatusOptionRepository statusOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingApplicationMapper castingApplicationMapper;
 
     // ======================
@@ -81,9 +82,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     }
 
     private static String safeTrim(String s) {
-        if (s == null) return null;
-        var t = s.trim();
-        return t.isBlank() ? null : t;
+        return TextNormalizer.normalizeNullable(s);
     }
 
     private void setEmployerOwnedApplicationStatus(UUID applicationId, String statusStringCode) {
@@ -95,9 +94,8 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
 
-        CastingApplicationStatusOptionEntity status = statusOptionRepository
-            .findByStringCode(statusStringCode)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.application_status.not_found"));
+        CastingApplicationStatusOptionEntity status =
+            siteMetadataResolver.resolveCastingApplicationStatusByCodeOrThrow(statusStringCode);
 
         int updated = castingApplicationRepository.setStatusIfOwned(applicationId, employerProfileId, status);
 
@@ -139,15 +137,14 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             }
         }
 
-        CastingApplicationStatusOptionEntity blankStatus = statusOptionRepository
-            .findByStringCode(CASTING_APPLICATION_STATUS_BLANK)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.application_status.not_found"));
+        CastingApplicationStatusOptionEntity blankStatus =
+            siteMetadataResolver.resolveCastingApplicationStatusByCodeOrThrow(CASTING_APPLICATION_STATUS_BLANK);
 
         CastingApplicationEntity app = CastingApplicationEntity.builder()
             .castingRole(role)
             .talentProfile(profile)
             .status(blankStatus)
-            .message(request != null ? request.message() : null)
+            .message(request != null ? TextNormalizer.normalizeNullable(request.message()) : null)
             .build();
 
         app = castingApplicationRepository.save(app);
@@ -165,9 +162,9 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
                 CastingApplicationRequirementSubmissionEntity sub = CastingApplicationRequirementSubmissionEntity.builder()
                     .application(app)
                     .castingRequirement(req)
-                    .audioUrl(s.audioUrl())
-                    .videoUrl(s.videoUrl())
-                    .notes(s.notes())
+                    .audioUrl(TextNormalizer.normalizeNullable(s.audioUrl()))
+                    .videoUrl(TextNormalizer.normalizeNullable(s.videoUrl()))
+                    .notes(TextNormalizer.normalizeNullable(s.notes()))
                     .build();
 
                 castingApplicationRequirementSubmissionRepository.save(sub);

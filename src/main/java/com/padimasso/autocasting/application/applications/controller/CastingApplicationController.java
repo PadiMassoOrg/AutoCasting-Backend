@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +40,7 @@ public class CastingApplicationController {
     @ResponseStatus(HttpStatus.CREATED)
     public void apply(
         @PathVariable UUID roleId,
-        @RequestBody(required = false) CastingApplicationRequest request
+        @Valid @RequestBody(required = false) CastingApplicationRequest request
     ) {
         castingApplicationService.apply(roleId, request);
     }
