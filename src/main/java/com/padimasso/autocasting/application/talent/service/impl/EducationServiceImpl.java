@@ -10,6 +10,7 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.EducationRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.EducationService;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,9 +36,9 @@ public class EducationServiceImpl implements EducationService {
             .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
 
         var newEducation = EducationEntity.builder()
-            .institution(request.institution())
-            .courseName(request.courseName())
-            .graduationYear(request.graduationYear())
+            .institution(TextNormalizer.normalizeNullable(request.institution()))
+            .courseName(TextNormalizer.normalizeNullable(request.courseName()))
+            .graduationYear(TextNormalizer.normalizeNullable(request.graduationYear()))
             .talentProfile(foundProfile)
             .build();
 
@@ -65,9 +66,9 @@ public class EducationServiceImpl implements EducationService {
     public EducationResponse patchMyEducation(UUID id, EducationRequest request) {
         EducationEntity education = getOwnEducationOrThrow(id);
 
-        if (request.institution() != null) education.setInstitution(request.institution());
-        if (request.courseName() != null) education.setCourseName(request.courseName());
-        if (request.graduationYear() != null) education.setGraduationYear(request.graduationYear());
+        if (request.institution() != null) education.setInstitution(TextNormalizer.normalizeNullable(request.institution()));
+        if (request.courseName() != null) education.setCourseName(TextNormalizer.normalizeNullable(request.courseName()));
+        if (request.graduationYear() != null) education.setGraduationYear(TextNormalizer.normalizeNullable(request.graduationYear()));
 
         return talentProfileMapper.toEducationResponse(educationRepository.save(education));
     }
