@@ -9,8 +9,8 @@ import com.padimasso.autocasting.application.employer.model.EmployerProfileEntit
 import com.padimasso.autocasting.application.employer.repository.EmployerBasicInfoRepository;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.employer.service.EmployerBasicInfoService;
-import com.padimasso.autocasting.application.sitemetadata.model.CompanyTypeOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.repository.CompanyTypeOptionRepository;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
     private final EmployerContext employerContext;
     private final EmployerProfileRepository employerProfileRepository;
     private final EmployerBasicInfoRepository employerBasicInfoRepository;
-    private final CompanyTypeOptionRepository companyTypeOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final EmployerProfileMapper employerProfileMapper;
 
     @Transactional
@@ -40,19 +40,16 @@ public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
                 ));
 
         if (req.companyTypeId() != null) {
-            CompanyTypeOptionEntity companyTypeEntity = companyTypeOptionRepository.findById(req.companyTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("sitemetadata.company_type.not_found"));
-            basicInfo.setCompanyType(companyTypeEntity);
+            basicInfo.setCompanyType(siteMetadataResolver.resolveCompanyTypeOrThrow(req.companyTypeId()));
         }
-        if (req.companyName().isPresent()) basicInfo.setCompanyName(req.companyName().orElse(null));
-        if (req.taxNumber().isPresent()) basicInfo.setTaxNumber(req.taxNumber().orElse(null));
-        if (req.companyEmail().isPresent()) basicInfo.setCompanyEmail(req.companyEmail().orElse(null));
-        if (req.imageUrl().isPresent()) basicInfo.setImageUrl(req.imageUrl().orElse(null));
-        if (req.address().isPresent()) basicInfo.setAddress(req.address().orElse(null));
-        if (req.websiteUrl().isPresent()) basicInfo.setWebsiteUrl(req.websiteUrl().orElse(null));
-        if (req.about().isPresent()) basicInfo.setAbout(req.about().orElse(null));
+        if (req.companyName().isPresent()) basicInfo.setCompanyName(TextNormalizer.normalizeNullable(req.companyName().orElse(null)));
+        if (req.taxNumber().isPresent()) basicInfo.setTaxNumber(TextNormalizer.normalizeNullable(req.taxNumber().orElse(null)));
+        if (req.companyEmail().isPresent()) basicInfo.setCompanyEmail(TextNormalizer.normalizeNullable(req.companyEmail().orElse(null)));
+        if (req.imageUrl().isPresent()) basicInfo.setImageUrl(TextNormalizer.normalizeNullable(req.imageUrl().orElse(null)));
+        if (req.address().isPresent()) basicInfo.setAddress(TextNormalizer.normalizeNullable(req.address().orElse(null)));
+        if (req.websiteUrl().isPresent()) basicInfo.setWebsiteUrl(TextNormalizer.normalizeNullable(req.websiteUrl().orElse(null)));
+        if (req.about().isPresent()) basicInfo.setAbout(TextNormalizer.normalizeNullable(req.about().orElse(null)));
 
         return employerProfileMapper.toBasicInfoResponse(employerBasicInfoRepository.save(basicInfo));
     }
-
 }
