@@ -17,7 +17,8 @@ import com.padimasso.autocasting.application.castings.service.CastingRoleService
 import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
 import com.padimasso.autocasting.application.sitemetadata.model.*;
-import com.padimasso.autocasting.application.sitemetadata.repository.*;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,16 +40,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     private final CastingRolesSectionRepository castingRolesSectionRepository;
     private final CastingRoleRepository castingRoleRepository;
-    private final ProfessionRepository professionRepository;
-    private final RoleTypeOptionRepository roleTypeOptionRepository;
-    private final GenderOptionRepository genderOptionRepository;
-    private final SkillRepository skillRepository;
-    private final EthnicityOptionRepository ethnicityOptionRepository;
-    private final ColorOptionRepository colorOptionRepository;
-    private final DietOptionRepository dietOptionRepository;
-    private final PayRateTypeOptionRepository payRateTypeOptionRepository;
-    private final CurrencyOptionRepository currencyOptionRepository;
-    private final CastingSectionStatusOptionRepository castingSectionStatusOptionRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
     private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
@@ -57,24 +50,18 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     public CastingRoleResponse createCastingRole(CastingRoleRequest request) {
 
         CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(request.rolesSectionId())
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
 
-        Set<UUID> professionIds = request.professionIds();
-        var foundProfessions = new HashSet<>(professionRepository.findAllByIdIn(professionIds));
+        Set<UUID> professionIds = request.professionIds() == null ? Set.of() : request.professionIds();
+        var foundProfessions = new HashSet<>(siteMetadataResolver.resolveProfessionsOrThrow(professionIds));
 
-        RoleTypeOptionEntity foundRoleType = roleTypeOptionRepository.findById(request.roleTypeId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_role.not_found"));
+        RoleTypeOptionEntity foundRoleType = siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId());
 
-        GenderOptionEntity foundGender = genderOptionRepository.findById(request.genderId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
+        GenderOptionEntity foundGender = siteMetadataResolver.resolveGenderOrThrow(request.genderId());
 
-        PayRateTypeOptionEntity payRateTypeUnpaid = payRateTypeOptionRepository
-            .findByStringCode(PAY_RATE_TYPE_UNPAID)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.pay_rate_type.not_found"));
+        PayRateTypeOptionEntity payRateTypeUnpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
 
-        CurrencyOptionEntity currencyARS = currencyOptionRepository
-            .findByStringCode(CURRENCY_ARS)
-            .orElseThrow(() -> new IllegalStateException("sitemetadata.currency.not_found"));
+        CurrencyOptionEntity currencyARS = siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS);
 
         var newRole = CastingRoleEntity.builder()
             .rolesSection(foundSection)
@@ -86,10 +73,10 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .ageMax(request.ageMax())
             .build();
 
-        if (request.description().isPresent()) newRole.setDescription(request.description().orElse(null));
+        if (request.description().isPresent()) newRole.setDescription(TextNormalizer.normalizeNullable(request.description().orElse(null)));
         if (request.skillIds().isPresent()) {
             Set<UUID> skillIds = request.skillIds().get();
-            var foundSkills = new HashSet<>(skillRepository.findAllByIdIn(skillIds));
+            var foundSkills = new HashSet<>(siteMetadataResolver.resolveSkillsOrThrow(skillIds));
             newRole.setSkills(foundSkills);
         }
 
@@ -101,34 +88,30 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             var ch = request.characteristics().get();
             if (ch.heightCm().isPresent()) newCharacteristics.setHeightCm(ch.heightCm().orElse(null));
             if (ch.ethnicityId() != null) {
-                EthnicityOptionEntity ethnicityOption = ethnicityOptionRepository.findById(ch.ethnicityId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.ethnicity.not_found"));
+                EthnicityOptionEntity ethnicityOption = siteMetadataResolver.resolveEthnicityOrThrow(ch.ethnicityId());
                 newCharacteristics.setEthnicity(ethnicityOption);
             }
             if (ch.weightKg().isPresent()) newCharacteristics.setWeightKg(ch.weightKg().orElse(null));
             if (ch.hairColorId() != null) {
-                ColorOptionEntity color = colorOptionRepository.findById(ch.hairColorId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.hairColorId());
                 newCharacteristics.setHairColor(color);
             }
             if (ch.eyeColorId() != null) {
-                ColorOptionEntity color = colorOptionRepository.findById(ch.eyeColorId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.eyeColorId());
                 newCharacteristics.setEyeColor(color);
             }
-            if (ch.chestCm().isPresent()) newCharacteristics.setChestCm(ch.chestCm().orElse(null));
-            if (ch.waistCm().isPresent()) newCharacteristics.setWaistCm(ch.waistCm().orElse(null));
-            if (ch.hipCm().isPresent()) newCharacteristics.setHipCm(ch.hipCm().orElse(null));
-            if (ch.shirtSize().isPresent()) newCharacteristics.setShirtSize(ch.shirtSize().orElse(null));
-            if (ch.pantSize().isPresent()) newCharacteristics.setPantSize(ch.pantSize().orElse(null));
-            if (ch.dressSize().isPresent()) newCharacteristics.setDressSize(ch.dressSize().orElse(null));
-            if (ch.shoeSize().isPresent()) newCharacteristics.setShoeSize(ch.shoeSize().orElse(null));
+            if (ch.chestCm().isPresent()) newCharacteristics.setChestCm(TextNormalizer.normalizeNullable(ch.chestCm().orElse(null)));
+            if (ch.waistCm().isPresent()) newCharacteristics.setWaistCm(TextNormalizer.normalizeNullable(ch.waistCm().orElse(null)));
+            if (ch.hipCm().isPresent()) newCharacteristics.setHipCm(TextNormalizer.normalizeNullable(ch.hipCm().orElse(null)));
+            if (ch.shirtSize().isPresent()) newCharacteristics.setShirtSize(TextNormalizer.normalizeNullable(ch.shirtSize().orElse(null)));
+            if (ch.pantSize().isPresent()) newCharacteristics.setPantSize(TextNormalizer.normalizeNullable(ch.pantSize().orElse(null)));
+            if (ch.dressSize().isPresent()) newCharacteristics.setDressSize(TextNormalizer.normalizeNullable(ch.dressSize().orElse(null)));
+            if (ch.shoeSize().isPresent()) newCharacteristics.setShoeSize(TextNormalizer.normalizeNullable(ch.shoeSize().orElse(null)));
             if (ch.tattoo().isPresent()) newCharacteristics.setTattoo(ch.tattoo().orElse(null));
             if (ch.passport().isPresent()) newCharacteristics.setPassport(ch.passport().orElse(null));
             if (ch.drivingLicense().isPresent()) newCharacteristics.setDrivingLicense(ch.drivingLicense().orElse(null));
             if (ch.dietOptionId() != null) {
-                DietOptionEntity diet = dietOptionRepository.findById(ch.dietOptionId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.diet.not_found"));
+                DietOptionEntity diet = siteMetadataResolver.resolveDietOrThrow(ch.dietOptionId());
                 newCharacteristics.setDietOption(diet);
             }
         }
@@ -160,7 +143,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     public CastingRolesSectionResponse getBySectionId(UUID sectionId) {
         CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
         return castingMapper.toRolesSectionResponsePublic(foundSection);
     }
 
@@ -187,20 +170,18 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Transactional
     public CastingRoleResponse updateCastingRole(UUID roleId, CastingRoleRequest request) {
         CastingRoleEntity role = castingRoleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("casting.role.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
         if (role.getRolesSection() == null || role.getRolesSection().getId() == null) {
-            throw new IllegalStateException("castings.section.not_found");
+            throw new IllegalStateException(CASTINGS_SECTION_NOT_FOUND);
         }
         if (!role.getRolesSection().getId().equals(request.rolesSectionId())) {
-            throw new IllegalArgumentException("castings.section.mismatch");
+            throw new IllegalArgumentException(CASTINGS_SECTION_MISMATCH);
         }
 
-        var foundRoleType = roleTypeOptionRepository.findById(request.roleTypeId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_role.not_found"));
-        var foundGender = genderOptionRepository.findById(request.genderId())
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
-        Set<UUID> professionIds = request.professionIds();
-        var foundProfessions = new HashSet<>(professionRepository.findAllByIdIn(professionIds));
+        var foundRoleType = siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId());
+        var foundGender = siteMetadataResolver.resolveGenderOrThrow(request.genderId());
+        Set<UUID> professionIds = request.professionIds() == null ? Set.of() : request.professionIds();
+        var foundProfessions = new HashSet<>(siteMetadataResolver.resolveProfessionsOrThrow(professionIds));
 
         role.setRoleName(request.roleName());
         role.setRoleType(foundRoleType);
@@ -209,10 +190,10 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         role.setAgeMax(request.ageMax());
         role.setProfessions(foundProfessions);
 
-        role.setDescription(request.description().orElse(null));
+        role.setDescription(TextNormalizer.normalizeNullable(request.description().orElse(null)));
         if (request.skillIds().isPresent()) {
             Set<UUID> skillIds = request.skillIds().get();
-            var foundSkills = new HashSet<>(skillRepository.findAllByIdIn(skillIds));
+            var foundSkills = new HashSet<>(siteMetadataResolver.resolveSkillsOrThrow(skillIds));
             role.setSkills(foundSkills);
         }
 
@@ -237,45 +218,41 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
             if (ch.heightCm().isPresent()) characteristics.setHeightCm(ch.heightCm().orElse(null));
             if (ch.weightKg().isPresent()) characteristics.setWeightKg(ch.weightKg().orElse(null));
-            if (ch.chestCm().isPresent()) characteristics.setChestCm(ch.chestCm().orElse(null));
-            if (ch.waistCm().isPresent()) characteristics.setWaistCm(ch.waistCm().orElse(null));
-            if (ch.hipCm().isPresent()) characteristics.setHipCm(ch.hipCm().orElse(null));
-            if (ch.shirtSize().isPresent()) characteristics.setShirtSize(ch.shirtSize().orElse(null));
-            if (ch.pantSize().isPresent()) characteristics.setPantSize(ch.pantSize().orElse(null));
-            if (ch.dressSize().isPresent()) characteristics.setDressSize(ch.dressSize().orElse(null));
-            if (ch.shoeSize().isPresent()) characteristics.setShoeSize(ch.shoeSize().orElse(null));
+            if (ch.chestCm().isPresent()) characteristics.setChestCm(TextNormalizer.normalizeNullable(ch.chestCm().orElse(null)));
+            if (ch.waistCm().isPresent()) characteristics.setWaistCm(TextNormalizer.normalizeNullable(ch.waistCm().orElse(null)));
+            if (ch.hipCm().isPresent()) characteristics.setHipCm(TextNormalizer.normalizeNullable(ch.hipCm().orElse(null)));
+            if (ch.shirtSize().isPresent()) characteristics.setShirtSize(TextNormalizer.normalizeNullable(ch.shirtSize().orElse(null)));
+            if (ch.pantSize().isPresent()) characteristics.setPantSize(TextNormalizer.normalizeNullable(ch.pantSize().orElse(null)));
+            if (ch.dressSize().isPresent()) characteristics.setDressSize(TextNormalizer.normalizeNullable(ch.dressSize().orElse(null)));
+            if (ch.shoeSize().isPresent()) characteristics.setShoeSize(TextNormalizer.normalizeNullable(ch.shoeSize().orElse(null)));
 
             if (ch.tattoo().isPresent()) characteristics.setTattoo(ch.tattoo().orElse(null));
             if (ch.passport().isPresent()) characteristics.setPassport(ch.passport().orElse(null));
             if (ch.drivingLicense().isPresent()) characteristics.setDrivingLicense(ch.drivingLicense().orElse(null));
 
             if (ch.ethnicityId() != null) {
-                EthnicityOptionEntity ethnicityOption = ethnicityOptionRepository.findById(ch.ethnicityId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.ethnicity.not_found"));
+                EthnicityOptionEntity ethnicityOption = siteMetadataResolver.resolveEthnicityOrThrow(ch.ethnicityId());
                 characteristics.setEthnicity(ethnicityOption);
             } else {
                 characteristics.setEthnicity(null);
             }
 
             if (ch.hairColorId() != null) {
-                ColorOptionEntity color = colorOptionRepository.findById(ch.hairColorId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.hairColorId());
                 characteristics.setHairColor(color);
             } else {
                 characteristics.setHairColor(null);
             }
 
             if (ch.eyeColorId() != null) {
-                ColorOptionEntity color = colorOptionRepository.findById(ch.eyeColorId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.color.not_found"));
+                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.eyeColorId());
                 characteristics.setEyeColor(color);
             } else {
                 characteristics.setEyeColor(null);
             }
 
             if (ch.dietOptionId() != null) {
-                DietOptionEntity diet = dietOptionRepository.findById(ch.dietOptionId())
-                    .orElseThrow(() -> new IllegalArgumentException("sitemetadata.diet.not_found"));
+                DietOptionEntity diet = siteMetadataResolver.resolveDietOrThrow(ch.dietOptionId());
                 characteristics.setDietOption(diet);
             } else {
                 characteristics.setDietOption(null);
@@ -299,7 +276,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Transactional
     public void deleteCastingRole(UUID roleId) {
         CastingRoleEntity role = castingRoleRepository.findById(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("casting.role.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
 
         UUID sectionId = role.getRolesSection() != null ? role.getRolesSection().getId() : null;
 
@@ -322,7 +299,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     private void updateSectionStatus(UUID sectionId) {
         CastingRolesSectionEntity section = castingRolesSectionRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException("castings.section.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
 
         long activeCount = castingRoleRepository.countByRolesSectionIdAndDeletedFalse(sectionId);
 
@@ -330,9 +307,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             ? CASTING_SECTION_STATUS_COMPLETED
             : CASTING_SECTION_STATUS_IN_PROGRESS;
 
-        CastingSectionStatusOptionEntity status = castingSectionStatusOptionRepository.findByStringCode(nextStatusCode)
-            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_section_status.not_found"));
-
+        CastingSectionStatusOptionEntity status = siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(nextStatusCode);
         section.setSectionStatus(status);
         castingRolesSectionRepository.save(section);
     }
