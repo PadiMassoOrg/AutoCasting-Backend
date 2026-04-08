@@ -10,6 +10,7 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.ContactRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.ContactService;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class ContactServiceImpl implements ContactService {
             .orElseGet(() -> contactRepository.save(ContactEntity.builder().talentProfile(profile).build()));
 
         if (request.phoneNumber() != null) {
-            contact.setPhoneNumber(request.phoneNumber());
+            contact.setPhoneNumber(TextNormalizer.normalizeNullable(request.phoneNumber()));
         }
 
         return talentProfileMapper.toContactResponse(contactRepository.save(contact));
