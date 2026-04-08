@@ -14,6 +14,9 @@ import com.padimasso.autocasting.application.talent.repository.TalentProfileRepo
 import com.padimasso.autocasting.application.talent.service.CharacteristicsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -29,7 +32,7 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
     public CharacteristicsResponse patchMyCharacteristics(CharacteristicsPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         CharacteristicsEntity characteristics = characteristicsRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> characteristicsRepository.save(CharacteristicsEntity.builder().talentProfile(profile).build()));
 

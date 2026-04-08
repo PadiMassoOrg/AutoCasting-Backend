@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -35,7 +37,7 @@ public class BasicInfoServiceImpl implements BasicInfoService {
     public BasicInfoResponse patchMyBasicInfo(BasicInfoPatchRequest req) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         BasicInfoEntity basicInfo = basicInfoRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> basicInfoRepository.save(BasicInfoEntity.builder().talentProfile(profile).build()));
 

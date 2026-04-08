@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -35,7 +37,7 @@ public class CreditServiceImpl implements CreditService {
     public CreditResponse createCredit(CreditRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         var foundProductionType = siteMetadataResolver.resolveProductionTypeOrThrow(request.productionTypeId());
 
         var newCredit = CreditEntity.builder()
@@ -96,7 +98,7 @@ public class CreditServiceImpl implements CreditService {
     private TalentProfileEntity getMyProfileOrThrow() {
         UserEntity user = authContext.getCurrentUserOrThrow();
         return talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
     }
 
     private CreditEntity getOwnedCreditOrThrow(UUID creditId) {

@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -33,7 +35,7 @@ public class EducationServiceImpl implements EducationService {
     public EducationResponse createEducation(EducationRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         var newEducation = EducationEntity.builder()
             .institution(TextNormalizer.normalizeNullable(request.institution()))
@@ -85,7 +87,7 @@ public class EducationServiceImpl implements EducationService {
     private TalentProfileEntity getMyProfileOrThrow() {
         UserEntity user = authContext.getCurrentUserOrThrow();
         return talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
     }
 
     private EducationEntity getOwnEducationOrThrow(UUID educationId) {

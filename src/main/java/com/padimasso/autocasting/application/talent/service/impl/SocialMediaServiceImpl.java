@@ -20,6 +20,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -37,7 +39,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         if (request.links() != null) {
             for (SocialMediaLinkDto rawDto : request.links()) {
@@ -84,7 +86,7 @@ public class SocialMediaServiceImpl implements SocialMediaService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         EmployerProfileEntity profile = employerProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         EmployerBasicInfoEntity basicInfo = profile.getBasicInfo();
 

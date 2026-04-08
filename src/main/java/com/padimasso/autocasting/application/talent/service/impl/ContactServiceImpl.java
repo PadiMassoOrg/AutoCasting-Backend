@@ -15,6 +15,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -30,7 +32,7 @@ public class ContactServiceImpl implements ContactService {
     public ContactResponse patchMyContact(ContactPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         ContactEntity contact = contactRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> contactRepository.save(ContactEntity.builder().talentProfile(profile).build()));
 

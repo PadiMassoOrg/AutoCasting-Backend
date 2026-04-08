@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 @SuppressWarnings("unused")
 public class EmployerProfileServiceImpl implements EmployerProfileService {
 
-    private static final String PROFILE_NOT_FOUND = "profile.not_found";
     private final EmployerContext employerContext;
     private final AuthContext authContext;
     private final EmployerProfileRepository employerProfileRepository;

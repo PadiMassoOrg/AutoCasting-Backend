@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
@@ -34,7 +36,7 @@ public class MediaServiceImpl implements MediaService {
     public MediaResponse patchMyMedia(MediaPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         MediaEntity media = mediaRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> mediaRepository.save(MediaEntity.builder().talentProfile(profile).build()));
 

@@ -42,6 +42,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.APPLICATIONS_ALREADY_APPLIED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.APPLICATIONS_NOT_FOUND_OR_FORBIDDEN;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTING_ROLE_NOT_FOUND;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTING_ROLE_REQUIRED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -101,7 +106,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
 
         if (updated == 0) {
             // 0 = no existe, no pertenece al employer, o está deleted
-            throw new IllegalArgumentException("applications.not_found_or_forbidden");
+            throw new IllegalArgumentException(APPLICATIONS_NOT_FOUND_OR_FORBIDDEN);
         }
     }
 
@@ -111,14 +116,14 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     @Override
     @Transactional
     public void apply(UUID roleId, CastingApplicationRequest request) {
-        if (roleId == null) throw new IllegalArgumentException("casting.role.required");
+        if (roleId == null) throw new IllegalArgumentException(CASTING_ROLE_REQUIRED);
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
         CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
-            .orElseThrow(() -> new IllegalArgumentException("casting.role.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
         if (castingApplicationRepository.existsByCastingRoleIdAndTalentProfileId(roleId, profile.getId())) {
-            throw new IllegalStateException("applications.already_applied");
+            throw new IllegalStateException(APPLICATIONS_ALREADY_APPLIED);
         }
 
         List<CastingRequirementEntity> requirements =
@@ -181,7 +186,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     ) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new IllegalArgumentException("profile.not_found"));
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
         int ps = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 
