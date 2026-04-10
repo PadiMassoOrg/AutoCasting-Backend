@@ -58,15 +58,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {
-            SecurityContextHolder.clearContext();
-            request.setAttribute("auth_error_code", AUTH_TOKEN_EXPIRED);
-            authenticationEntryPoint.commence(request, response,
-                new InsufficientAuthenticationException("token expired", ex));
+            handleAuthenticationFailure(request, response, AUTH_TOKEN_EXPIRED, "token expired", ex);
         } catch (JwtException ex) {
-            SecurityContextHolder.clearContext();
-            request.setAttribute("auth_error_code", AUTH_INVALID_TOKEN);
-            authenticationEntryPoint.commence(request, response,
-                new InsufficientAuthenticationException("invalid token", ex));
+            handleAuthenticationFailure(request, response, AUTH_INVALID_TOKEN, "invalid token", ex);
+        } catch (IllegalArgumentException ex) {
+            String errorCode = AUTH_TOKEN_EXPIRED.equals(ex.getMessage()) ? AUTH_TOKEN_EXPIRED : AUTH_INVALID_TOKEN;
+            String authMessage = AUTH_TOKEN_EXPIRED.equals(errorCode) ? "token expired" : "invalid token";
+            handleAuthenticationFailure(request, response, errorCode, authMessage, ex);
         }
+    }
+
+    private void handleAuthenticationFailure(HttpServletRequest request,
+                                             HttpServletResponse response,
+                                             String errorCode,
+                                             String authMessage,
+                                             Exception exception) throws IOException {
+        SecurityContextHolder.clearContext();
+        request.setAttribute("auth_error_code", errorCode);
+        authenticationEntryPoint.commence(request, response,
+            new InsufficientAuthenticationException(authMessage, exception));
     }
 }
