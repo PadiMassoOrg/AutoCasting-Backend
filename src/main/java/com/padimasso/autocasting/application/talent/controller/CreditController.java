@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.talent.controller;
 
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
 import com.padimasso.autocasting.application.talent.dto.response.CreditResponse;
 import com.padimasso.autocasting.application.talent.service.CreditService;
@@ -52,9 +53,8 @@ public class CreditController {
 
     @Operation(summary = "DELETE Credit (soft)", security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping(AppConstants.CREDIT_API_URL + "/{id}")
-    public ResponseEntity<Void> delete(@Parameter @PathVariable UUID id) {
-        creditsService.deleteMyCredit(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<LastModifiedResponse> delete(@Parameter @PathVariable UUID id) {
+        return ResponseEntity.ok(creditsService.deleteMyCredit(id));
     }
 
 }

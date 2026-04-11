@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +49,102 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
           and c.deleted = false
         """)
     Optional<EmployerCastingEditorProjection> findCastingEditorProjectionBySlug(@Param("slug") String slug);
+
+    @Query(value = """
+        select max(a.modified_at)
+        from (
+            select c.modified_at
+            from casting c
+            where c.id = :castingId
+              and c.deleted = false
+
+            union all
+            select bi.modified_at
+            from casting_basic_info bi
+            where bi.casting_id = :castingId
+              and bi.deleted = false
+
+            union all
+            select att.modified_at
+            from casting_attachment att
+                join casting_basic_info bi on bi.id = att.casting_basic_info_id
+            where bi.casting_id = :castingId
+              and bi.deleted = false
+              and att.deleted = false
+
+            union all
+            select rs.modified_at
+            from casting_roles_section rs
+            where rs.casting_id = :castingId
+              and rs.deleted = false
+
+            union all
+            select r.modified_at
+            from casting_role r
+                join casting_roles_section rs on rs.id = r.casting_roles_section_id
+            where rs.casting_id = :castingId
+              and rs.deleted = false
+              and r.deleted = false
+
+            union all
+            select ch.modified_at
+            from casting_role_characteristics ch
+                join casting_role r on r.id = ch.casting_role_id
+                join casting_roles_section rs on rs.id = r.casting_roles_section_id
+            where rs.casting_id = :castingId
+              and rs.deleted = false
+              and r.deleted = false
+              and ch.deleted = false
+
+            union all
+            select reqs.modified_at
+            from casting_requirements_section reqs
+            where reqs.casting_id = :castingId
+              and reqs.deleted = false
+
+            union all
+            select req.modified_at
+            from casting_requirement req
+                join casting_requirements_section reqs on reqs.id = req.casting_requirements_section_id
+            where reqs.casting_id = :castingId
+              and reqs.deleted = false
+              and req.deleted = false
+
+            union all
+            select rem.modified_at
+            from casting_remuneration rem
+            where rem.casting_id = :castingId
+              and rem.deleted = false
+
+            union all
+            select rr.modified_at
+            from casting_role_remuneration rr
+                join casting_role r on r.id = rr.casting_role_id
+                join casting_roles_section rs on rs.id = r.casting_roles_section_id
+            where rs.casting_id = :castingId
+              and rs.deleted = false
+              and r.deleted = false
+              and rr.deleted = false
+        ) a
+        """, nativeQuery = true)
+    LocalDateTime findEditorModifiedAtByCastingId(@Param("castingId") UUID castingId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        update CastingEntity c
+           set c.modifiedAt = CURRENT_TIMESTAMP
+         where c.id = :castingId
+           and c.deleted = false
+        """)
+    void touchModifiedAt(@Param("castingId") UUID castingId);
+
+    @Query("""
+        select c.modifiedAt
+        from CastingEntity c
+        where c.id = :castingId
+          and c.deleted = false
+        """)
+    LocalDateTime findModifiedAtById(@Param("castingId") UUID castingId);
 
     @EntityGraph(attributePaths = {
         "status",
@@ -203,7 +300,8 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     @Modifying
     @Query("""
         update CastingEntity c
-           set c.status = :publishedStatus
+           set c.status = :publishedStatus,
+               c.modifiedAt = CURRENT_TIMESTAMP
          where c.id = :castingId
            and c.employerProfile.id = :employerProfileId
            and c.deleted = false
@@ -270,7 +368,8 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     @Modifying
     @Query("""
         update CastingEntity c
-           set c.status = :draftStatus
+           set c.status = :draftStatus,
+               c.modifiedAt = CURRENT_TIMESTAMP
          where c.id = :castingId
            and c.deleted = false
            and c.status.stringCode = :publishedCode
@@ -284,7 +383,8 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     @Modifying
     @Query("""
         update CastingEntity c
-           set c.status = :nextStatus
+           set c.status = :nextStatus,
+               c.modifiedAt = CURRENT_TIMESTAMP
          where c.id = :castingId
            and c.employerProfile.id = :employerProfileId
            and c.deleted = false

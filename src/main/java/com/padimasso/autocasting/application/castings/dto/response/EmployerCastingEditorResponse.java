@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.castings.dto.response;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record EmployerCastingEditorResponse(
@@ -16,6 +17,7 @@ public record EmployerCastingEditorResponse(
     SiteMetadataObject rolesSectionStatus,
     SiteMetadataObject requirementsSectionStatus,
     SiteMetadataObject remunerationSectionStatus,
-    boolean publishable
+    boolean publishable,
+    LocalDateTime modifiedAt
 ) {
 }

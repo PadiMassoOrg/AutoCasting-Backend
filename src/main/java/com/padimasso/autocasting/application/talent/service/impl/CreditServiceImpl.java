@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
@@ -87,9 +88,14 @@ public class CreditServiceImpl implements CreditService {
 
     @Override
     @Transactional
-    public void deleteMyCredit(UUID id) {
+    public LastModifiedResponse deleteMyCredit(UUID id) {
         CreditEntity credit = getOwnedCreditOrThrow(id);
-        creditRepository.delete(credit);
+        UUID profileId = credit.getTalentProfile().getId();
+
+        creditRepository.softDelete(credit);
+        talentProfileRepository.touchModifiedAt(profileId);
+
+        return new LastModifiedResponse(talentProfileRepository.findModifiedAtById(profileId));
     }
 
 

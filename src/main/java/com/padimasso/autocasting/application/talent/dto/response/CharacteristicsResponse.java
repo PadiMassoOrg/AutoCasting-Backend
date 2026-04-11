@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.talent.dto.response;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record CharacteristicsResponse(
@@ -21,6 +22,7 @@ public record CharacteristicsResponse(
     Boolean tattoo,
     Boolean passport,
     Boolean drivingLicense,
-    SiteMetadataObject dietOption
+    SiteMetadataObject dietOption,
+    LocalDateTime modifiedAt
 ) {
 }

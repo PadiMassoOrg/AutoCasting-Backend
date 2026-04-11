@@ -9,11 +9,13 @@ import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingRequirementEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRequirementsSectionEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
+import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRequirementRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRequirementsSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRequirementSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRequirementService;
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.exception.ApiException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
     private final CastingRequirementsSectionRepository requirementsSectionRepository;
     private final CastingRequirementRepository requirementRepository;
     private final CastingRoleRepository castingRoleRepository;
+    private final CastingRepository castingRepository;
     private final CastingMapper castingMapper;
 
     @Override
@@ -166,11 +169,23 @@ public class CastingRequirementServiceImpl implements CastingRequirementService 
 
     @Override
     @Transactional
-    public void deleteCastingRequirement(UUID requirementId) {
-        if (!requirementRepository.existsById(requirementId)) {
-            throw new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND);
+    public LastModifiedResponse deleteCastingRequirement(UUID requirementId) {
+        CastingRequirementEntity requirement = requirementRepository.findById(requirementId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
+
+        UUID castingId = requirement.getCastingRequirementsSection() != null
+            && requirement.getCastingRequirementsSection().getCasting() != null
+            ? requirement.getCastingRequirementsSection().getCasting().getId()
+            : null;
+
+        requirementRepository.softDelete(requirement);
+
+        if (castingId != null) {
+            castingRepository.touchModifiedAt(castingId);
+            return new LastModifiedResponse(castingRepository.findModifiedAtById(castingId));
         }
-        requirementRepository.deleteById(requirementId);
+
+        return new LastModifiedResponse(null);
     }
 
     private String readNullableTrimmed(JsonNullable<String> v) {

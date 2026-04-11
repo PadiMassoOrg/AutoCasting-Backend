@@ -64,6 +64,6 @@ public class MediaServiceImpl implements MediaService {
             media.setShowReelVideoUrl(TextNormalizer.normalizeNullable(request.showReelVideoUrl().orElse(null)));
         }
 
-        return talentProfileMapper.toMediaResponse(mediaRepository.save(media));
+        return talentProfileMapper.toMediaResponse(mediaRepository.saveAndFlush(media));
     }
 }

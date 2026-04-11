@@ -77,7 +77,11 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
         // 👇 aquí usamos SOLO activos (deleted = false)
         var allLinks = linkRepository.findAllByTalentProfileId(profile.getId());
-        return TalentProfileMapper.toSocialMediaResponse(allLinks.stream().toList());
+        talentProfileRepository.touchModifiedAt(profile.getId());
+        return TalentProfileMapper.toSocialMediaResponse(
+            allLinks.stream().toList(),
+            talentProfileRepository.findModifiedAtById(profile.getId())
+        );
     }
 
     @Transactional

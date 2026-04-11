@@ -7,6 +7,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.dto.request.SkillsPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
+import com.padimasso.autocasting.application.talent.dto.response.SkillsResponse;
 import com.padimasso.autocasting.application.talent.dto.response.TalentProfileResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
@@ -17,6 +18,7 @@ import com.padimasso.autocasting.application.talent.service.TalentProfileService
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,7 +58,8 @@ public class TalentProfileServiceImpl implements TalentProfileService {
     }
 
     @Override
-    public Set<SiteMetadataObject> patchMySkills(SkillsPatchRequest request) {
+    @Transactional
+    public SkillsResponse patchMySkills(SkillsPatchRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
@@ -70,7 +73,12 @@ public class TalentProfileServiceImpl implements TalentProfileService {
             }
         }
 
-        return TalentProfileMapper.mapToSiteMetadataObjectList(talentProfileRepository.save(foundProfile).getSkills());
+        Set<SiteMetadataObject> skills = TalentProfileMapper.mapToSiteMetadataObjectList(
+            talentProfileRepository.save(foundProfile).getSkills()
+        );
+
+        talentProfileRepository.touchModifiedAt(foundProfile.getId());
+        return new SkillsResponse(skills, talentProfileRepository.findModifiedAtById(foundProfile.getId()));
     }
 
 }

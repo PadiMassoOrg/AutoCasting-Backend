@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.talent.controller;
 
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.EducationRequest;
 import com.padimasso.autocasting.application.talent.dto.response.EducationResponse;
 import com.padimasso.autocasting.application.talent.service.EducationService;
@@ -52,9 +53,8 @@ public class EducationController {
 
     @Operation(summary = "DELETE Education (soft)", security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping(AppConstants.EDUCATION_API_URL + "/{id}")
-    public ResponseEntity<Void> delete(@Parameter @PathVariable UUID id) {
-        educationService.deleteMyEducation(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<LastModifiedResponse> delete(@Parameter @PathVariable UUID id) {
+        return ResponseEntity.ok(educationService.deleteMyEducation(id));
     }
 
 }

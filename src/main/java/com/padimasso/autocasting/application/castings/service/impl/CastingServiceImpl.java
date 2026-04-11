@@ -212,7 +212,8 @@ public class CastingServiceImpl implements CastingService {
             mapToSiteMetadataObject(p.getRolesSectionStatus()),
             mapToSiteMetadataObject(p.getRequirementsSectionStatus()),
             mapToSiteMetadataObject(p.getRemunerationSectionStatus()),
-            publishable
+            publishable,
+            castingRepository.findEditorModifiedAtByCastingId(p.getId())
         );
     }
 
@@ -301,7 +302,8 @@ public class CastingServiceImpl implements CastingService {
         var newReqSection = new CastingRequirementsSectionResponse(
             response.requirementsSection().id(),
             response.requirementsSection().sectionStatus(),
-            filtered
+            filtered,
+            response.requirementsSection().modifiedAt()
         );
 
         var publicCasting = new CastingResponse(

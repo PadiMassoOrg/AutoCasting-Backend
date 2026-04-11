@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.service;
 
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -17,7 +18,7 @@ public interface CastingRoleService {
 
     CastingRoleResponse updateCastingRole(UUID roleId, @Valid CastingRoleRequest request);
 
-    void deleteCastingRole(UUID roleId);
+    LastModifiedResponse deleteCastingRole(UUID roleId);
 
     CastingRolesSectionResponse getBySectionId(UUID sectionId);
 }

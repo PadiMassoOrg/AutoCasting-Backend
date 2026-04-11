@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.castings.dto.response;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +19,7 @@ public record CastingRoleResponse(
     List<SiteMetadataObject> professions,
     CharacteristicsResponse characteristics,
     List<SiteMetadataObject> skills,
-    CastingRoleRemunerationResponse remuneration
+    CastingRoleRemunerationResponse remuneration,
+    LocalDateTime modifiedAt
 ) {
 }
