@@ -59,6 +59,8 @@ public class AppConstants {
     public static final String INSTA_URL = "instagram.com";
     public static final String LINKEDIN_URL = "linkedin.com";
 
+    // Gender
+    public static final String GENDER_OPTION_INDISTINCT = "sitemetadata.gender.indistinct";
     // Casting
     public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
     public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";

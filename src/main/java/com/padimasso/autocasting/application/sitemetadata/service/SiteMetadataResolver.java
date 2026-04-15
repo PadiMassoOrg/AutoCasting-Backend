@@ -38,6 +38,8 @@ public interface SiteMetadataResolver {
 
     CastingCompensationTypeOptionEntity resolveCastingCompensationTypeByCodeOrThrow(String stringCode);
 
+    GenderOptionEntity resolveGenderByCodeOrThrow(String stringCode);
+
     CastingSectionStatusOptionEntity resolveCastingSectionStatusByCodeOrThrow(String stringCode);
 
     PayRateTypeOptionEntity resolvePayRateTypeOrThrow(UUID id);

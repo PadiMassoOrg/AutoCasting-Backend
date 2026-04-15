@@ -136,6 +136,12 @@ public class SiteMetadataResolverImpl implements SiteMetadataResolver {
     }
 
     @Override
+    public GenderOptionEntity resolveGenderByCodeOrThrow(String stringCode) {
+        return genderOptionRepository.findByStringCode(stringCode)
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.gender.not_found"));
+    }
+
+    @Override
     public CastingSectionStatusOptionEntity resolveCastingSectionStatusByCodeOrThrow(String stringCode) {
         return castingSectionStatusOptionRepository.findByStringCode(stringCode)
             .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_section_status.not_found"));

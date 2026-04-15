@@ -20,6 +20,8 @@ import com.padimasso.autocasting.application.employer.repository.EmployerBasicIn
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
+import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.model.*;
 import com.padimasso.autocasting.application.talent.repository.*;
 import com.padimasso.autocasting.config.AppConstants;
@@ -39,6 +41,7 @@ import java.util.Set;
 
 import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
 import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
+import static com.padimasso.autocasting.config.AppConstants.GENDER_OPTION_INDISTINCT;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Service
@@ -57,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     private final ContactRepository contactRepository;
     private final MediaRepository mediaRepository;
     private final CharacteristicsRepository characteristicsRepository;
+    private final SiteMetadataResolver siteMetadataResolver;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
@@ -228,8 +232,12 @@ public class AuthServiceImpl implements AuthService {
         employerProfileRepository.save(employerProfile);
 
         // 3) Basic Info
+        GenderOptionEntity indistinctGender =
+            siteMetadataResolver.resolveGenderByCodeOrThrow(GENDER_OPTION_INDISTINCT);
+
         var basicInfo = BasicInfoEntity.builder()
             .talentProfile(talentProfile)
+            .gender(indistinctGender)
             .build();
         basicInfoRepository.save(basicInfo);
 
