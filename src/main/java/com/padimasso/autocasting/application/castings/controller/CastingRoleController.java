@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRe
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -63,9 +64,8 @@ public class CastingRoleController {
 
     @Operation(summary = "DELETE Casting Role", security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping(AppConstants.CASTING_ROLE_URL + "/{roleId}")
-    public ResponseEntity<Void> deleteCastingRole(@PathVariable UUID roleId) {
-        castingRoleService.deleteCastingRole(roleId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<LastModifiedResponse> deleteCastingRole(@PathVariable UUID roleId) {
+        return ResponseEntity.ok(castingRoleService.deleteCastingRole(roleId));
     }
 
 }

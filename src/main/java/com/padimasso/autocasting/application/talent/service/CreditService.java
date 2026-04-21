@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.talent.service;
 
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
 import com.padimasso.autocasting.application.talent.dto.response.CreditResponse;
 
@@ -16,6 +17,6 @@ public interface CreditService {
 
     CreditResponse patchMyCredit(UUID id, CreditRequest request);
 
-    void deleteMyCredit(UUID id);
+    LastModifiedResponse deleteMyCredit(UUID id);
 
 }

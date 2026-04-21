@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -139,7 +140,12 @@ public class CastingMapper {
             professions,
             mapToSiteMetadataObject(role.getRoleType()),
             skills,
-            toRoleRemunerationResponse(role.getRemuneration())
+            toRoleRemunerationResponse(role.getRemuneration()),
+            maxModifiedAt(
+                role.getModifiedAt(),
+                role.getCharacteristics() != null ? role.getCharacteristics().getModifiedAt() : null,
+                role.getRemuneration() != null ? role.getRemuneration().getModifiedAt() : null
+            )
         );
     }
 
@@ -165,7 +171,8 @@ public class CastingMapper {
             entity.getWardrobeFittingText(),
             entity.getShootingStartDate(),
             entity.getShootingEndDate(),
-            entity.getDescription()
+            entity.getDescription(),
+            entity.getModifiedAt()
         );
     }
 
@@ -189,7 +196,11 @@ public class CastingMapper {
             entity.getId(),
             sectionStatus,
             entity.getNotes(),
-            roles
+            roles,
+            maxModifiedAt(
+                entity.getModifiedAt(),
+                roles.stream().map(CastingRoleResponse::modifiedAt).toArray(LocalDateTime[]::new)
+            )
         );
     }
 
@@ -228,7 +239,12 @@ public class CastingMapper {
             professions,
             characteristics,
             skills,
-            toRoleRemunerationResponse(entity.getRemuneration())
+            toRoleRemunerationResponse(entity.getRemuneration()),
+            maxModifiedAt(
+                entity.getModifiedAt(),
+                characteristics != null ? characteristics.modifiedAt() : null,
+                entity.getRemuneration() != null ? entity.getRemuneration().getModifiedAt() : null
+            )
         );
     }
 
@@ -257,7 +273,8 @@ public class CastingMapper {
             entity.getTattoo(),
             entity.getPassport(),
             entity.getDrivingLicense(),
-            diet
+            diet,
+            entity.getModifiedAt()
         );
     }
 
@@ -280,7 +297,11 @@ public class CastingMapper {
         return new CastingRequirementsSectionResponse(
             entity.getId(),
             sectionStatus,
-            requirements
+            requirements,
+            maxModifiedAt(
+                entity.getModifiedAt(),
+                requirements.stream().map(CastingRequirementResponse::modifiedAt).toArray(LocalDateTime[]::new)
+            )
         );
     }
 
@@ -295,7 +316,8 @@ public class CastingMapper {
             castingRoleId,
             entity.getDescription(),
             entity.isRequiresAudio(),
-            entity.isRequiresVideo()
+            entity.isRequiresVideo(),
+            entity.getModifiedAt()
         );
     }
 
@@ -311,7 +333,8 @@ public class CastingMapper {
             roleName,
             base.requiresAudio(),
             base.requiresVideo(),
-            base.description()
+            base.description(),
+            base.modifiedAt()
         );
     }
 
@@ -332,7 +355,11 @@ public class CastingMapper {
             sectionStatus,
             compensationType,
             entity.getNotes(),
-            remunerations
+            remunerations,
+            maxModifiedAt(
+                entity.getModifiedAt(),
+                remunerations.stream().map(CastingRoleRemunerationRowResponse::modifiedAt).toArray(LocalDateTime[]::new)
+            )
         );
     }
 
@@ -367,7 +394,8 @@ public class CastingMapper {
             mapToSiteMetadataObject(entity.getPayRateType()),
             mapToSiteMetadataObject(entity.getCurrency()),
             entity.getAmount(),
-            entity.getNotes()
+            entity.getNotes(),
+            entity.getModifiedAt()
         );
     }
 
@@ -388,7 +416,8 @@ public class CastingMapper {
             base.payRateType(),
             base.currency(),
             base.amount(),
-            base.notes()
+            base.notes(),
+            base.modifiedAt()
         );
     }
 
@@ -434,5 +463,16 @@ public class CastingMapper {
 
     private boolean isSoftDeleted(Boolean deleted) {
         return Boolean.TRUE.equals(deleted);
+    }
+
+    private LocalDateTime maxModifiedAt(LocalDateTime first, LocalDateTime... rest) {
+        LocalDateTime max = first;
+        if (rest == null) return max;
+        for (LocalDateTime value : rest) {
+            if (value != null && (max == null || value.isAfter(max))) {
+                max = value;
+            }
+        }
+        return max;
     }
 }

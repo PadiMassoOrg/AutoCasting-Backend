@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.talent.service;
 
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.EducationRequest;
 import com.padimasso.autocasting.application.talent.dto.response.EducationResponse;
 import jakarta.validation.Valid;
@@ -16,5 +17,5 @@ public interface EducationService {
 
     EducationResponse patchMyEducation(UUID id, @Valid EducationRequest request);
 
-    void deleteMyEducation(UUID id);
+    LastModifiedResponse deleteMyEducation(UUID id);
 }

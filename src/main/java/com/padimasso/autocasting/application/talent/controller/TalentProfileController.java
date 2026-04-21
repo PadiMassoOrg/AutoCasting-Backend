@@ -3,7 +3,6 @@ package com.padimasso.autocasting.application.talent.controller;
 
 import com.padimasso.autocasting.application.common.dto.MatchMode;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
-import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.dto.TalentFilter;
 import com.padimasso.autocasting.application.talent.dto.request.*;
 import com.padimasso.autocasting.application.talent.dto.response.*;
@@ -18,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -127,7 +125,7 @@ public class TalentProfileController {
     //    Skills
     @PatchMapping(AppConstants.TALENT_PROFILE_API_URL + "/skills")
     @Operation(summary = "PATCH Skills (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<Set<SiteMetadataObject>> patchMySkills(@Valid @RequestBody SkillsPatchRequest request) {
+    public ResponseEntity<SkillsResponse> patchMySkills(@Valid @RequestBody SkillsPatchRequest request) {
         return ResponseEntity.ok(talentProfileService.patchMySkills(request));
     }
 }

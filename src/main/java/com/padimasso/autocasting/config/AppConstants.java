@@ -59,6 +59,8 @@ public class AppConstants {
     public static final String INSTA_URL = "instagram.com";
     public static final String LINKEDIN_URL = "linkedin.com";
 
+    // Gender
+    public static final String GENDER_OPTION_INDISTINCT = "sitemetadata.gender.indistinct";
     // Casting
     public static final String CASTING_STATUS_DRAFT = "sitemetadata.casting_status.draft";
     public static final String CASTING_STATUS_PUBLISHED = "sitemetadata.casting_status.published";
@@ -74,6 +76,7 @@ public class AppConstants {
     public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
     public static final String CASTING_COMPENSATION_TYPE_COLLABORATIVE = "sitemetadata.compensation_type.collaborative";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
+    public static final String PAY_RATE_TYPE_COLLABORATIVE = "sitemetadata.pay_rate_type.collaborative";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";

@@ -29,7 +29,7 @@ public class CastingRemunerationSectionStatusService {
      * Regla propuesta (robusta y alineada a tu UI):
      * - Si no hay roles => NOT_STARTED
      * - Si hay roles:
-     * - Si compensationType = COLLABORATIVE => COMPLETED si notes tiene texto, si no IN_PROGRESS
+     * - Si compensationType = COLLABORATIVE => COMPLETED (notes es opcional/nullable)
      * - Si compensationType = PAID => COMPLETED si NO hay remuneraciones incompletas, si no IN_PROGRESS
      * <p>
      * Nota: Para tu caso actual (rol creado con remuneración por defecto), esto hará COMPLETED.
@@ -51,8 +51,7 @@ public class CastingRemunerationSectionStatusService {
                 : null;
 
             if (CASTING_COMPENSATION_TYPE_COLLABORATIVE.equals(compensationCode)) {
-                boolean hasNotes = hasText(section.getNotes());
-                nextStatusCode = hasNotes ? CASTING_SECTION_STATUS_COMPLETED : CASTING_SECTION_STATUS_IN_PROGRESS;
+                nextStatusCode = CASTING_SECTION_STATUS_COMPLETED;
             } else {
                 // Default: PAID (o cualquier otro) => depende de remuneraciones por rol
                 boolean hasIncomplete = castingRoleRepository.existsIncompleteRemunerationByCastingId(
@@ -70,7 +69,4 @@ public class CastingRemunerationSectionStatusService {
         remunerationsSectionRepository.save(section);
     }
 
-    private boolean hasText(String v) {
-        return v != null && !v.trim().isEmpty();
-    }
 }

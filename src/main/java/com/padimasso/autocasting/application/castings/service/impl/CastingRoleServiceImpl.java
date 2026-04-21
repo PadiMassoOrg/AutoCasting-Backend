@@ -10,12 +10,14 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleCharacter
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleRemunerationEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRolesSectionEntity;
+import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRolesSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.sitemetadata.model.*;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
@@ -40,6 +42,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     private final CastingRolesSectionRepository castingRolesSectionRepository;
     private final CastingRoleRepository castingRoleRepository;
+    private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
     private final CastingStatusService castingStatusService;
@@ -274,7 +277,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     @Override
     @Transactional
-    public void deleteCastingRole(UUID roleId) {
+    public LastModifiedResponse deleteCastingRole(UUID roleId) {
         CastingRoleEntity role = castingRoleRepository.findById(roleId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
 
@@ -285,7 +288,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             castingId = role.getRolesSection().getCasting().getId();
         }
 
-        castingRoleRepository.deleteById(roleId);
+        castingRoleRepository.softDelete(role);
 
         if (sectionId != null) {
             updateSectionStatus(sectionId);
@@ -294,7 +297,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         if (castingId != null) {
             remunerationSectionStatusService.recomputeForCasting(castingId);
             castingStatusService.recomputeAfterSectionChange(castingId);
+            castingRepository.touchModifiedAt(castingId);
+            return new LastModifiedResponse(castingRepository.findModifiedAtById(castingId));
         }
+
+        return new LastModifiedResponse(null);
     }
 
     private void updateSectionStatus(UUID sectionId) {

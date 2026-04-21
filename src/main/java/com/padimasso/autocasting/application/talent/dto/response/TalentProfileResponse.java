@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.talent.dto.response;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ public record TalentProfileResponse(
     CharacteristicsResponse characteristics,
     Set<SiteMetadataObject> skills,
     Set<CreditResponse> credits,
-    Set<EducationResponse> education
+    Set<EducationResponse> education,
+    LocalDateTime modifiedAt
 ) {
 }

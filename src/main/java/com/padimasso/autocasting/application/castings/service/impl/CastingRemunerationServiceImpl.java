@@ -173,12 +173,13 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         if (active.isEmpty()) return;
 
-        PayRateTypeOptionEntity unpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
+        PayRateTypeOptionEntity collaborativePayRate =
+            siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_COLLABORATIVE);
 
         CurrencyOptionEntity ars = siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS);
 
         List<CastingRoleRemunerationEntity> next = active.stream().map(r -> {
-            r.setPayRateType(unpaid);
+            r.setPayRateType(collaborativePayRate);
             r.setCurrency(ars);
             r.setAmount(null);
             r.setNotes(null);

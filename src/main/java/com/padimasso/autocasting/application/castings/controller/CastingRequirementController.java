@@ -7,6 +7,7 @@ import com.padimasso.autocasting.application.castings.dto.response.CastingRequir
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRequirementCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.section.CastingRequirementsSectionResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRequirementService;
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,9 +67,8 @@ public class CastingRequirementController {
 
     @Operation(summary = "DELETE Casting Requirement", security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping(CASTING_REQUIREMENT_URL + "/{requirementId}")
-    public ResponseEntity<Void> deleteCastingRequirement(@PathVariable UUID requirementId) {
-        castingRequirementService.deleteCastingRequirement(requirementId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<LastModifiedResponse> deleteCastingRequirement(@PathVariable UUID requirementId) {
+        return ResponseEntity.ok(castingRequirementService.deleteCastingRequirement(requirementId));
     }
 
 

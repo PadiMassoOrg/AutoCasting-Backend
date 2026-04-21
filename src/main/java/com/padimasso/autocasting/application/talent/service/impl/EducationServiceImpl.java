@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.EducationRequest;
 import com.padimasso.autocasting.application.talent.dto.response.EducationResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
@@ -77,9 +78,14 @@ public class EducationServiceImpl implements EducationService {
 
     @Override
     @Transactional
-    public void deleteMyEducation(UUID id) {
+    public LastModifiedResponse deleteMyEducation(UUID id) {
         EducationEntity education = getOwnEducationOrThrow(id);
-        educationRepository.delete(education);
+        UUID profileId = education.getTalentProfile().getId();
+
+        educationRepository.softDelete(education);
+        talentProfileRepository.touchModifiedAt(profileId);
+
+        return new LastModifiedResponse(talentProfileRepository.findModifiedAtById(profileId));
     }
 
     /* ---------------- Helpers ---------------- */

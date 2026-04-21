@@ -13,6 +13,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase
 import com.padimasso.autocasting.application.sitemetadata.repository.*;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -51,7 +52,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var foundPlanEntities = planRepository.findAll();
         var foundSkillEntities = skillRepository.findAll();
         var foundProfessionEntities = professionRepository.findAll();
-        var foundGenderOptionEntities = genderOptionRepository.findAll();
+        var foundGenderOptionEntities = genderOptionRepository.findAll(Sort.by(Sort.Direction.ASC, "createdAt"));
         var foundEthnicityOptionsEntities = ethnicityOptionRepository.findAll();
         var foundColorOptionEntities = colorOptionRepository.findAll();
         var foundDietOptionEntities = dietOptionRepository.findAll();
