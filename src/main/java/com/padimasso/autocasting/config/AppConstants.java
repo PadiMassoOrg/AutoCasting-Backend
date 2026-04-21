@@ -76,6 +76,7 @@ public class AppConstants {
     public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
     public static final String CASTING_COMPENSATION_TYPE_COLLABORATIVE = "sitemetadata.compensation_type.collaborative";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
+    public static final String PAY_RATE_TYPE_COLLABORATIVE = "sitemetadata.pay_rate_type.collaborative";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";
