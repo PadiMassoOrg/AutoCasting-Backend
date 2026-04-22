@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -395,6 +396,25 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("employerProfileId") UUID employerProfileId,
         @Param("nextStatus") CastingStatusOptionEntity nextStatus,
         @Param("allowedCurrentCodes") List<String> allowedCurrentCodes
+    );
+
+    @Modifying
+    @Query(value = """
+        update casting c
+           set casting_status_option_id = :closedStatusId,
+               modified_at = CURRENT_TIMESTAMP
+          from casting_basic_info bi
+         where bi.casting_id = c.id
+           and c.deleted = false
+           and bi.deleted = false
+           and bi.application_deadline is not null
+           and bi.application_deadline <= :today
+           and c.casting_status_option_id in (:allowedStatusIds)
+        """, nativeQuery = true)
+    int closeExpiredCastings(
+        @Param("today") LocalDate today,
+        @Param("closedStatusId") UUID closedStatusId,
+        @Param("allowedStatusIds") List<UUID> allowedStatusIds
     );
 
     @Query("""
