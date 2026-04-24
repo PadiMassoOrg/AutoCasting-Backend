@@ -5,6 +5,8 @@ import com.padimasso.autocasting.application.applications.dto.TalentCastingAppli
 import com.padimasso.autocasting.application.applications.dto.request.CastingApplicationRequest;
 import com.padimasso.autocasting.application.applications.dto.response.ApplicantRequirementSubmissionRow;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantCardResponse;
+import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantsGroupedResponse;
+import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantsRoleSliceResponse;
 import com.padimasso.autocasting.application.applications.dto.response.TalentCastingApplicationCardResponse;
 import com.padimasso.autocasting.application.applications.mapper.CastingApplicationMapper;
 import com.padimasso.autocasting.application.applications.model.CastingApplicationEntity;
@@ -259,95 +261,55 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     ) {
         var employer = employerContext.getCurrentEmployerOrThrow();
         UUID employerProfileId = employer.employerProfile().getId();
+        return getEmployerCastingApplicantsInternal(employerProfileId, filter, page, size);
+    }
+
+    @Override
+    @Transactional
+    public EmployerCastingApplicantsGroupedResponse getEmployerCastingApplicantsGrouped(
+        EmployerCastingApplicantsFilter filter,
+        int perRoleSize
+    ) {
+        var employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
 
         String castingSlug = safeTrim(filter.castingSlug());
         if (castingSlug == null) throw new IllegalArgumentException("casting.slug_required");
 
-        int ps = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        int normalizedPerRoleSize = normalizePageSize(perRoleSize);
 
-        var orderBy = filter.orderBy() != null
-            ? filter.orderBy()
-            : EmployerCastingApplicantsOrderBy.CREATION_DATE_DESC;
+        var roleKeys = castingRoleRepository.findRoleKeysByCastingSlugAndEmployer(castingSlug, employerProfileId);
 
-        var pageable = PageRequest.of(page, ps, orderBy.toSort());
+        var roleSlices = roleKeys.stream()
+            .map(roleKey -> {
+                var roleFilter = new EmployerCastingApplicantsFilter(
+                    employerProfileId,
+                    castingSlug,
+                    roleKey.getRoleId(),
+                    safeTrim(filter.search()),
+                    filter.applicationStatusIdTokens(),
+                    filter.professionIds(),
+                    filter.orderBy()
+                );
+                var slice = getEmployerCastingApplicantsInternal(
+                    employerProfileId,
+                    roleFilter,
+                    0,
+                    normalizedPerRoleSize
+                );
 
-        var effectiveFilter = new EmployerCastingApplicantsFilter(
-            employerProfileId,
-            castingSlug,
-            safeTrim(filter.search()),
-            filter.applicationStatusIdTokens(),
-            filter.professionIds(),
-            filter.orderBy()
-        );
-
-        var spec = CastingApplicationSpecs.fromEmployerFilter(effectiveFilter);
-
-        // 1) Página liviana
-        var pageResult = castingApplicationRepository.findAll(spec, pageable);
-        List<CastingApplicationEntity> pageApps = pageResult.getContent();
-
-        List<UUID> appIds = pageApps.stream()
-            .map(CastingApplicationEntity::getId)
+                return new EmployerCastingApplicantsRoleSliceResponse(
+                    roleKey.getRoleId() != null ? roleKey.getRoleId().toString() : null,
+                    roleKey.getRoleName(),
+                    slice.items(),
+                    slice.hasNext(),
+                    slice.page(),
+                    slice.size()
+                );
+            })
             .toList();
 
-        if (appIds.isEmpty()) {
-            return new SliceResponse<>(
-                List.of(),
-                pageResult.hasNext(),
-                pageResult.getNumber(),
-                pageResult.getSize()
-            );
-        }
-
-        // 2) Rehidratación solo de la página visible
-        var hydratedApps = castingApplicationRepository.findAllForEmployerApplicantCardsByIdIn(appIds);
-
-        var byId = hydratedApps.stream()
-            .collect(java.util.stream.Collectors.toMap(
-                CastingApplicationEntity::getId,
-                java.util.function.Function.identity()
-            ));
-
-        var orderedApps = appIds.stream()
-            .map(byId::get)
-            .filter(java.util.Objects::nonNull)
-            .toList();
-
-        // 3) Submissions
-        Map<UUID, List<ApplicantRequirementSubmissionRow>> subsByAppId =
-            groupSubmissions(appIds);
-
-        // 4) Professions
-        var profRows = castingApplicationRepository.findProfessionsByApplicationIds(appIds);
-
-        Map<UUID, List<SiteMetadataObject>> professionsByAppId = profRows.stream()
-            .filter(r -> r.getProfessionId() != null)
-            .collect(Collectors.groupingBy(
-                ApplicationProfessionProjection::getApplicationId,
-                Collectors.mapping(
-                    r -> new SiteMetadataObject(
-                        r.getProfessionId(),
-                        r.getProfessionCode(),
-                        r.getProfessionCategoryStringCode()
-                    ),
-                    Collectors.toList()
-                )
-            ));
-
-        var items = orderedApps.stream()
-            .map(a -> castingApplicationMapper.toEmployerApplicantCardFromEntity(
-                a,
-                professionsByAppId.getOrDefault(a.getId(), List.of()),
-                subsByAppId.getOrDefault(a.getId(), List.of())
-            ))
-            .toList();
-
-        return new SliceResponse<>(
-            items,
-            pageResult.hasNext(),
-            pageResult.getNumber(),
-            pageResult.getSize()
-        );
+        return new EmployerCastingApplicantsGroupedResponse(castingSlug, roleSlices);
     }
 
     // ======================
@@ -409,5 +371,101 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
                     Collectors.toList()
                 )
             ));
+    }
+
+    private int normalizePageSize(int size) {
+        return Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+    }
+
+    private SliceResponse<EmployerCastingApplicantCardResponse> getEmployerCastingApplicantsInternal(
+        UUID employerProfileId,
+        EmployerCastingApplicantsFilter filter,
+        int page,
+        int size
+    ) {
+        String castingSlug = safeTrim(filter.castingSlug());
+        if (castingSlug == null) throw new IllegalArgumentException("casting.slug_required");
+
+        int ps = normalizePageSize(size);
+
+        var orderBy = filter.orderBy() != null
+            ? filter.orderBy()
+            : EmployerCastingApplicantsOrderBy.CREATION_DATE_DESC;
+
+        var pageable = PageRequest.of(page, ps, orderBy.toSort());
+
+        var effectiveFilter = new EmployerCastingApplicantsFilter(
+            employerProfileId,
+            castingSlug,
+            filter.castingRoleId(),
+            safeTrim(filter.search()),
+            filter.applicationStatusIdTokens(),
+            filter.professionIds(),
+            filter.orderBy()
+        );
+
+        var spec = CastingApplicationSpecs.fromEmployerFilter(effectiveFilter);
+
+        var pageResult = castingApplicationRepository.findAll(spec, pageable);
+        List<CastingApplicationEntity> pageApps = pageResult.getContent();
+
+        List<UUID> appIds = pageApps.stream()
+            .map(CastingApplicationEntity::getId)
+            .toList();
+
+        if (appIds.isEmpty()) {
+            return new SliceResponse<>(
+                List.of(),
+                pageResult.hasNext(),
+                pageResult.getNumber(),
+                pageResult.getSize()
+            );
+        }
+
+        var hydratedApps = castingApplicationRepository.findAllForEmployerApplicantCardsByIdIn(appIds);
+
+        var byId = hydratedApps.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                CastingApplicationEntity::getId,
+                java.util.function.Function.identity()
+            ));
+
+        var orderedApps = appIds.stream()
+            .map(byId::get)
+            .filter(java.util.Objects::nonNull)
+            .toList();
+
+        Map<UUID, List<ApplicantRequirementSubmissionRow>> subsByAppId = groupSubmissions(appIds);
+
+        var profRows = castingApplicationRepository.findProfessionsByApplicationIds(appIds);
+
+        Map<UUID, List<SiteMetadataObject>> professionsByAppId = profRows.stream()
+            .filter(r -> r.getProfessionId() != null)
+            .collect(Collectors.groupingBy(
+                ApplicationProfessionProjection::getApplicationId,
+                Collectors.mapping(
+                    r -> new SiteMetadataObject(
+                        r.getProfessionId(),
+                        r.getProfessionCode(),
+                        r.getProfessionCategoryStringCode()
+                    ),
+                    Collectors.toList()
+                )
+            ));
+
+        var items = orderedApps.stream()
+            .map(a -> castingApplicationMapper.toEmployerApplicantCardFromEntity(
+                a,
+                professionsByAppId.getOrDefault(a.getId(), List.of()),
+                subsByAppId.getOrDefault(a.getId(), List.of())
+            ))
+            .toList();
+
+        return new SliceResponse<>(
+            items,
+            pageResult.hasNext(),
+            pageResult.getNumber(),
+            pageResult.getSize()
+        );
     }
 }

@@ -43,6 +43,7 @@ public final class CastingApplicationSpecs {
         Specification<CastingApplicationEntity> spec = null;
         spec = and(spec, deletedFalse());
         spec = and(spec, forEmployerAndCastingSlug(f.employerProfileId(), f.castingSlug()));
+        spec = and(spec, forCastingRoleId(f.castingRoleId()));
         spec = and(spec, employerSearchText(f.search())); // UPDATED
         spec = and(spec, applicationStatusInTokens(f.applicationStatusIdTokens()));
         spec = and(spec, professionIdIn(f.professionIds()));
@@ -75,6 +76,11 @@ public final class CastingApplicationSpecs {
                 cb.equal(casting.join("employerProfile").get("id"), employerProfileId)
             );
         };
+    }
+
+    public static Specification<CastingApplicationEntity> forCastingRoleId(UUID castingRoleId) {
+        if (castingRoleId == null) return null;
+        return (root, query, cb) -> cb.equal(root.join("castingRole").get("id"), castingRoleId);
     }
 
     // ======================

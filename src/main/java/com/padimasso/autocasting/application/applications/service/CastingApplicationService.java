@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.applications.dto.EmployerCastingApp
 import com.padimasso.autocasting.application.applications.dto.TalentCastingApplicationsFilter;
 import com.padimasso.autocasting.application.applications.dto.request.CastingApplicationRequest;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantCardResponse;
+import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantsGroupedResponse;
 import com.padimasso.autocasting.application.applications.dto.response.TalentCastingApplicationCardResponse;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 
@@ -13,6 +14,7 @@ public interface CastingApplicationService {
     void apply(UUID roleId, CastingApplicationRequest request);
 
     SliceResponse<EmployerCastingApplicantCardResponse> getEmployerCastingApplicants(EmployerCastingApplicantsFilter filter, int page, int size);
+    EmployerCastingApplicantsGroupedResponse getEmployerCastingApplicantsGrouped(EmployerCastingApplicantsFilter filter, int perRoleSize);
 
     SliceResponse<TalentCastingApplicationCardResponse> getTalentCastingApplications(TalentCastingApplicationsFilter filter, int page, int size);
     

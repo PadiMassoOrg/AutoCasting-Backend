@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.applications.dto.EmployerCastingApp
 import com.padimasso.autocasting.application.applications.dto.TalentCastingApplicationsFilter;
 import com.padimasso.autocasting.application.applications.dto.request.CastingApplicationRequest;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantCardResponse;
+import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantsGroupedResponse;
 import com.padimasso.autocasting.application.applications.dto.response.TalentCastingApplicationCardResponse;
 import com.padimasso.autocasting.application.applications.repository.order.EmployerCastingApplicantsOrderBy;
 import com.padimasso.autocasting.application.applications.repository.order.TalentCastingApplicationsOrderBy;
@@ -81,6 +82,7 @@ public class CastingApplicationController {
     public SliceResponse<EmployerCastingApplicantCardResponse> getApplicantsByCasting(
         @PathVariable String slug,
         @RequestParam(required = false, name = "q") String q,
+        @RequestParam(required = false, name = "roleId") UUID roleId,
         @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
         @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
         @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
@@ -90,12 +92,39 @@ public class CastingApplicationController {
         var filter = new EmployerCastingApplicantsFilter(
             null,
             slug,
+            roleId,
             q,
             applicationStatusIdTokens,
             professionIds,
             orderBy
         );
         return castingApplicationService.getEmployerCastingApplicants(filter, page, size);
+    }
+
+    @Operation(
+        summary = "Applicants by casting grouped by role (Employer)",
+        description = "Listado de roles del casting con un primer slice de aplicantes por cada role.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(AppConstants.EMPLOYER_CASTING_URL + "/{slug}/applicants/grouped")
+    public EmployerCastingApplicantsGroupedResponse getApplicantsByCastingGrouped(
+        @PathVariable String slug,
+        @RequestParam(required = false, name = "q") String q,
+        @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
+        @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
+        @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
+        @RequestParam(defaultValue = "4") int perRoleSize
+    ) {
+        var filter = new EmployerCastingApplicantsFilter(
+            null,
+            slug,
+            null,
+            q,
+            applicationStatusIdTokens,
+            professionIds,
+            orderBy
+        );
+        return castingApplicationService.getEmployerCastingApplicantsGrouped(filter, perRoleSize);
     }
 
     // Casting Application Statuses
