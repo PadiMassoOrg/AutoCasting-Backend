@@ -8,6 +8,7 @@ import java.util.UUID;
 public record EmployerCastingApplicantsFilter(
     UUID employerProfileId,
     String castingSlug,
+    UUID castingRoleId,
     String search,
     List<String> applicationStatusIdTokens,
     List<UUID> professionIds,

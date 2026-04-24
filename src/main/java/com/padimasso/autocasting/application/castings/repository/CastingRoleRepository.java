@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.castings.repository;
 
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
+import com.padimasso.autocasting.application.castings.repository.projection.CastingRoleKeyProjection;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Page;
@@ -88,4 +89,23 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
     );
 
     Optional<CastingRoleEntity> findByIdAndDeletedFalse(UUID roleId);
+
+    @Query("""
+        select
+            r.id as roleId,
+            r.roleName as roleName
+        from CastingRoleEntity r
+            join r.rolesSection rs
+            join rs.casting c
+        where r.deleted = false
+          and rs.deleted = false
+          and c.deleted = false
+          and c.defaultCode = :slug
+          and c.employerProfile.id = :employerProfileId
+        order by lower(r.roleName) asc, r.id asc
+        """)
+    List<CastingRoleKeyProjection> findRoleKeysByCastingSlugAndEmployer(
+        @Param("slug") String slug,
+        @Param("employerProfileId") UUID employerProfileId
+    );
 }
