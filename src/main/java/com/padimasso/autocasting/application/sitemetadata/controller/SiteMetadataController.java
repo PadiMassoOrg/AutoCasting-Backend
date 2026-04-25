@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.VersionRe
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataService;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,26 +20,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Site Metadata", description = "Metadata del sitio")
+@Tag(name = "Site Metadata", description = "Site-wide metadata and version endpoints.")
 @SuppressWarnings("unused")
 public class SiteMetadataController {
 
     private final SiteMetadataService siteMetadataService;
 
-    @Operation(summary = "Site Metadata", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Get site metadata",
+        description = "Returns full site metadata. Supports ETag revalidation via If-None-Match.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(AppConstants.SITE_METADATA_URL)
     public ResponseEntity<SiteMetadataResponse> getMetadata(
-        @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch
+        @Parameter(description = "Optional ETag value for conditional requests.") @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch
     ) {
-        // Revalidación por ETag (versión)
+        // ETag-based revalidation (version)
         VersionResponse version = siteMetadataService.getVersionOnly();
         String etag = "\"" + version.version() + "\"";
 
         if (etag.equals(ifNoneMatch)) {
-            // El cliente ya tiene esta versión → 304 Not Modified
+            // Client already has this version -> 304 Not Modified
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                 .eTag(etag)
-                .cacheControl(CacheControl.noCache()) // fuerza revalidación por ETag
+                .cacheControl(CacheControl.noCache()) // force ETag revalidation
                 .build();
         }
 
@@ -49,7 +54,11 @@ public class SiteMetadataController {
             .body(body);
     }
 
-    @Operation(summary = "Versión de Site Metadata", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Get site metadata version",
+        description = "Returns only the current site metadata version token.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(AppConstants.SITE_METADATA_VERSION_URL)
     public VersionResponse getVersion() {
         return siteMetadataService.getVersionOnly();

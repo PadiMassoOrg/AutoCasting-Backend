@@ -13,6 +13,7 @@ import com.padimasso.autocasting.application.common.dto.MatchMode;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTING_URL
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Castings", description = "Operaciones relacionadas a los Castings de un empleador")
+@Tag(name = "Castings", description = "Endpoints for employer casting management and public casting discovery.")
 @SuppressWarnings("unused")
 public class CastingController {
 
@@ -37,119 +38,151 @@ public class CastingController {
     private final CastingBasicInfoService castingBasicInfoService;
 
     // Employer
-    @Operation(summary = "Creacion de un nuevo Casting", description = "Permite a un Employer crear un nuevo Casting (vacío).")
+    @Operation(
+        summary = "Create empty casting",
+        description = "Creates a new empty casting for the authenticated employer.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PostMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<String> createEmptyCasting() {
         return ResponseEntity.ok(castingService.createEmptyCasting());
     }
 
-    @Operation(summary = "Casting editor bootstrap", description = "Devuelve IDs de secciones y estado para editar un casting", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Get casting editor bootstrap",
+        description = "Returns section IDs and statuses required to edit a casting.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/editor")
-    public ResponseEntity<EmployerCastingEditorResponse> getEmployerCastingEditor(@PathVariable String slug) {
+    public ResponseEntity<EmployerCastingEditorResponse> getEmployerCastingEditor(
+        @Parameter(description = "Casting slug.") @PathVariable String slug
+    ) {
         return ResponseEntity.ok(castingService.getCastingEditorBySlug(slug));
     }
 
     @Operation(
         summary = "Employer casting details",
-        description = "Obtiene detalles completos del casting por slug. Solo owner.",
+        description = "Returns full casting details by slug (owner employer only).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(EMPLOYER_CASTING_URL + "/{slug}/details")
-    public ResponseEntity<CastingResponse> getEmployerCastingDetails(@PathVariable String slug) {
+    public ResponseEntity<CastingResponse> getEmployerCastingDetails(
+        @Parameter(description = "Casting slug.") @PathVariable String slug
+    ) {
         return ResponseEntity.ok(castingService.getEmployerCastingDetailsBySlug(slug));
     }
 
     @Operation(
         summary = "Employer casting checkout summary",
-        description = "Obtiene el resumen mínimo del casting para checkout/publicación. Solo owner.",
+        description = "Returns the minimum casting summary needed for checkout/publication (owner employer only).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(EMPLOYER_CASTING_URL + "/{id}/checkout-summary")
     public ResponseEntity<EmployerCastingCheckoutSummaryResponse> getEmployerCastingCheckoutSummary(
-        @PathVariable UUID id
+        @Parameter(description = "Casting ID.") @PathVariable UUID id
     ) {
         return ResponseEntity.ok(castingService.getEmployerCastingCheckoutSummary(id));
     }
 
-    @Operation(summary = "DELETE Casting", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Delete casting",
+        description = "Soft-deletes a casting by ID for the authenticated employer owner.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @DeleteMapping(AppConstants.EMPLOYER_CASTING_URL + "/{castingId}")
-    public ResponseEntity<Void> deleteCastingRole(@PathVariable UUID castingId) {
+    public ResponseEntity<Void> deleteCastingRole(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId
+    ) {
         castingService.deleteCasting(castingId);
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Listado de mis Castings", description = "Permite a un Employer ver sus Castings. CARDS")
+    @Operation(
+        summary = "List my castings",
+        description = "Returns paginated casting cards for the authenticated employer.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(EMPLOYER_CASTINGS_URL)
     public ResponseEntity<List<CastingCardResponse>> getMyCastingsCards(
-        @RequestParam(required = false, name = "q") String q,
-        @RequestParam(required = false, name = "projectTypeId") List<String> projectTypeIdTokens,
-        @RequestParam(required = false, name = "statusId") List<String> statusIdTokens,
-        @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingsOrderBy orderBy,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+        @Parameter(description = "Free-text search query.") @RequestParam(required = false, name = "q") String q,
+        @Parameter(description = "Project type token filters.") @RequestParam(required = false, name = "projectTypeId") List<String> projectTypeIdTokens,
+        @Parameter(description = "Casting status token filters.") @RequestParam(required = false, name = "statusId") List<String> statusIdTokens,
+        @Parameter(description = "Sorting strategy.") @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingsOrderBy orderBy,
+        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "10") int size
     ) {
         var filter = new EmployerCastingsFilter(null, q, projectTypeIdTokens, statusIdTokens, orderBy);
         return ResponseEntity.ok(castingService.getMyCastings(filter, page, size));
     }
 
     // Casting Statuses:
-    @Operation(summary = "PUBLISH Casting", description = "Publica un casting si pertenece al employer, es publishable y su deadline no está vencida.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Publish casting", description = "Publishes a casting if ownership, state transitions, and publishability checks pass.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/publish")
-    public ResponseEntity<EmployerCastingEditorResponse> publishCasting(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> publishCasting(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId
+    ) {
         return ResponseEntity.ok(castingService.publishCasting(castingId));
     }
 
-    @Operation(summary = "Set Casting to DRAFT", description = "Vuelve el casting a DRAFT si pertenece al employer y la transición es válida.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Set casting to DRAFT", description = "Sets a casting back to DRAFT if ownership and transition checks pass.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/draft")
-    public ResponseEntity<EmployerCastingEditorResponse> setDraft(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> setDraft(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId
+    ) {
         return ResponseEntity.ok(castingService.setDraftCasting(castingId));
     }
 
-    @Operation(summary = "PAUSE Casting", description = "Pausa un casting publicado.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Pause casting", description = "Pauses a published casting.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/pause")
-    public ResponseEntity<EmployerCastingEditorResponse> pause(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> pause(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId
+    ) {
         return ResponseEntity.ok(castingService.pauseCasting(castingId));
     }
 
-    @Operation(summary = "CLOSE Casting", description = "Cierra un casting.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Close casting", description = "Closes a casting.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/close")
-    public ResponseEntity<EmployerCastingEditorResponse> close(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> close(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId
+    ) {
         return ResponseEntity.ok(castingService.closeCasting(castingId));
     }
 
-    @Operation(summary = "ARCHIVE Casting", description = "Archiva un casting.", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Archive casting", description = "Archives a casting.", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(EMPLOYER_CASTING_URL + "/{castingId}/archive")
-    public ResponseEntity<EmployerCastingEditorResponse> archive(@PathVariable UUID castingId) {
+    public ResponseEntity<EmployerCastingEditorResponse> archive(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId
+    ) {
         return ResponseEntity.ok(castingService.archiveCasting(castingId));
     }
 
     // Casting Database
-    @Operation(summary = "Listado público de Roles (Casting Database)", description = "Permite buscar roles publicados (CastingRolePublicCardResponse) con filtros similares al Talent Database.")
+    @Operation(summary = "Search public casting roles", description = "Returns paginated public casting-role cards using advanced filters.")
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)
     public SliceResponse<CastingRolePublicCardResponse> searchPublicCastings(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "12") int size,
-        @RequestParam(required = false) String roleName,
-        @RequestParam(required = false) Integer ageMin,
-        @RequestParam(required = false) Integer ageMax,
-        @RequestParam(required = false, name = "genderId") List<String> genderIdTokens,
-        @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens,
-        @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
-        @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
-        @RequestParam(required = false) Integer heightMinCm,
-        @RequestParam(required = false) Integer heightMaxCm,
-        @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds,
-        @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode,
-        @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds,
-        @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode,
-        @RequestParam(required = false) Boolean tattoo,
-        @RequestParam(required = false) Boolean passport,
-        @RequestParam(required = false) Boolean drivingLicense,
-        @RequestParam(required = false, name = "skillId") List<UUID> skillIds,
-        @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode,
-        @RequestParam(required = false, name = "projectTypeId") List<UUID> projectTypeIds,
-        @RequestParam(required = false, name = "castingModalityId") List<UUID> castingModalityIds,
-        @RequestParam(required = false) String locationText
+        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "12") int size,
+        @Parameter(description = "Role name filter.") @RequestParam(required = false) String roleName,
+        @Parameter(description = "Minimum age filter.") @RequestParam(required = false) Integer ageMin,
+        @Parameter(description = "Maximum age filter.") @RequestParam(required = false) Integer ageMax,
+        @Parameter(description = "Gender token filters.") @RequestParam(required = false, name = "genderId") List<String> genderIdTokens,
+        @Parameter(description = "Ethnicity token filters.") @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens,
+        @Parameter(description = "Profession IDs filter.") @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
+        @Parameter(description = "Match mode for profession IDs.") @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode,
+        @Parameter(description = "Minimum height in cm.") @RequestParam(required = false) Integer heightMinCm,
+        @Parameter(description = "Maximum height in cm.") @RequestParam(required = false) Integer heightMaxCm,
+        @Parameter(description = "Hair color IDs filter.") @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds,
+        @Parameter(description = "Match mode for hair color IDs.") @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode,
+        @Parameter(description = "Eye color IDs filter.") @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds,
+        @Parameter(description = "Match mode for eye color IDs.") @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode,
+        @Parameter(description = "Tattoo filter.") @RequestParam(required = false) Boolean tattoo,
+        @Parameter(description = "Passport filter.") @RequestParam(required = false) Boolean passport,
+        @Parameter(description = "Driving license filter.") @RequestParam(required = false) Boolean drivingLicense,
+        @Parameter(description = "Skill IDs filter.") @RequestParam(required = false, name = "skillId") List<UUID> skillIds,
+        @Parameter(description = "Match mode for skill IDs.") @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode,
+        @Parameter(description = "Project type IDs filter.") @RequestParam(required = false, name = "projectTypeId") List<UUID> projectTypeIds,
+        @Parameter(description = "Casting modality IDs filter.") @RequestParam(required = false, name = "castingModalityId") List<UUID> castingModalityIds,
+        @Parameter(description = "Location text filter.") @RequestParam(required = false) String locationText
     ) {
         var filter = new CastingRoleFilter(
             roleName,
@@ -179,22 +212,24 @@ public class CastingController {
 
     @Operation(
         summary = "Public casting details by slug and role",
-        description = "Obtiene detalles del casting por slug pero devuelve SOLO el role seleccionado (en array)."
+        description = "Returns public casting details by slug, including only the selected role in the response."
     )
     @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}/roles/{roleId}")
     public ResponseEntity<PublicCastingDetailsResponse> getPublicCastingDetailsBySlugAndRole(
-        @PathVariable String slug,
-        @PathVariable UUID roleId
+        @Parameter(description = "Casting slug.") @PathVariable String slug,
+        @Parameter(description = "Casting role ID.") @PathVariable UUID roleId
     ) {
         return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlugAndRoleId(slug, roleId));
     }
 
     @Operation(
         summary = "Public casting details by slug",
-        description = "Obtiene detalles públicos completos del casting por slug, devolviendo todos los roles."
+        description = "Returns full public casting details by slug, including all roles."
     )
     @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}")
-    public ResponseEntity<PublicCastingOverviewResponse> getPublicCastingDetailsBySlug(@PathVariable String slug) {
+    public ResponseEntity<PublicCastingOverviewResponse> getPublicCastingDetailsBySlug(
+        @Parameter(description = "Casting slug.") @PathVariable String slug
+    ) {
         return ResponseEntity.ok(castingService.getPublicCastingDetailsBySlug(slug));
     }
 

@@ -12,6 +12,7 @@ import com.padimasso.autocasting.application.applications.service.CastingApplica
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.config.AppConstants;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,7 +26,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Casting Application", description = "Operaciones relacionadas a los Aplicantes de un Casting")
+@Tag(name = "Casting Applications", description = "Endpoints for submitting and managing casting applications.")
 @SuppressWarnings("unused")
 public class CastingApplicationController {
 
@@ -34,32 +35,32 @@ public class CastingApplicationController {
     //   Talent
     @Operation(
         summary = "Apply to a casting role",
-        description = "Crea una Application para un Role. Si el Role tiene requirements, requiere submissions.",
+        description = "Creates an application for a role. If the role has requirements, submissions are required.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(AppConstants.TALENT_CASTING_APPLICATION_URL + "/{roleId}")
     @ResponseStatus(HttpStatus.CREATED)
     public void apply(
-        @PathVariable UUID roleId,
+        @Parameter(description = "Casting role ID.") @PathVariable UUID roleId,
         @Valid @RequestBody(required = false) CastingApplicationRequest request
     ) {
         castingApplicationService.apply(roleId, request);
     }
 
     @Operation(
-        summary = "My applications (Talent)",
-        description = "Listado de roles/castings a los que el talento aplicó. No expone entity application.",
+        summary = "List my applications (Talent)",
+        description = "Returns paginated role/casting cards for applications submitted by the authenticated talent.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(AppConstants.TALENT_CASTING_APPLICATIONS_URL)
     public SliceResponse<TalentCastingApplicationCardResponse> getMyApplications(
-        @RequestParam(required = false, name = "q") String q,
-        @RequestParam(required = false, name = "castingStatusId") List<String> castingStatusIdTokens,
-        @RequestParam(required = false, name = "projectTypeId") List<String> projectTypeIdTokens,
-        @RequestParam(required = false, name = "modalityId") List<String> modalityIdTokens,
-        @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") TalentCastingApplicationsOrderBy orderBy,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "8") int size
+        @Parameter(description = "Free-text search query.") @RequestParam(required = false, name = "q") String q,
+        @Parameter(description = "Casting status token filters.") @RequestParam(required = false, name = "castingStatusId") List<String> castingStatusIdTokens,
+        @Parameter(description = "Project type token filters.") @RequestParam(required = false, name = "projectTypeId") List<String> projectTypeIdTokens,
+        @Parameter(description = "Casting modality token filters.") @RequestParam(required = false, name = "modalityId") List<String> modalityIdTokens,
+        @Parameter(description = "Sorting strategy.") @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") TalentCastingApplicationsOrderBy orderBy,
+        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "8") int size
     ) {
         var filter = new TalentCastingApplicationsFilter(
             null,
@@ -74,20 +75,20 @@ public class CastingApplicationController {
 
     //    Employer
     @Operation(
-        summary = "Applicants by casting (Employer)",
-        description = "Listado de aplicantes por castingSlug (todas las roles).",
+        summary = "List applicants by casting (Employer)",
+        description = "Returns paginated applicants for a casting slug across all roles.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(AppConstants.EMPLOYER_CASTING_URL + "/{slug}/applicants")
     public SliceResponse<EmployerCastingApplicantCardResponse> getApplicantsByCasting(
-        @PathVariable String slug,
-        @RequestParam(required = false, name = "q") String q,
-        @RequestParam(required = false, name = "roleId") UUID roleId,
-        @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
-        @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
-        @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "8") int size
+        @Parameter(description = "Casting slug.") @PathVariable String slug,
+        @Parameter(description = "Free-text search query.") @RequestParam(required = false, name = "q") String q,
+        @Parameter(description = "Optional casting role ID filter.") @RequestParam(required = false, name = "roleId") UUID roleId,
+        @Parameter(description = "Application status token filters.") @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
+        @Parameter(description = "Profession ID filters.") @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
+        @Parameter(description = "Sorting strategy.") @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
+        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "8") int size
     ) {
         var filter = new EmployerCastingApplicantsFilter(
             null,
@@ -102,18 +103,18 @@ public class CastingApplicationController {
     }
 
     @Operation(
-        summary = "Applicants by casting grouped by role (Employer)",
-        description = "Listado de roles del casting con un primer slice de aplicantes por cada role.",
+        summary = "List applicants by casting grouped by role (Employer)",
+        description = "Returns casting roles with an initial slice of applicants for each role.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(AppConstants.EMPLOYER_CASTING_URL + "/{slug}/applicants/grouped")
     public EmployerCastingApplicantsGroupedResponse getApplicantsByCastingGrouped(
-        @PathVariable String slug,
-        @RequestParam(required = false, name = "q") String q,
-        @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
-        @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
-        @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
-        @RequestParam(defaultValue = "4") int perRoleSize
+        @Parameter(description = "Casting slug.") @PathVariable String slug,
+        @Parameter(description = "Free-text search query.") @RequestParam(required = false, name = "q") String q,
+        @Parameter(description = "Application status token filters.") @RequestParam(required = false, name = "applicationStatusId") List<String> applicationStatusIdTokens,
+        @Parameter(description = "Profession ID filters.") @RequestParam(required = false, name = "professionId") List<UUID> professionIds,
+        @Parameter(description = "Sorting strategy.") @RequestParam(required = false, defaultValue = "CREATION_DATE_DESC") EmployerCastingApplicantsOrderBy orderBy,
+        @Parameter(description = "Applicants returned per role.") @RequestParam(defaultValue = "4") int perRoleSize
     ) {
         var filter = new EmployerCastingApplicantsFilter(
             null,
@@ -130,56 +131,56 @@ public class CastingApplicationController {
     // Casting Application Statuses
     @Operation(
         summary = "Set application to PRESELECTED",
-        description = "Marca la Application como PRESELECTED (solo owner employer y transición válida).",
+        description = "Sets application status to PRESELECTED (owner employer only, valid transition required).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/preselect")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void preselect(@PathVariable UUID applicationId) {
+    public void preselect(@Parameter(description = "Casting application ID.") @PathVariable UUID applicationId) {
         castingApplicationService.preselectCastingApplication(applicationId);
     }
 
     @Operation(
         summary = "Set application to SELECTED",
-        description = "Marca la Application como SELECTED (solo owner employer y transición válida).",
+        description = "Sets application status to SELECTED (owner employer only, valid transition required).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/select")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void select(@PathVariable UUID applicationId) {
+    public void select(@Parameter(description = "Casting application ID.") @PathVariable UUID applicationId) {
         castingApplicationService.selectCastingApplication(applicationId);
     }
 
     @Operation(
         summary = "Set application to VIEWED",
-        description = "Marca la Application como VIEWED (solo owner employer).",
+        description = "Sets application status to VIEWED (owner employer only).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/view")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void view(@PathVariable UUID applicationId) {
+    public void view(@Parameter(description = "Casting application ID.") @PathVariable UUID applicationId) {
         castingApplicationService.viewCastingApplication(applicationId);
     }
 
     @Operation(
         summary = "Set application to NOT_PROCEEDING",
-        description = "Marca la Application como NOT_PROCEEDING (solo owner employer y transición válida).",
+        description = "Sets application status to NOT_PROCEEDING (owner employer only, valid transition required).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/not-proceeding")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void notProceeding(@PathVariable UUID applicationId) {
+    public void notProceeding(@Parameter(description = "Casting application ID.") @PathVariable UUID applicationId) {
         castingApplicationService.notProceedingCastingApplication(applicationId);
     }
 
     @Operation(
         summary = "Reset application status to BLANK",
-        description = "Resetea la Application a BLANK (solo owner employer y transición válida).",
+        description = "Resets application status to BLANK (owner employer only, valid transition required).",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/{applicationId}/blank")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void blank(@PathVariable UUID applicationId) {
+    public void blank(@Parameter(description = "Casting application ID.") @PathVariable UUID applicationId) {
         castingApplicationService.blankCastingApplication(applicationId);
     }
 

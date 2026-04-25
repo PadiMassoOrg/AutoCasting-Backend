@@ -9,6 +9,7 @@ import com.padimasso.autocasting.application.castings.dto.response.section.Casti
 import com.padimasso.autocasting.application.castings.service.CastingRequirementService;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,30 +26,44 @@ import static com.padimasso.autocasting.config.AppConstants.CASTING_REQUIREMENT_
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "CastingRequirement", description = "Operaciones relacionadas a los Requirements de un casting.")
+@Tag(name = "Casting Requirements", description = "Endpoints for managing casting requirement sections and items.")
 @SuppressWarnings("unused")
 public class CastingRequirementController {
 
     private final CastingRequirementService castingRequirementService;
 
-    @Operation(summary = "GET Requirements Section by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Get requirement section by section ID",
+        description = "Returns requirement section metadata for the provided section ID.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(CASTING_REQUIREMENT_URL + "/{sectionId}")
-    public ResponseEntity<CastingRequirementsSectionResponse> getSectionRequirementsById(@PathVariable UUID sectionId) {
+    public ResponseEntity<CastingRequirementsSectionResponse> getSectionRequirementsById(
+        @Parameter(description = "Casting requirement section ID.") @PathVariable UUID sectionId
+    ) {
         return ResponseEntity.ok().body(castingRequirementService.getBySectionId(sectionId));
     }
 
-    @Operation(summary = "GET Requirements by SECTION ID", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "List requirements by section ID",
+        description = "Returns paginated requirement cards for the provided section ID.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(CASTING_REQUIREMENT_REQUIREMENTS_URL + "/{sectionId}")
     public ResponseEntity<List<CastingRequirementCardResponse>> getRequirementsBySectionId(
-        @PathVariable UUID sectionId,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "50") int size
+        @Parameter(description = "Casting requirement section ID.") @PathVariable UUID sectionId,
+        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "50") int size
     ) {
         var filter = new EmployerCastingRequirementsFilter(sectionId);
         return ResponseEntity.ok().body(castingRequirementService.getRequirementsBySectionId(filter, page, size));
     }
 
-    @Operation(summary = "CREATE Requirements (bulk)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Create requirements (bulk)",
+        description = "Creates multiple requirement entries for a casting section in one request.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PostMapping(CASTING_REQUIREMENT_URL)
     public ResponseEntity<List<CastingRequirementCardResponse>> createRequirementsBulk(
         @Valid @RequestBody CastingRequirementBulkRequest request
@@ -56,18 +71,28 @@ public class CastingRequirementController {
         return ResponseEntity.ok().body(castingRequirementService.createRequirementsBulk(request));
     }
 
-    @Operation(summary = "UPDATE Casting Requirement", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Update casting requirement",
+        description = "Updates one requirement entry by requirement ID.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PutMapping(CASTING_REQUIREMENT_URL + "/{requirementId}")
     public ResponseEntity<CastingRequirementResponse> updateCastingRequirement(
-        @PathVariable UUID requirementId,
+        @Parameter(description = "Casting requirement ID.") @PathVariable UUID requirementId,
         @Valid @RequestBody CastingRequirementBulkRequest request
     ) {
         return ResponseEntity.ok().body(castingRequirementService.updateCastingRequirement(requirementId, request));
     }
 
-    @Operation(summary = "DELETE Casting Requirement", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Delete casting requirement",
+        description = "Soft-deletes one requirement entry by requirement ID.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @DeleteMapping(CASTING_REQUIREMENT_URL + "/{requirementId}")
-    public ResponseEntity<LastModifiedResponse> deleteCastingRequirement(@PathVariable UUID requirementId) {
+    public ResponseEntity<LastModifiedResponse> deleteCastingRequirement(
+        @Parameter(description = "Casting requirement ID.") @PathVariable UUID requirementId
+    ) {
         return ResponseEntity.ok(castingRequirementService.deleteCastingRequirement(requirementId));
     }
 

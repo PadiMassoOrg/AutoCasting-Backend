@@ -20,40 +20,60 @@ import java.util.UUID;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Credits", description = "Operaciones relacionadas a los Credits del perfil del usuario.")
+@Tag(name = "Credits", description = "Endpoints for managing the authenticated talent's credit entries.")
 @SuppressWarnings("unused")
 public class CreditController {
 
     private final CreditService creditsService;
 
-    @Operation(summary = "CREATE Credit", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Create credit entry",
+        description = "Creates a new credit entry for the authenticated talent.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PostMapping(AppConstants.CREDIT_API_URL)
     public ResponseEntity<CreditResponse> createNewCredit(@Valid @RequestBody CreditRequest request) {
         return ResponseEntity.ok().body(creditsService.createCredit(request));
     }
 
-    @Operation(summary = "GET all Credits", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "List my credit entries",
+        description = "Returns all credit entries that belong to the authenticated talent.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(AppConstants.CREDIT_API_URL)
     public ResponseEntity<List<CreditResponse>> listMine() {
         return ResponseEntity.ok(creditsService.listMyCredits());
     }
 
-    @Operation(summary = "GET Credit by Id", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Get credit entry by ID",
+        description = "Returns one credit entry by ID if it belongs to the authenticated talent.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(AppConstants.CREDIT_API_URL + "/{id}")
-    public ResponseEntity<CreditResponse> getOne(@Parameter @PathVariable UUID id) {
+    public ResponseEntity<CreditResponse> getOne(@Parameter(description = "Credit entry ID.") @PathVariable UUID id) {
         return ResponseEntity.ok(creditsService.getMyCredit(id));
     }
 
-    @Operation(summary = "PATCH Credit (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Patch credit entry",
+        description = "Partially updates a credit entry by ID for the authenticated talent.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PatchMapping(AppConstants.CREDIT_API_URL + "/{id}")
-    public ResponseEntity<CreditResponse> patch(@Parameter @PathVariable UUID id,
+    public ResponseEntity<CreditResponse> patch(@Parameter(description = "Credit entry ID.") @PathVariable UUID id,
                                                 @Valid @RequestBody CreditRequest request) {
         return ResponseEntity.ok(creditsService.patchMyCredit(id, request));
     }
 
-    @Operation(summary = "DELETE Credit (soft)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Soft-delete credit entry",
+        description = "Soft-deletes a credit entry by ID for the authenticated talent.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @DeleteMapping(AppConstants.CREDIT_API_URL + "/{id}")
-    public ResponseEntity<LastModifiedResponse> delete(@Parameter @PathVariable UUID id) {
+    public ResponseEntity<LastModifiedResponse> delete(@Parameter(description = "Credit entry ID.") @PathVariable UUID id) {
         return ResponseEntity.ok(creditsService.deleteMyCredit(id));
     }
 

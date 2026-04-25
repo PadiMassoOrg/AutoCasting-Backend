@@ -8,6 +8,10 @@ import com.padimasso.autocasting.application.legal.service.LegalDocumentRenderer
 import com.padimasso.autocasting.application.legal.service.LegalService;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.exception.ApiException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +22,21 @@ import java.util.UUID;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
+@Tag(name = "Legal", description = "Endpoints for legal documents and user acceptances.")
 public class LegalController {
 
     private final LegalService legalService;
     private final LegalDocumentRenderer renderer;
     private final AuthContext authContext;
 
+    @Operation(
+        summary = "Get current legal document",
+        description = "Returns the currently active legal document for the requested type and locale."
+    )
     @GetMapping(AppConstants.LEGAL_CURRENT_DOCUMENT_API_URL)
     public ResponseEntity<LegalDocumentResponse> current(
-        @RequestParam LegalDocumentType type,
-        @RequestParam String locale
+        @Parameter(description = "Legal document type.") @RequestParam LegalDocumentType type,
+        @Parameter(description = "Locale code (for example: en, es, es-MX).") @RequestParam String locale
     ) {
         LegalDocument doc = legalService.getCurrent(type, locale)
             .orElseThrow(() -> ApiException.notFound("legal.current_document.not_found", type, locale));
@@ -43,11 +52,23 @@ public class LegalController {
 
     public record AcceptReq(UUID documentId) {}
 
+    @Operation(
+        summary = "Accept legal document",
+        description = "Registers acceptance of a legal document by the authenticated user.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @PostMapping(AppConstants.LEGAL_ACCEPT_DOCUMENT_API_URL)
-    public ResponseEntity<Void> accept(@RequestBody AcceptReq req, HttpServletRequest http) {
+    public ResponseEntity<Void> accept(
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Legal acceptance payload containing the document ID.",
+            required = true
+        )
+        @RequestBody AcceptReq req,
+        HttpServletRequest http
+    ) {
         UUID userId = authContext.getCurrentUserOrThrow().getId();
 
-        // Si estás detrás de proxy, habilita forward-headers (ver nota abajo)
+        // If you are behind a proxy, enable forward headers.
         String ip = clientIp(http);
         String ua = http.getHeader("User-Agent");
 

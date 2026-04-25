@@ -8,6 +8,7 @@ import com.padimasso.autocasting.application.auth.dto.response.MeResponse;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import static com.padimasso.autocasting.config.AppConstants.*;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Autenticación", description = "Registro, inicio de sesión y recuperación de contraseña")
+@Tag(name = "Authentication", description = "Registration, authentication, onboarding, and password recovery endpoints.")
 @SuppressWarnings("unused")
 public class AuthController {
 
@@ -27,8 +28,8 @@ public class AuthController {
     private final AuthContext authContext;
 
     @Operation(
-        summary = "Registro de nuevo usuario",
-        description = "Permite a un usuario registrarse con correo electrónico, contraseña y rol"
+        summary = "Register user",
+        description = "Registers a new user with email, password, and role."
     )
     @PostMapping(REGISTER_API_URL)
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -36,8 +37,8 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Inicio de sesión",
-        description = "Autentica al usuario con su correo y contraseña, devuelve un JWT"
+        summary = "User login",
+        description = "Authenticates a user with email and password and returns a JWT."
     )
     @PostMapping(LOGIN_API_URL)
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
@@ -45,8 +46,8 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Inicio de sesión admin",
-        description = "Autentica al usuario administrador con correo y contraseña, devuelve un JWT"
+        summary = "Admin login",
+        description = "Authenticates an admin user with email and password and returns a JWT."
     )
     @PostMapping(ADMIN_LOGIN_API_URL)
     public ResponseEntity<AuthResponse> adminLogin(@Valid @RequestBody LoginRequest request) {
@@ -54,8 +55,9 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Datos del Usuario autenticado",
-        description = "Devuelve información básica del usuario y el estado del onboarding"
+        summary = "Get authenticated user",
+        description = "Returns basic user information and onboarding status.",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ME_API_URL)
     public ResponseEntity<MeResponse> me() {
@@ -64,8 +66,9 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Actualiza el estado de onboarding del usuario autenticado",
-        description = "Permite settear el modo activo (TALENT/EMPLOYER) y los estados de onboarding de talento y empleador"
+        summary = "Update onboarding state",
+        description = "Updates active mode (TALENT/EMPLOYER) and onboarding statuses.",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     @PatchMapping(ONBOARDING_API_URL)
     public ResponseEntity<MeResponse> updateOnboarding(
@@ -76,8 +79,8 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Solicitud de recuperación de contraseña",
-        description = "Envía un email con un enlace para restablecer la contraseña"
+        summary = "Request password reset",
+        description = "Sends a password reset email when the address is eligible."
     )
     @PostMapping(FORGOT_PASS_URL)
     public ResponseEntity<ForgotPasswordResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
@@ -85,8 +88,8 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Restablecer contraseña",
-        description = "Permite al usuario establecer una nueva contraseña usando el token recibido por email"
+        summary = "Reset password",
+        description = "Sets a new password using the reset token."
     )
     @PostMapping(RESET_PASS_URL)
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
@@ -95,8 +98,9 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "Cambia contraseña",
-        description = "Permite al usuario establecer una nueva contraseña usando el token recibido por email"
+        summary = "Change password",
+        description = "Changes the password for the authenticated user.",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
     @PostMapping(CHANGE_PASS_URL)
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {

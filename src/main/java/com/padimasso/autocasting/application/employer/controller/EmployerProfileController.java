@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping
 @RequiredArgsConstructor
-@Tag(name = "Perfil Empleador", description = "Operaciones relacionadas al perfil de usuario")
+@Tag(name = "Employer Profile", description = "Endpoints for employer profile management.")
 @SuppressWarnings("unused")
 public class EmployerProfileController {
 
@@ -29,7 +29,11 @@ public class EmployerProfileController {
     private final SocialMediaService socialMediaService;
 
     //    Profile
-    @Operation(summary = "Obtener mi perfil", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Get my employer profile",
+        description = "Returns the full employer profile for the authenticated employer user.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     @GetMapping(AppConstants.EMPLOYER_PROFILE_API_URL)
     public ResponseEntity<EmployerProfileResponse> getMyProfile() {
         return ResponseEntity.ok(employerProfileService.getMyProfile());
@@ -37,14 +41,22 @@ public class EmployerProfileController {
 
     //    Basic Info
     @PatchMapping(AppConstants.EMPLOYER_PROFILE_API_URL + "/basic-info")
-    @Operation(summary = "PATCH BasicInfo (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Patch my basic info",
+        description = "Partially updates the authenticated employer's basic profile information.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<EmployerBasicInfoResponse> patchMyBasicInfo(@Valid @RequestBody EmployerBasicInfoPatchRequest request) {
         return ResponseEntity.ok(employerBasicInfoService.patchMyBasicInfo(request));
     }
 
     //    Social Media
     @PatchMapping(AppConstants.EMPLOYER_PROFILE_API_URL + "/social-media")
-    @Operation(summary = "PATCH Social Media (parcial)", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(
+        summary = "Patch my social media",
+        description = "Partially updates social media links for the authenticated employer.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<SocialMediaResponse> patchMySocialMedia(
         @Valid @RequestBody SocialMediaPatchRequest request
     ) {
