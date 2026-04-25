@@ -10,6 +10,8 @@ public interface AuthService {
 
     AuthResponse login(LoginRequest request);
 
+    AuthResponse adminLogin(LoginRequest request);
+
     ForgotPasswordResponse sendResetPasswordEmail(ForgotPasswordRequest request);
 
     void resetPassword(ResetPasswordRequest request);

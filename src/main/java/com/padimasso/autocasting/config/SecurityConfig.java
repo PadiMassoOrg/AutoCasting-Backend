@@ -64,6 +64,8 @@ public class SecurityConfig {
                     // Test Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(EMPLOYER.name())
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(TALENT.name())
+                    // Admin
+                    .requestMatchers(HttpMethod.GET, AppConstants.ADMIN_API_URL + "/**").hasRole("ADMIN")
                     // Talent
                     .requestMatchers(HttpMethod.POST, AppConstants.TALENT_PROFILE_API_URL).authenticated()
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL).authenticated()
@@ -156,7 +158,8 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://localhost:8080",
             "https://autocasting.app",
-            "https://app-autocasting.vercel.app")
+            "https://app-autocasting.vercel.app",
+            "https://autocasting-admin.vercel.app")
         );
 
         // Allow all HTTP methods

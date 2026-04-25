@@ -59,6 +59,11 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
 
+        boolean hasAdmin = roles.stream().anyMatch(r -> r.getCode().equals("ADMIN"));
+        if (hasAdmin) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
+
         if (activeMode != null) {
             switch (activeMode) {
                 case TALENT -> {
@@ -85,4 +90,3 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     }
 
 }
-
