@@ -158,7 +158,8 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://localhost:8080",
             "https://autocasting.app",
-            "https://app-autocasting.vercel.app")
+            "https://app-autocasting.vercel.app",
+            "https://autocasting-admin.vercel.app")
         );
 
         // Allow all HTTP methods
