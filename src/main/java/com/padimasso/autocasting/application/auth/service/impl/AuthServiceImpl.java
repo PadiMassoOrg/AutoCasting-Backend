@@ -111,20 +111,24 @@ public class AuthServiceImpl implements AuthService {
         normalizeUser(user, roles);
         userRepository.save(user);
 
-        var talentProfileOpt = talentProfileRepository.findByUserId(user.getId());
-        String talentProfileSlug = talentProfileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+        return buildAuthResponse(user);
+    }
 
-        var employerProfileOpt = employerProfileRepository.findByUserId(user.getId());
-        String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
+    @Override
+    public AuthResponse adminLogin(LoginRequest request) {
+        var user = userRepository.findByEmail(request.email())
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_CREDENTIALS));
 
-        String jwt = jwtService.generateTokenWithCustomExpirationTime(
-            user,
-            AppConstants.EXPIRATION_TIME,
-            talentProfileSlug,
-            employerProfileSlug
-        );
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
+        }
 
-        return new AuthResponse(jwt);
+        boolean isAdmin = user.getRoles().stream().anyMatch(role -> "ADMIN".equals(role.getCode()));
+        if (!isAdmin) {
+            throw new IllegalArgumentException(AUTH_ACCESS_DENIED);
+        }
+
+        return buildAuthResponse(user);
     }
 
     @Override
@@ -295,6 +299,23 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         return MeResponse.from(user);
+    }
+
+    private AuthResponse buildAuthResponse(UserEntity user) {
+        var talentProfileOpt = talentProfileRepository.findByUserId(user.getId());
+        String talentProfileSlug = talentProfileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+
+        var employerProfileOpt = employerProfileRepository.findByUserId(user.getId());
+        String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
+
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(
+            user,
+            AppConstants.EXPIRATION_TIME,
+            talentProfileSlug,
+            employerProfileSlug
+        );
+
+        return new AuthResponse(jwt);
     }
 
 }

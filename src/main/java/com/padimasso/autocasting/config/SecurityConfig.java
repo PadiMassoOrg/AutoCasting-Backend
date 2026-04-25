@@ -64,6 +64,8 @@ public class SecurityConfig {
                     // Test Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(EMPLOYER.name())
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(TALENT.name())
+                    // Admin
+                    .requestMatchers(HttpMethod.GET, AppConstants.ADMIN_USERS_API_URL).hasRole("ADMIN")
                     // Talent
                     .requestMatchers(HttpMethod.POST, AppConstants.TALENT_PROFILE_API_URL).authenticated()
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL).authenticated()

@@ -45,6 +45,15 @@ public class AuthController {
     }
 
     @Operation(
+        summary = "Inicio de sesión admin",
+        description = "Autentica al usuario administrador con correo y contraseña, devuelve un JWT"
+    )
+    @PostMapping(ADMIN_LOGIN_API_URL)
+    public ResponseEntity<AuthResponse> adminLogin(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.adminLogin(request));
+    }
+
+    @Operation(
         summary = "Datos del Usuario autenticado",
         description = "Devuelve información básica del usuario y el estado del onboarding"
     )
