@@ -79,6 +79,14 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Set<RoleEntity> currentRoles = user.getRoles();
+        boolean hasAdminRole = currentRoles != null
+            && currentRoles.stream().anyMatch(role -> "ADMIN".equals(role.getCode()));
+
+        // Usuarios administrativos no deben recibir automáticamente roles de producto.
+        if (hasAdminRole) {
+            return;
+        }
+
         if (currentRoles == null || currentRoles.isEmpty()) {
             user.setRoles(new HashSet<>(baseRoles));
         } else {
