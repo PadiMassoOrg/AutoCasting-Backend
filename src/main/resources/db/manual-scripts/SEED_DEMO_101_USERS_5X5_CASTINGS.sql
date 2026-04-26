@@ -3,7 +3,7 @@
 -- - 1 employer base: asd@asd.com (password: asdasd)
 -- - 100 talents: asd1@asd.com ... asd100@asd.com (password: asdasd)
 -- - 5 castings del employer base, cada uno con 5 roles
--- - 40 talentos aplican a esos roles
+-- - cada role recibe entre 3 y 15 applicants (distribución determinística)
 --
 -- Diseñado para correr después de HARD_DELETE + boot de backend (Flyway ya aplicado).
 --
@@ -24,7 +24,7 @@ BEGIN
 -- - 1 employer base: asd@asd.com (password: asdasd)
 -- - 100 talents: asd1@asd.com ... asd100@asd.com (password: asdasd)
 -- - 5 castings del employer base, cada uno con 5 roles
--- - 40 talentos aplican a esos roles
+-- - cada role recibe entre 3 y 15 applicants (distribución determinística)
 --
 -- Diseñado para correr después de HARD_DELETE + boot de backend (Flyway ya aplicado).
 -- ============================================================
@@ -281,30 +281,114 @@ JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 WHERE tc.talent_profile_id = tp.id;
 
 -- Talent media (mínimo onboarding: stageName + headshot)
+CREATE TEMP TABLE tmp_headshot_pool (
+  idx int PRIMARY KEY,
+  url text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_headshot_pool (idx, url) VALUES
+  (1,  'https://images.pexels.com/photos/30120612/pexels-photo-30120612.jpeg?cs=srgb&dl=pexels-hao-peng-2148478861-30120612.jpg&fm=jpg'),
+  (2,  'https://images.pexels.com/photos/16958117/pexels-photo-16958117.jpeg?cs=srgb&dl=pexels-luiz-woellner-fotografia-557028708-16958117.jpg&fm=jpg'),
+  (3,  'https://images.pexels.com/photos/13259277/pexels-photo-13259277.jpeg?cs=srgb&dl=pexels-connorscottmcmanus-13259277.jpg&fm=jpg'),
+  (4,  'https://images.pexels.com/photos/8870738/pexels-photo-8870738.jpeg?cs=srgb&dl=pexels-vikkirillova-8870738.jpg&fm=jpg'),
+  (5,  'https://images.pexels.com/photos/5311135/pexels-photo-5311135.jpeg?cs=srgb&dl=pexels-juan-vargas-1955119-5311135.jpg&fm=jpg'),
+  (6,  'https://images.pexels.com/photos/32721688/pexels-photo-32721688.jpeg?cs=srgb&dl=pexels-shootsaga-32721688.jpg&fm=jpg'),
+  (7,  'https://images.pexels.com/photos/30930814/pexels-photo-30930814.jpeg?cs=srgb&dl=pexels-darkshadephotos-30930814.jpg&fm=jpg'),
+  (8,  'https://images.pexels.com/photos/4869348/pexels-photo-4869348.jpeg?cs=srgb&dl=pexels-skyler-ewing-266953-4869348.jpg&fm=jpg'),
+  (9,  'https://images.pexels.com/photos/22867971/pexels-photo-22867971.jpeg?cs=srgb&dl=pexels-shahinkhalaji-22867971.jpg&fm=jpg'),
+  (10, 'https://images.pexels.com/photos/17247995/pexels-photo-17247995.jpeg?cs=srgb&dl=pexels-46792860-17247995.jpg&fm=jpg'),
+  (11, 'https://images.pexels.com/photos/3534962/pexels-photo-3534962.jpeg?cs=srgb&dl=pexels-tubarones-3534962.jpg&fm=jpg'),
+  (12, 'https://images.pexels.com/photos/3953843/pexels-photo-3953843.jpeg?cs=srgb&dl=pexels-itfeelslikefilm-3953843.jpg&fm=jpg'),
+  (13, 'https://images.pexels.com/photos/14589344/pexels-photo-14589344.jpeg?cs=srgb&dl=pexels-amirsaeiddehghan-14589344.jpg&fm=jpg'),
+  (14, 'https://images.pexels.com/photos/5608917/pexels-photo-5608917.jpeg?cs=srgb&dl=pexels-aviz-5608917.jpg&fm=jpg'),
+  (15, 'https://images.pexels.com/photos/37148308/pexels-photo-37148308.jpeg?cs=srgb&dl=pexels-vincent-santamaria-194760512-37148308.jpg&fm=jpg'),
+  (16, 'https://images.pexels.com/photos/7200637/pexels-photo-7200637.jpeg?cs=srgb&dl=pexels-cottonbro-7200637.jpg&fm=jpg'),
+  (17, 'https://images.pexels.com/photos/18466015/pexels-photo-18466015.jpeg?cs=srgb&dl=pexels-oluseyi-18466015.jpg&fm=jpg'),
+  (18, 'https://images.pexels.com/photos/36200745/pexels-photo-36200745.jpeg?cs=srgb&dl=pexels-y-glmmes-2147904764-36200745.jpg&fm=jpg'),
+  (19, 'https://images.pexels.com/photos/5131547/pexels-photo-5131547.jpeg?cs=srgb&dl=pexels-harrisonhaines-5131547.jpg&fm=jpg'),
+  (20, 'https://images.pexels.com/photos/33220961/pexels-photo-33220961.jpeg?cs=srgb&dl=pexels-quachtungduong-33220961.jpg&fm=jpg'),
+  (21, 'https://images.pexels.com/photos/11091224/pexels-photo-11091224.jpeg?cs=srgb&dl=pexels-rupinder-singh-2744173-11091224.jpg&fm=jpg'),
+  (22, 'https://images.pexels.com/photos/10453027/pexels-photo-10453027.jpeg?cs=srgb&dl=pexels-ron-lach-10453027.jpg&fm=jpg'),
+  (23, 'https://images.pexels.com/photos/31972438/pexels-photo-31972438.jpeg?cs=srgb&dl=pexels-mayaramombellifotografias-31972438.jpg&fm=jpg'),
+  (24, 'https://images.pexels.com/photos/30004323/pexels-photo-30004323.jpeg?cs=srgb&dl=pexels-prolificpeople-30004323.jpg&fm=jpg'),
+  (25, 'https://images.pexels.com/photos/30004315/pexels-photo-30004315.jpeg?cs=srgb&dl=pexels-prolificpeople-30004315.jpg&fm=jpg'),
+  (26, 'https://images.pexels.com/photos/30004325/pexels-photo-30004325.jpeg?cs=srgb&dl=pexels-prolificpeople-30004325.jpg&fm=jpg'),
+  (27, 'https://images.pexels.com/photos/37148339/pexels-photo-37148339.jpeg?cs=srgb&dl=pexels-vincent-santamaria-194760512-37148339.jpg&fm=jpg'),
+  (28, 'https://images.pexels.com/photos/10919461/pexels-photo-10919461.jpeg?cs=srgb&dl=pexels-mengmedia-10919461.jpg&fm=jpg'),
+  (29, 'https://images.pexels.com/photos/32721690/pexels-photo-32721690.jpeg?cs=srgb&dl=pexels-shootsaga-32721690.jpg&fm=jpg'),
+  (30, 'https://images.pexels.com/photos/30258585/pexels-photo-30258585.jpeg?cs=srgb&dl=pexels-adara-cox-2148751755-30258585.jpg&fm=jpg'),
+  (31, 'https://images.pexels.com/photos/30468636/pexels-photo-30468636.jpeg?cs=srgb&dl=pexels-augustocarneirojr-30468636.jpg&fm=jpg'),
+  (32, 'https://images.pexels.com/photos/29852895/pexels-photo-29852895.jpeg?cs=srgb&dl=pexels-ifeyinkastudios-29852895.jpg&fm=jpg'),
+  (33, 'https://images.pexels.com/photos/30496625/pexels-photo-30496625.jpeg?cs=srgb&dl=pexels-kingcyrusstudios-30496625.jpg&fm=jpg'),
+  (34, 'https://images.pexels.com/photos/29852852/pexels-photo-29852852.jpeg?cs=srgb&dl=pexels-ifeyinkastudios-29852852.jpg&fm=jpg'),
+  (35, 'https://images.pexels.com/photos/35129364/pexels-photo-35129364.jpeg?cs=srgb&dl=pexels-moh-dikko-photography-2151327861-35129364.jpg&fm=jpg'),
+  (36, 'https://images.pexels.com/photos/31880922/pexels-photo-31880922.jpeg?cs=srgb&dl=pexels-wasinpirom-31880922.jpg&fm=jpg'),
+  (37, 'https://images.pexels.com/photos/26872232/pexels-photo-26872232.jpeg?cs=srgb&dl=pexels-luis-angel-alejos-espinoza-538962425-26872232.jpg&fm=jpg'),
+  (38, 'https://images.pexels.com/photos/18032391/pexels-photo-18032391.jpeg?cs=srgb&dl=pexels-salvador-olague-682304070-18032391.jpg&fm=jpg'),
+  (39, 'https://images.pexels.com/photos/31869537/pexels-photo-31869537.jpeg?cs=srgb&dl=pexels-finn-gruber-2147533269-31869537.jpg&fm=jpg'),
+  (40, 'https://images.pexels.com/photos/11302135/pexels-photo-11302135.jpeg?cs=srgb&dl=pexels-jayb-11302135.jpg&fm=jpg'),
+  (41, 'https://images.pexels.com/photos/33202132/pexels-photo-33202132.jpeg?cs=srgb&dl=pexels-gabriela-brasiliano-515209300-33202132.jpg&fm=jpg'),
+  (42, 'https://images.pexels.com/photos/12311581/pexels-photo-12311581.jpeg?cs=srgb&dl=pexels-josepheulo-nyc-12311581.jpg&fm=jpg'),
+  (43, 'https://images.pexels.com/photos/11000156/pexels-photo-11000156.jpeg?cs=srgb&dl=pexels-vincent-b-170981268-11000156.jpg&fm=jpg'),
+  (44, 'https://images.pexels.com/photos/5906433/pexels-photo-5906433.jpeg?cs=srgb&dl=pexels-luisbecerrafotografo-5906433.jpg&fm=jpg'),
+  (45, 'https://images.pexels.com/photos/4183527/pexels-photo-4183527.jpeg?cs=srgb&dl=pexels-docta-ulimwengu-2601920-4183527.jpg&fm=jpg'),
+  (46, 'https://images.pexels.com/photos/26728099/pexels-photo-26728099.jpeg?cs=srgb&dl=pexels-hanuman-photo-studio-564865561-26728099.jpg&fm=jpg'),
+  (47, 'https://images.pexels.com/photos/14585727/pexels-photo-14585727.jpeg?cs=srgb&dl=pexels-amirsaeiddehghan-14585727.jpg&fm=jpg'),
+  (48, 'https://images.pexels.com/photos/15780889/pexels-photo-15780889.jpeg?cs=srgb&dl=pexels-joelsantosfotografias-15780889.jpg&fm=jpg'),
+  (49, 'https://images.pexels.com/photos/12616225/pexels-photo-12616225.jpeg?cs=srgb&dl=pexels-fabricio-moraes-cunha-259139555-12616225.jpg&fm=jpg'),
+  (50, 'https://images.pexels.com/photos/13331367/pexels-photo-13331367.jpeg?cs=srgb&dl=pexels-marcos-felipe-177641462-13331367.jpg&fm=jpg'),
+  (51, 'https://images.pexels.com/photos/10417390/pexels-photo-10417390.jpeg?cs=srgb&dl=pexels-jordan-bergendahl-2628960-10417390.jpg&fm=jpg'),
+  (52, 'https://images.pexels.com/photos/32844866/pexels-photo-32844866.jpeg?cs=srgb&dl=pexels-kooldark-32844866.jpg&fm=jpg'),
+  (53, 'https://images.pexels.com/photos/26834972/pexels-photo-26834972.jpeg?cs=srgb&dl=pexels-bhandari-law-and-partners-1470175070-26834972.jpg&fm=jpg'),
+  (54, 'https://images.pexels.com/photos/8872492/pexels-photo-8872492.jpeg?cs=srgb&dl=pexels-mikhail-nilov-8872492.jpg&fm=jpg'),
+  (55, 'https://images.pexels.com/photos/36733301/pexels-photo-36733301.jpeg?cs=srgb&dl=pexels-silverkblack-36733301.jpg&fm=jpg'),
+  (56, 'https://images.pexels.com/photos/33539340/pexels-photo-33539340.jpeg?cs=srgb&dl=pexels-lucretius-mooka-2554524-33539340.jpg&fm=jpg'),
+  (57, 'https://images.pexels.com/photos/29811345/pexels-photo-29811345.jpeg?cs=srgb&dl=pexels-kevinshrmasc-29811345.jpg&fm=jpg'),
+  (58, 'https://images.pexels.com/photos/13111213/pexels-photo-13111213.jpeg?cs=srgb&dl=pexels-sandro-tavares-260503371-13111213.jpg&fm=jpg'),
+  (59, 'https://images.pexels.com/photos/29995688/pexels-photo-29995688.jpeg?cs=srgb&dl=pexels-kooldark-29995688.jpg&fm=jpg'),
+  (60, 'https://images.pexels.com/photos/1520760/pexels-photo-1520760.jpeg?cs=srgb&dl=pexels-doquyen-1520760.jpg&fm=jpg'),
+  (61, 'https://images.pexels.com/photos/30386124/pexels-photo-30386124.jpeg?cs=srgb&dl=pexels-boko-shots-812604874-30386124.jpg&fm=jpg'),
+  (62, 'https://images.pexels.com/photos/30975982/pexels-photo-30975982.jpeg?cs=srgb&dl=pexels-hao-peng-2148478861-30975982.jpg&fm=jpg'),
+  (63, 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?cs=srgb&dl=pexels-divinetechygirl-1181686.jpg&fm=jpg'),
+  (64, 'https://images.pexels.com/photos/1188971/pexels-photo-1188971.jpeg?cs=srgb&dl=pexels-krivitskiy-1188971.jpg&fm=jpg'),
+  (65, 'https://images.pexels.com/photos/34461415/pexels-photo-34461415.jpeg?cs=srgb&dl=pexels-2mephoto-34461415.jpg&fm=jpg');
+
 INSERT INTO public.talent_media (
   id, created_at, created_by, deleted, modified_at, modified_by,
   full_body_image_url, headshot_image_url, introduction_video_url, show_reel_video_url, talent_profile_id
 )
 SELECT
   gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
-  'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/c8c5ffcc-494a-4ea0-965b-1872526f30e2.jpg',
-  'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/c8c5ffcc-494a-4ea0-965b-1872526f30e2.jpg',
+  NULL,
+  split_part(hp.url, '?', 1) || '?auto=compress&cs=tinysrgb&fit=crop&w=480&h=640&dpr=1',
   NULL,
   NULL,
-  tp.id
-FROM public.talent_profile tp
-JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
-LEFT JOIN public.talent_media tm ON tm.talent_profile_id = tp.id
+  m.talent_profile_id
+FROM (
+  SELECT
+    tp.id AS talent_profile_id,
+    ((abs(hashtext(t.email)) % 65) + 1) AS headshot_idx
+  FROM public.talent_profile tp
+  JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+) m
+JOIN tmp_headshot_pool hp ON hp.idx = m.headshot_idx
+LEFT JOIN public.talent_media tm ON tm.talent_profile_id = m.talent_profile_id
 WHERE tm.id IS NULL;
 
 UPDATE public.talent_media tm
-SET headshot_image_url = 'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/c8c5ffcc-494a-4ea0-965b-1872526f30e2.jpg',
-    full_body_image_url = 'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/c8c5ffcc-494a-4ea0-965b-1872526f30e2.jpg',
+SET headshot_image_url = split_part(hp.url, '?', 1) || '?auto=compress&cs=tinysrgb&fit=crop&w=480&h=640&dpr=1',
+    full_body_image_url = NULL,
     modified_at = NOW(),
     modified_by = 'SEED_DEMO'
-FROM public.talent_profile tp
-JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
-WHERE tm.talent_profile_id = tp.id;
+FROM (
+  SELECT
+    tp.id AS talent_profile_id,
+    ((abs(hashtext(t.email)) % 65) + 1) AS headshot_idx
+  FROM public.talent_profile tp
+  JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+) m
+JOIN tmp_headshot_pool hp ON hp.idx = m.headshot_idx
+WHERE tm.talent_profile_id = m.talent_profile_id;
 
 -- Talent characteristics (placeholder)
 INSERT INTO public.talent_characteristics (
@@ -768,7 +852,8 @@ LEFT JOIN LATERAL (
 ) co ON true;
 
 -- ------------------------------------------------------------
--- 4) 40 aplicaciones talent -> roles del employer base
+-- 4) Aplicaciones talent -> roles del employer base
+--    objetivo: entre 3 y 15 applicants por role
 -- ------------------------------------------------------------
 
 CREATE TEMP TABLE tmp_applicant_talents ON COMMIT DROP AS
@@ -779,8 +864,7 @@ SELECT
 FROM public.users u
 JOIN public.talent_profile tp ON tp.user_id = u.id
 WHERE u.email ~ '^asd[0-9]+@asd\.com$'
-ORDER BY u.email
-LIMIT 40;
+ORDER BY u.email;
 
 CREATE TEMP TABLE tmp_target_roles ON COMMIT DROP AS
 SELECT
@@ -788,6 +872,22 @@ SELECT
   r.casting_role_id
 FROM tmp_created_roles r
 ORDER BY r.casting_seq, r.role_pos;
+
+CREATE TEMP TABLE tmp_role_application_targets ON COMMIT DROP AS
+SELECT
+  tr.rn,
+  tr.casting_role_id,
+  (3 + ((tr.rn * 7) % 13))::int AS target_count
+FROM tmp_target_roles tr;
+
+CREATE TEMP TABLE tmp_role_applicants ON COMMIT DROP AS
+SELECT
+  rt.casting_role_id,
+  at.talent_profile_id
+FROM tmp_role_application_targets rt
+JOIN LATERAL generate_series(1, rt.target_count) gs(slot) ON true
+JOIN tmp_applicant_talents at
+  ON at.rn = (((rt.rn * 17 + gs.slot * 11) % (SELECT COUNT(*) FROM tmp_applicant_talents)) + 1);
 
 CREATE TEMP TABLE tmp_created_applications (
   id uuid NOT NULL,
@@ -802,13 +902,12 @@ WITH inserted_apps AS (
   )
   SELECT
     gen_random_uuid(),
-    tr.casting_role_id,
-    at.talent_profile_id,
+    ra.casting_role_id,
+    ra.talent_profile_id,
     sao.id,
     'Aplicación demo generada por seed para validar tablero de postulantes.',
     NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-  FROM tmp_applicant_talents at
-  JOIN tmp_target_roles tr ON tr.rn = ((at.rn - 1) % (SELECT COUNT(*) FROM tmp_target_roles)) + 1
+  FROM tmp_role_applicants ra
   CROSS JOIN LATERAL (
     SELECT id FROM public.casting_application_status_option
     WHERE string_code = 'sitemetadata.application_status.blank'
@@ -871,6 +970,26 @@ IF (
   RAISE EXCEPTION 'Seed inválido: cantidad de roles del employer base distinta de 25';
 END IF;
 
+IF EXISTS (
+  SELECT 1
+  FROM (
+    SELECT
+      ca.casting_role_id,
+      COUNT(*)::int AS applicant_count
+    FROM public.casting_application ca
+    JOIN public.casting_role cr ON cr.id = ca.casting_role_id
+    JOIN public.casting_roles_section crs ON crs.id = cr.casting_roles_section_id
+    JOIN public.casting c ON c.id = crs.casting_id
+    JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
+    JOIN public.users u ON u.id = ep.user_id
+    WHERE u.email = 'asd@asd.com'
+    GROUP BY ca.casting_role_id
+  ) per_role
+  WHERE per_role.applicant_count < 3 OR per_role.applicant_count > 15
+) THEN
+  RAISE EXCEPTION 'Seed inválido: existe al menos un role fuera del rango de applicants (3..15)';
+END IF;
+
 IF (
   SELECT COUNT(*)
   FROM public.casting_application ca
@@ -880,8 +999,11 @@ IF (
   JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
   JOIN public.users u ON u.id = ep.user_id
   WHERE u.email = 'asd@asd.com'
-) <> 40 THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad de aplicaciones sobre castings base distinta de 40';
+) <> (
+  SELECT COALESCE(SUM(target_count), 0)
+  FROM tmp_role_application_targets
+) THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad total de aplicaciones no coincide con el target generado por role';
 END IF;
 
 END;
