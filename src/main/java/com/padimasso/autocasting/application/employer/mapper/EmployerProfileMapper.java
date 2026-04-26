@@ -21,6 +21,7 @@ public class EmployerProfileMapper {
     public EmployerProfileResponse toProfileResponse(EmployerProfileEntity profile, UserEntity user) {
         return new EmployerProfileResponse(
             profile.getId(),
+            user.getEmail(),
             user.getUserAccountProvider().toString(),
             profile.getPublicSlug(),
             profile.getPlan().getNameStringCode(),

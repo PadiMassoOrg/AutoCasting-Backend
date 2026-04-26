@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public record EmployerProfileResponse(
     UUID id,
+    String email,
     String userAccountProvider,
     String publicSlug,
     String planStringCode,
