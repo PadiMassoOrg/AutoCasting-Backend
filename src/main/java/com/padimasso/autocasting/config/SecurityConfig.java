@@ -3,6 +3,7 @@ package com.padimasso.autocasting.config;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.application.auth.service.*;
+import com.padimasso.autocasting.application.legal.security.LegalAcceptanceEnforcementFilter;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.exception.ApiAccessDeniedHandler;
@@ -45,6 +46,7 @@ public class SecurityConfig {
     private final AppProperties appProperties;
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final LegalAcceptanceEnforcementFilter legalAcceptanceEnforcementFilter;
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
@@ -80,7 +82,9 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, AppConstants.ME_API_URL).authenticated()
                     .requestMatchers(HttpMethod.PATCH, AppConstants.ONBOARDING_API_URL).authenticated()
                     .requestMatchers(HttpMethod.POST, AppConstants.CHANGE_PASS_URL).authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.LEGAL_REQUIREMENTS_API_URL).authenticated()
                     .requestMatchers(HttpMethod.POST, AppConstants.LEGAL_ACCEPT_DOCUMENT_API_URL).authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.LEGAL_ACCEPT_CURRENT_API_URL).authenticated()
                     // Test Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_CASTINERA_API_URL).hasRole(EMPLOYER.name())
                     .requestMatchers(HttpMethod.GET, AppConstants.TEST_ACTOR_API_URL).hasRole(TALENT.name())
@@ -138,7 +142,8 @@ public class SecurityConfig {
                 .authenticationEntryPoint(jwtAuthEntryPoint)
                 .accessDeniedHandler(apiAccessDeniedHandler))
             .authenticationProvider(authenticationProvider)
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(legalAcceptanceEnforcementFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

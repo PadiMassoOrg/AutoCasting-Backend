@@ -56,6 +56,12 @@ app:
     frontend-url: ${FRONTEND_URL}
     backend-url: ${BACKEND_URL}
     oauth-success-url: ${FRONTEND_URL}/oauth2/success
+    supabase:
+        url: ${SUPABASE_URL:}
+        service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+        legal-bucket: ${SUPABASE_LEGAL_BUCKET:legal-documents-private}
+        legal-prefix: ${SUPABASE_LEGAL_PREFIX:legal/documents}
+        legal-pdf-signed-url-ttl-seconds: ${SUPABASE_LEGAL_PDF_TTL_SECONDS:900}
     jobs:
         close-expired-castings:
             enabled: true

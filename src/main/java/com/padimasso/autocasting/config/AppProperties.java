@@ -13,4 +13,15 @@ public class AppProperties {
     private String frontendUrl;
     private String backendUrl;
     private String oauthSuccessUrl;
+    private SupabaseProperties supabase = new SupabaseProperties();
+
+    @Getter
+    @Setter
+    public static class SupabaseProperties {
+        private String url;
+        private String serviceRoleKey;
+        private String legalBucket = "legal-documents-private";
+        private String legalPrefix = "legal/documents";
+        private int legalPdfSignedUrlTtlSeconds = 900;
+    }
 }

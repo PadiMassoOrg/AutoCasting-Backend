@@ -40,3 +40,6 @@ out/
 # AI Stuff
 mcp.json
 .codex/*
+
+# Legal release artifacts (keep markdown, ignore generated PDFs)
+src/main/resources/legal/releases/**/*.pdf
