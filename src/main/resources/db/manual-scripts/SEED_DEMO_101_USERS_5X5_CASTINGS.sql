@@ -471,7 +471,7 @@ UPDATE public.employer_basic_info ebi
 SET company_name = CASE WHEN t.is_base THEN 'ASD Studios' ELSE ebi.company_name END,
     tax_number = CASE WHEN t.is_base THEN 'ASD-0001' ELSE ebi.tax_number END,
     company_email = t.email,
-    image_url = COALESCE(ebi.image_url, 'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/c8c5ffcc-494a-4ea0-965b-1872526f30e2.jpg'),
+    image_url = COALESCE(ebi.image_url, 'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/b6adeb92-127e-4fc3-a82b-1bbcdf2d50ec.png'),
     address = CASE WHEN t.is_base THEN 'Buenos Aires, AR' ELSE ebi.address END,
     website_url = CASE WHEN t.is_base THEN 'https://autocasting.app' ELSE ebi.website_url END,
     about = CASE WHEN t.is_base THEN 'Productora demo para QA de castings y aplicaciones.' ELSE ebi.about END,
@@ -617,11 +617,14 @@ SELECT
   cs.location_text,
   cmo.id,
   CASE WHEN cs.modality_code = 'sitemetadata.casting_modality.on_site' THEN 'Presencial con callback híbrido' ELSE 'Autocasting 100% remoto' END,
-  CURRENT_DATE + (10 + cs.casting_seq),
+  CASE
+    WHEN cs.casting_seq = 1 THEN (NOW() + INTERVAL '1 day')::date
+    ELSE (NOW() + ((10 + (abs(hashtext(cs.title)) % 6))::text || ' days')::interval)::date
+  END,
   (cs.casting_seq % 2 = 1),
   CASE WHEN cs.casting_seq % 2 = 1 THEN 'Prueba de vestuario opcional en estudio' ELSE NULL END,
-  CURRENT_DATE + (20 + cs.casting_seq),
-  CURRENT_DATE + (25 + cs.casting_seq),
+  (NOW() + ((20 + cs.casting_seq)::text || ' days')::interval)::date,
+  (NOW() + ((25 + cs.casting_seq)::text || ' days')::interval)::date,
   'Casting generado por seed para probar dashboard employer/talent con datos consistentes.',
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM public.casting c
