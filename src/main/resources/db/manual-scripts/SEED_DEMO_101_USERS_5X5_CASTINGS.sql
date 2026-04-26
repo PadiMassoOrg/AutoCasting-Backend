@@ -451,7 +451,7 @@ SELECT
   CASE WHEN t.is_base THEN 'ASD-0001' ELSE NULL END,
   cto.id,
   t.email,
-  'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/c8c5ffcc-494a-4ea0-965b-1872526f30e2.jpg',
+  'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/b6adeb92-127e-4fc3-a82b-1bbcdf2d50ec.png',
   CASE WHEN t.is_base THEN 'Buenos Aires, AR' ELSE NULL END,
   CASE WHEN t.is_base THEN 'https://autocasting.app' ELSE NULL END,
   CASE WHEN t.is_base THEN 'Productora demo para QA de castings y aplicaciones.' ELSE NULL END,
