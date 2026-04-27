@@ -8,8 +8,8 @@ spring:
         password: ${DATABASE_PASSWORD}
         hikari:
             connection-timeout: 20000
-            maximum-pool-size: 5
-            minimum-idle: 1
+            maximum-pool-size: ${DB_POOL_MAX_SIZE:3}
+            minimum-idle: ${DB_POOL_MIN_IDLE:0}
 
     jpa:
         hibernate:
@@ -72,8 +72,14 @@ server:
     port: ${PORT:8080}
     tomcat:
         threads:
-            max: 20
-            min-spare: 5
+            max: ${TOMCAT_MAX_THREADS:12}
+            min-spare: ${TOMCAT_MIN_SPARE_THREADS:2}
+
+springdoc:
+    api-docs:
+        enabled: ${SPRINGDOC_API_DOCS_ENABLED:false}
+    swagger-ui:
+        enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}
 
 logging:
     level:
