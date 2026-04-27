@@ -1,7 +1,12 @@
 package com.padimasso.autocasting.application.legal.service;
 
 import com.padimasso.autocasting.application.legal.model.LegalDocument;
+import com.padimasso.autocasting.application.legal.model.ContentFormat;
 import com.padimasso.autocasting.exception.ApiException;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -14,6 +19,9 @@ import java.security.MessageDigest;
 public class LegalDocumentRenderer {
 
     private final TemplateEngine engine;
+    private final Parser markdownParser;
+    private final HtmlRenderer markdownRenderer;
+    private final Safelist markdownSafelist;
 
     public LegalDocumentRenderer() {
         var r = new StringTemplateResolver();
@@ -21,10 +29,21 @@ public class LegalDocumentRenderer {
         r.setCacheable(false);
         this.engine = new TemplateEngine();
         this.engine.setTemplateResolver(r);
+        this.markdownParser = Parser.builder().build();
+        this.markdownRenderer = HtmlRenderer.builder().build();
+        this.markdownSafelist = Safelist.relaxed()
+            .addTags("table", "thead", "tbody", "tfoot", "tr", "th", "td")
+            .addAttributes("a", "target", "rel")
+            .addProtocols("a", "href", "http", "https", "mailto");
     }
 
     public String renderHtml(LegalDocument doc) {
-        return doc.getBodyTemplate();
+        if (doc.getFormat() == ContentFormat.MARKDOWN) {
+            String markdownHtml = markdownRenderer.render(markdownParser.parse(doc.getBodyTemplate()));
+            String safeHtml = Jsoup.clean(markdownHtml, markdownSafelist);
+            return "<article class=\"prose prose-neutral max-w-3xl mx-auto\">" + safeHtml + "</article>";
+        }
+        return doc.getBodyTemplate(); // Backward compatibility with legacy HTML docs
     }
 
     public String sha256(String data) {

@@ -1,8 +1,87 @@
--- Single source legal documents in MARKDOWN (es-AR)
--- Version 3.0.0 replaces HTML body with markdown source.
+-- VXX__legal_documents_release.sql
 
-WITH terms_doc AS (
-  SELECT $$Última actualización: 26/04/2026
+CREATE OR REPLACE PROCEDURE publish_legal_release(
+  p_legal_version text,
+  p_terms_md text,
+  p_privacy_md text
+)
+LANGUAGE plpgsql
+AS $proc$
+BEGIN
+  INSERT INTO legal_documents(
+    id, type, locale, version, title, slug,
+    status, format, body_template, content_hash,
+    effective_at, published_at,
+    created_at, created_by, modified_at, modified_by, deleted
+  )
+  VALUES (
+    gen_random_uuid(),
+    'TERMS',
+    'es',
+    p_legal_version,
+    'Términos y Condiciones',
+    'terms-and-conditions',
+    'PUBLISHED',
+    'MARKDOWN',
+    p_terms_md,
+    encode(digest(p_terms_md, 'sha256'), 'hex'),
+    NOW(),
+    NOW(),
+    NOW(), 'SYSTEM', NOW(), 'SYSTEM', false
+  )
+  ON CONFLICT (type, locale, version) DO UPDATE SET
+    title = EXCLUDED.title,
+    slug = EXCLUDED.slug,
+    status = EXCLUDED.status,
+    format = EXCLUDED.format,
+    body_template = EXCLUDED.body_template,
+    content_hash = EXCLUDED.content_hash,
+    effective_at = NOW(),
+    published_at = NOW(),
+    deleted = false,
+    modified_at = NOW(),
+    modified_by = 'FLYWAY_RELEASE';
+
+  INSERT INTO legal_documents(
+    id, type, locale, version, title, slug,
+    status, format, body_template, content_hash,
+    effective_at, published_at,
+    created_at, created_by, modified_at, modified_by, deleted
+  )
+  VALUES (
+    gen_random_uuid(),
+    'PRIVACY',
+    'es',
+    p_legal_version,
+    'Políticas de Privacidad',
+    'privacy-policy',
+    'PUBLISHED',
+    'MARKDOWN',
+    p_privacy_md,
+    encode(digest(p_privacy_md, 'sha256'), 'hex'),
+    NOW(),
+    NOW(),
+    NOW(), 'SYSTEM', NOW(), 'SYSTEM', false
+  )
+  ON CONFLICT (type, locale, version) DO UPDATE SET
+    title = EXCLUDED.title,
+    slug = EXCLUDED.slug,
+    status = EXCLUDED.status,
+    format = EXCLUDED.format,
+    body_template = EXCLUDED.body_template,
+    content_hash = EXCLUDED.content_hash,
+    effective_at = NOW(),
+    published_at = NOW(),
+    deleted = false,
+    modified_at = NOW(),
+    modified_by = 'FLYWAY_RELEASE';
+END;
+$proc$;
+
+CALL publish_legal_release(
+  p_legal_version := '3.3.0',
+  p_terms_md := $terms_md$
+**Última actualización:** 27/04/2026
 
 # Términos y Condiciones
 
@@ -10,7 +89,7 @@ Estos Términos y Condiciones regulan el acceso y uso de autocasting (la “Plat
 
 ## 1. Identificación del proveedor
 
-El servicio es prestado por **[RAZÓN SOCIAL]**, CUIT **[CUIT]**, con domicilio en **[DOMICILIO LEGAL]** (en adelante, “autocasting”, “nosotros” o “la Plataforma”).
+El servicio es prestado por **[RAZÓN SOCIAL]**, CUIT **[CUIT]**, con domicilio en **[DOMICILIO LEGAL]** (en adelante, **“autocasting”**, **“nosotros”** o **“la Plataforma”**).
 
 ## 2. Objeto del servicio
 
@@ -30,31 +109,30 @@ autocasting facilita el contacto entre talentos, productoras, agencias, director
 
 ## 5. Contenido del usuario y licencias
 
-- Conservás la titularidad sobre el contenido que subís (texto, imágenes, videos, audios, documentos y demás materiales).
+- Conservás la titularidad sobre el contenido que subís (texto, imágenes, videos, audios, enlaces y demás materiales).
 - Nos otorgás una licencia no exclusiva, mundial, gratuita, revocable y necesaria para alojar, reproducir, transformar técnicamente, mostrar y comunicar tu contenido dentro de la Plataforma para su funcionamiento.
 - Garantizás que contás con derechos y autorizaciones suficientes sobre el contenido subido, incluyendo derechos de imagen de terceros cuando corresponda.
 
-## 6. Conductas prohibidas
+## 6. Funcionalidades actuales y estado comercial
+
+- La Plataforma actualmente permite, entre otras funciones, registro/login (incluyendo OAuth con Google), gestión de perfiles de talento y empleador, publicación/gestión de castings, y postulaciones.
+- A la fecha de esta versión, **no se encuentra habilitado un flujo de cobro online dentro de la Plataforma** (pasarela de pago, cobro con tarjeta o billeteras).
+- Si en el futuro se habilitan funcionalidades pagas, se informarán de forma previa sus condiciones comerciales específicas.
+
+## 7. Conductas prohibidas
 
 - Publicar contenido ilícito, discriminatorio, difamatorio, violento, sexual no autorizado o que infrinja derechos de terceros.
 - Suplantar identidad, falsificar datos, manipular procesos de selección o publicar oportunidades engañosas.
 - Intentar vulnerar la seguridad, disponibilidad o integridad de la Plataforma y sus sistemas.
 - Usar scraping automatizado, bots no autorizados o ingeniería inversa sin consentimiento expreso.
 
-## 7. Moderación, suspensión y baja
+## 8. Moderación, suspensión y baja
 
 autocasting podrá, a su exclusivo criterio y sin generar derecho a indemnización, remover contenido, limitar, suspender o cancelar cuentas por incumplimientos, riesgos de seguridad, requerimientos legales o protección de terceros.
 
-## 8. Planes, precios y facturación
-
-- Podrán existir planes gratuitos y pagos. Las condiciones comerciales vigentes se informarán antes de contratar.
-- Los importes se expresarán con impuestos según corresponda conforme la normativa aplicable.
-- Salvo indicación en contrario, las suscripciones se renuevan automáticamente por períodos equivalentes.
-- La falta de pago podrá implicar suspensión o cancelación del servicio.
-
 ## 9. Naturaleza de la relación entre usuarios
 
-autocasting no garantiza contrataciones, resultados de castings ni ingresos. Toda negociación, verificación, contratación y pago entre usuarios es de exclusiva responsabilidad de las partes intervinientes.
+autocasting no garantiza contrataciones, resultados de castings ni ingresos. Toda negociación, verificación y contratación entre usuarios es de exclusiva responsabilidad de las partes intervinientes.
 
 ## 10. Propiedad intelectual de la Plataforma
 
@@ -62,10 +140,10 @@ El software, diseño, marcas, logotipos, bases de datos y demás activos de auto
 
 ## 11. Limitación de responsabilidad
 
-- La Plataforma se ofrece “tal como está” y “según disponibilidad”.
+- La Plataforma se ofrece **“tal como está”** y **“según disponibilidad”**.
 - No garantizamos funcionamiento ininterrumpido ni ausencia absoluta de errores o vulnerabilidades.
 - En la máxima medida permitida por la ley, autocasting no será responsable por daños indirectos, lucro cesante, pérdida de chance, pérdida de datos o daños derivados de relaciones entre usuarios.
-- Nada en estos términos limita derechos irrenunciables del consumidor bajo la Ley 24.240 y normativa aplicable.
+- Nada en estos términos limita derechos irrenunciables del consumidor bajo la **Ley 24.240** y normativa aplicable.
 
 ## 12. Indemnidad
 
@@ -73,57 +151,27 @@ El usuario se obliga a mantener indemne a autocasting, sus directivos, empleados
 
 ## 13. Datos personales y privacidad
 
-El tratamiento de datos personales se rige por la Política de Privacidad vigente, que integra estos términos. autocasting podrá registrar evidencia técnica de aceptación (usuario, versión, hash del documento, IP, agente de usuario y fecha/hora).
+El tratamiento de datos personales se rige por la **Política de Privacidad** vigente, que integra estos términos. autocasting podrá registrar evidencia técnica de aceptación (usuario, versión, hash del documento, IP, agente de usuario y fecha/hora).
 
 ## 14. Modificaciones y versionado
 
 Podremos modificar estos términos en cualquier momento. Las nuevas versiones se publicarán con fecha de vigencia. Para continuar operando, podrá requerirse aceptación expresa de la versión vigente al iniciar sesión.
 
-## 15. Ley aplicable y jurisdicción
+## 15. No aceptación de nuevas versiones
 
-Estos términos se rigen por las leyes de la República Argentina (incluyendo, según corresponda, Código Civil y Comercial de la Nación, Ley 24.240 y Ley 25.326). Para toda controversia, las partes se someten a los tribunales ordinarios competentes de la Ciudad Autónoma de Buenos Aires, salvo competencia imperativa en contrario.
+Si no aceptás la versión vigente de Términos y/o Política de Privacidad requerida para operar, no podrás continuar utilizando funcionalidades protegidas de la Plataforma y podremos cerrar tu sesión.
 
-## 16. Contacto legal
+## 16. Ley aplicable y jurisdicción
+
+Estos términos se rigen por las leyes de la República Argentina (incluyendo, según corresponda, Código Civil y Comercial de la Nación, **Ley 24.240** y **Ley 25.326**). Para toda controversia, las partes se someten a los tribunales ordinarios competentes de la Ciudad Autónoma de Buenos Aires, salvo competencia imperativa en contrario.
+
+## 17. Contacto legal
 
 Consultas legales: [legal@autocasting.app](mailto:legal@autocasting.app)
-$$::text AS body
-)
-INSERT INTO legal_documents(
-  id, type, locale, version, title, slug,
-  status, format, body_template, content_hash,
-  effective_at, published_at,
-  created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(),
-  'TERMS',
-  'es',
-  '3.0.0',
-  'Términos y Condiciones',
-  'terms-and-conditions',
-  'PUBLISHED',
-  'MARKDOWN',
-  body,
-  encode(digest(body, 'sha256'), 'hex'),
-  NOW(),
-  NOW(),
-  NOW(), 'SYSTEM', NOW(), 'SYSTEM', false
-FROM terms_doc
-ON CONFLICT (type, locale, version) DO UPDATE SET
-  title = EXCLUDED.title,
-  slug = EXCLUDED.slug,
-  status = EXCLUDED.status,
-  format = EXCLUDED.format,
-  body_template = EXCLUDED.body_template,
-  content_hash = EXCLUDED.content_hash,
-  effective_at = EXCLUDED.effective_at,
-  published_at = EXCLUDED.published_at,
-  deleted = false,
-  modified_at = NOW(),
-  modified_by = 'FLYWAY_V33';
 
-WITH privacy_doc AS (
-  SELECT $$Última actualización: 26/04/2026
+$terms_md$,
+  p_privacy_md := $privacy_md$
+**Última actualización:** 27/04/2026
 
 # Política de Privacidad
 
@@ -135,15 +183,14 @@ El responsable de la base de datos es **[RAZÓN SOCIAL]**, CUIT **[CUIT]**, con 
 
 ## 2. Marco normativo
 
-Tratamos datos conforme la Ley 25.326 de Protección de Datos Personales, su reglamentación, disposiciones de la AAIP y demás normativa aplicable en la República Argentina.
+Tratamos datos conforme la **Ley 25.326** de Protección de Datos Personales, su reglamentación, disposiciones de la **AAIP** y demás normativa aplicable en la República Argentina.
 
 ## 3. Datos que recolectamos
 
-- **Datos de cuenta**: email, contraseña cifrada, proveedor de autenticación.
-- **Datos de perfil**: nombre artístico, bio, redes, experiencia, formación, material audiovisual.
-- **Datos de actividad**: interacciones, postulaciones, publicaciones, logs técnicos y métricas de uso.
-- **Datos técnicos**: IP, user-agent, identificadores de sesión y eventos de seguridad.
-- **Datos de facturación**: cuando apliquen planes pagos, a través de pasarelas/proveedores externos.
+- **Datos de cuenta:** email, contraseña cifrada, proveedor de autenticación.
+- **Datos de perfil:** nombre artístico, bio, redes, experiencia, formación, material audiovisual.
+- **Datos de actividad:** interacciones, postulaciones, publicaciones, logs técnicos y métricas de uso.
+- **Datos técnicos:** IP, user-agent, identificadores de sesión y eventos de seguridad.
 
 ## 4. Finalidades del tratamiento
 
@@ -164,7 +211,6 @@ Tratamos datos conforme la Ley 25.326 de Protección de Datos Personales, su reg
 
 - Con otros usuarios, según la configuración y visibilidad del perfil o casting.
 - Con proveedores tecnológicos para infraestructura y almacenamiento (incluyendo Supabase para storage de archivos y base de datos), hosting, analítica, mensajería y soporte.
-- Con procesadores de pago cuando corresponda.
 - Con autoridades públicas por requerimiento legal válido.
 
 No vendemos datos personales a terceros.
@@ -206,38 +252,9 @@ Podemos actualizar esta política periódicamente. Publicaremos la versión vige
 ## 15. Contacto
 
 Consultas sobre privacidad o protección de datos: [privacy@autocasting.app](mailto:privacy@autocasting.app)
-$$::text AS body
-)
-INSERT INTO legal_documents(
-  id, type, locale, version, title, slug,
-  status, format, body_template, content_hash,
-  effective_at, published_at,
-  created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(),
-  'PRIVACY',
-  'es',
-  '3.0.0',
-  'Políticas de Privacidad',
-  'privacy-policy',
-  'PUBLISHED',
-  'MARKDOWN',
-  body,
-  encode(digest(body, 'sha256'), 'hex'),
-  NOW(),
-  NOW(),
-  NOW(), 'SYSTEM', NOW(), 'SYSTEM', false
-FROM privacy_doc
-ON CONFLICT (type, locale, version) DO UPDATE SET
-  title = EXCLUDED.title,
-  slug = EXCLUDED.slug,
-  status = EXCLUDED.status,
-  format = EXCLUDED.format,
-  body_template = EXCLUDED.body_template,
-  content_hash = EXCLUDED.content_hash,
-  effective_at = EXCLUDED.effective_at,
-  published_at = EXCLUDED.published_at,
-  deleted = false,
-  modified_at = NOW(),
-  modified_by = 'FLYWAY_V33';
+
+$privacy_md$
+);
+
+-- Opcional: evitar dejar el objeto creado en schema
+DROP PROCEDURE IF EXISTS publish_legal_release(text, text, text);

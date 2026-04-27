@@ -53,7 +53,9 @@ public class AppConstants {
     public static final String CASTING_REMUNERATION_REMUNERATIONS_URL = CASTING_REMUNERATION_URL + "/remunerations";
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
+    public static final String LEGAL_REQUIREMENTS_API_URL = BASE_API_URL + "/legal/requirements";
     public static final String LEGAL_ACCEPT_DOCUMENT_API_URL = BASE_API_URL + "/legal/accept";
+    public static final String LEGAL_ACCEPT_CURRENT_API_URL = BASE_API_URL + "/legal/accept-current";
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";

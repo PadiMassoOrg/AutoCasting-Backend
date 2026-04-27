@@ -4,8 +4,10 @@
 -- - 100 talents: asd1@asd.com ... asd100@asd.com (password: asdasd)
 -- - 5 castings del employer base, cada uno con 5 roles
 -- - cada role recibe entre 3 y 15 applicants (distribución determinística)
+-- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los 101 usuarios seed
 --
--- Diseñado para correr después de HARD_DELETE + boot de backend (Flyway ya aplicado).
+-- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
+-- Requiere schema y metadata al día (Flyway aplicado).
 --
 -- Ejecución segura:
 -- 1) Crea procedure
@@ -25,9 +27,13 @@ BEGIN
 -- - 100 talents: asd1@asd.com ... asd100@asd.com (password: asdasd)
 -- - 5 castings del employer base, cada uno con 5 roles
 -- - cada role recibe entre 3 y 15 applicants (distribución determinística)
+-- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los 101 usuarios seed
 --
--- Diseñado para correr después de HARD_DELETE + boot de backend (Flyway ya aplicado).
+-- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
 -- ============================================================
+
+  -- Evita ejecuciones concurrentes del seed en la misma base.
+  PERFORM pg_advisory_xact_lock(hashtext('seed_demo_101_users_5x5')::bigint);
 
 
 -- ------------------------------------------------------------
@@ -181,14 +187,61 @@ JOIN tmp_seed_users s ON s.email = u.email
 JOIN public.roles r ON r.code IN ('TALENT', 'EMPLOYER')
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
--- ------------------------------------------------------------
--- 2) Profiles Talent + Employer y datos mínimos onboarding
--- ------------------------------------------------------------
-
 CREATE TEMP TABLE tmp_seed_user_ids ON COMMIT DROP AS
 SELECT u.id AS user_id, u.email, s.is_base, s.stage_name
 FROM public.users u
 JOIN tmp_seed_users s ON s.email = u.email;
+
+-- ------------------------------------------------------------
+-- 1.5) Aceptaciones legales seed (current TERMS + PRIVACY, locale es)
+-- ------------------------------------------------------------
+
+CREATE TEMP TABLE tmp_current_legal_docs ON COMMIT DROP AS
+SELECT d.id, d.type, d.content_hash
+FROM (
+  SELECT
+    ld.id,
+    ld.type,
+    ld.content_hash,
+    row_number() OVER (PARTITION BY ld.type ORDER BY ld.effective_at DESC, ld.created_at DESC) AS rn
+  FROM public.legal_documents ld
+  WHERE ld.deleted = false
+    AND ld.status = 'PUBLISHED'
+    AND ld.locale = 'es'
+    AND ld.type IN ('TERMS', 'PRIVACY')
+    AND ld.effective_at <= NOW()
+) d
+WHERE d.rn = 1;
+
+IF (SELECT COUNT(*) FROM tmp_current_legal_docs) <> 2 THEN
+  RAISE EXCEPTION 'Faltan documentos legales actuales (TERMS/PRIVACY, locale=es). Ejecutá Flyway release legal antes del seed.';
+END IF;
+
+DELETE FROM public.legal_acceptances la
+USING public.legal_documents ld, tmp_seed_user_ids su
+WHERE la.legal_document_id = ld.id
+  AND la.user_id = su.user_id
+  AND ld.type IN ('TERMS', 'PRIVACY');
+
+INSERT INTO public.legal_acceptances (
+  id, user_id, legal_document_id, accepted_at, ip, user_agent, content_hash,
+  created_at, created_by, modified_at, modified_by, deleted
+)
+SELECT
+  gen_random_uuid(),
+  su.user_id,
+  d.id,
+  NOW() - interval '5 minutes',
+  '127.0.0.1',
+  'SEED_DEMO_101_USERS_5X5',
+  d.content_hash,
+  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
+FROM tmp_seed_user_ids su
+CROSS JOIN tmp_current_legal_docs d;
+
+-- ------------------------------------------------------------
+-- 2) Profiles Talent + Employer y datos mínimos onboarding
+-- ------------------------------------------------------------
 
 -- Talent profile
 INSERT INTO public.talent_profile (
@@ -1007,6 +1060,17 @@ IF (
   FROM tmp_role_application_targets
 ) THEN
   RAISE EXCEPTION 'Seed inválido: cantidad total de aplicaciones no coincide con el target generado por role';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.legal_acceptances la
+  JOIN public.legal_documents ld ON ld.id = la.legal_document_id
+  JOIN public.users u ON u.id = la.user_id
+  WHERE (u.email = 'asd@asd.com' OR u.email ~ '^asd[0-9]+@asd\.com$')
+    AND ld.type IN ('TERMS', 'PRIVACY')
+) <> 202 THEN
+  RAISE EXCEPTION 'Seed inválido: aceptaciones legales esperadas para usuarios demo (202) no coinciden';
 END IF;
 
 END;
