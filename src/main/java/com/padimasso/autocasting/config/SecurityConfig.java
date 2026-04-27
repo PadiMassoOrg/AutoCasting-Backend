@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.application.auth.service.*;
 import com.padimasso.autocasting.application.legal.security.LegalAcceptanceEnforcementFilter;
+import com.padimasso.autocasting.application.legal.service.LegalService;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.exception.ApiAccessDeniedHandler;
@@ -51,6 +52,7 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
     private final EmployerProfileRepository employerProfileRepository;
+    private final LegalService legalService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -167,6 +169,7 @@ public class SecurityConfig {
             userRepository,
             talentProfileRepository,
             employerProfileRepository,
+            legalService,
             apiErrorFactory
         );
     }
