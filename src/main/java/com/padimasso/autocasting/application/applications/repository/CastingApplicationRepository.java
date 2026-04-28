@@ -134,4 +134,18 @@ public interface CastingApplicationRepository
         @Param("employerProfileId") UUID employerProfileId,
         @Param("status") CastingApplicationStatusOptionEntity status
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        update CastingApplicationEntity a
+           set a.status = :status
+         where a.id in :applicationIds
+           and a.castingRole.rolesSection.casting.employerProfile.id = :employerProfileId
+           and a.deleted = false
+        """)
+    int setStatusIfOwnedBulk(
+        @Param("applicationIds") List<UUID> applicationIds,
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("status") CastingApplicationStatusOptionEntity status
+    );
 }

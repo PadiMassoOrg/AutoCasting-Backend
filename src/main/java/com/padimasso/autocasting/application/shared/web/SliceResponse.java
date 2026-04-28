@@ -6,6 +6,10 @@ public record SliceResponse<T>(
     List<T> items,
     boolean hasNext,
     int page,
-    int size
-) {}
-
+    int size,
+    Long totalCount
+) {
+    public SliceResponse(List<T> items, boolean hasNext, int page, int size) {
+        this(items, hasNext, page, size, null);
+    }
+}

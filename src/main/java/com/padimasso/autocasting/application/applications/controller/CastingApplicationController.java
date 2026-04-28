@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.applications.controller;
 
 import com.padimasso.autocasting.application.applications.dto.EmployerCastingApplicantsFilter;
 import com.padimasso.autocasting.application.applications.dto.TalentCastingApplicationsFilter;
+import com.padimasso.autocasting.application.applications.dto.request.BulkCastingApplicationStatusRequest;
 import com.padimasso.autocasting.application.applications.dto.request.CastingApplicationRequest;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantCardResponse;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantsGroupedResponse;
@@ -182,6 +183,17 @@ public class CastingApplicationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void blank(@Parameter(description = "Casting application ID.") @PathVariable UUID applicationId) {
         castingApplicationService.blankCastingApplication(applicationId);
+    }
+
+    @Operation(
+        summary = "Bulk update application status",
+        description = "Updates application status for many applications at once (owner employer only).",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(AppConstants.EMPLOYER_CASTING_APPLICATIONS_URL + "/bulk/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void bulkStatus(@Valid @RequestBody BulkCastingApplicationStatusRequest request) {
+        castingApplicationService.bulkSetCastingApplicationsStatus(request);
     }
 
 }

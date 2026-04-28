@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.applications.service.impl;
 
 import com.padimasso.autocasting.application.applications.dto.EmployerCastingApplicantsFilter;
 import com.padimasso.autocasting.application.applications.dto.TalentCastingApplicationsFilter;
+import com.padimasso.autocasting.application.applications.dto.request.BulkCastingApplicationStatusRequest;
 import com.padimasso.autocasting.application.applications.dto.request.CastingApplicationRequest;
 import com.padimasso.autocasting.application.applications.dto.response.ApplicantRequirementSubmissionRow;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantCardResponse;
@@ -345,6 +346,34 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
         setEmployerOwnedApplicationStatus(applicationId, CASTING_APPLICATION_STATUS_BLANK);
     }
 
+    @Override
+    @Transactional
+    public void bulkSetCastingApplicationsStatus(BulkCastingApplicationStatusRequest request) {
+        if (request == null || request.applicationIds() == null || request.applicationIds().isEmpty()) {
+            throw new IllegalArgumentException("applications.ids_required");
+        }
+
+        List<UUID> uniqueIds = request.applicationIds().stream()
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (uniqueIds.isEmpty()) {
+            throw new IllegalArgumentException("applications.ids_required");
+        }
+
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        UUID employerProfileId = employer.employerProfile().getId();
+
+        CastingApplicationStatusOptionEntity status =
+            siteMetadataResolver.resolveCastingApplicationStatusByCodeOrThrow(request.applicationStatus());
+
+        int updated = castingApplicationRepository.setStatusIfOwnedBulk(uniqueIds, employerProfileId, status);
+        if (updated != uniqueIds.size()) {
+            throw new IllegalArgumentException(APPLICATIONS_NOT_FOUND_OR_FORBIDDEN);
+        }
+    }
+
     // ======================
     // Internal grouping
     // ======================
@@ -418,7 +447,8 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
                 List.of(),
                 pageResult.hasNext(),
                 pageResult.getNumber(),
-                pageResult.getSize()
+                pageResult.getSize(),
+                pageResult.getTotalElements()
             );
         }
 
@@ -465,7 +495,8 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             items,
             pageResult.hasNext(),
             pageResult.getNumber(),
-            pageResult.getSize()
+            pageResult.getSize(),
+            pageResult.getTotalElements()
         );
     }
 }

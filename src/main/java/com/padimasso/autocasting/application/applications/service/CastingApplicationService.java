@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.applications.service;
 
 import com.padimasso.autocasting.application.applications.dto.EmployerCastingApplicantsFilter;
 import com.padimasso.autocasting.application.applications.dto.TalentCastingApplicationsFilter;
+import com.padimasso.autocasting.application.applications.dto.request.BulkCastingApplicationStatusRequest;
 import com.padimasso.autocasting.application.applications.dto.request.CastingApplicationRequest;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantCardResponse;
 import com.padimasso.autocasting.application.applications.dto.response.EmployerCastingApplicantsGroupedResponse;
@@ -27,4 +28,6 @@ public interface CastingApplicationService {
     void notProceedingCastingApplication(UUID applicationId);
 
     void blankCastingApplication(UUID applicationId);
+
+    void bulkSetCastingApplicationsStatus(BulkCastingApplicationStatusRequest request);
 }
