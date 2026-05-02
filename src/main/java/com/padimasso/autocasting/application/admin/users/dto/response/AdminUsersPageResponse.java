@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.admin.dto.response;
+package com.padimasso.autocasting.application.admin.users.dto.response;
 
 import java.util.List;
 

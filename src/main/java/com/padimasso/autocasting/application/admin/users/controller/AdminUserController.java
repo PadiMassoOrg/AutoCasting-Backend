@@ -1,7 +1,7 @@
-package com.padimasso.autocasting.application.admin.controller;
+package com.padimasso.autocasting.application.admin.users.controller;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
-import com.padimasso.autocasting.application.admin.service.AdminUserService;
+import com.padimasso.autocasting.application.admin.users.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.users.service.AdminUserService;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;

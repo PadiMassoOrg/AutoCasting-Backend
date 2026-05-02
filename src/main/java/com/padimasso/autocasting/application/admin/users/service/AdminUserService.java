@@ -1,6 +1,6 @@
-package com.padimasso.autocasting.application.admin.service;
+package com.padimasso.autocasting.application.admin.users.service;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.users.dto.response.AdminUsersPageResponse;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 

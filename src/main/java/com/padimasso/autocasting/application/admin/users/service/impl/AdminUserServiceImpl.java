@@ -1,8 +1,8 @@
-package com.padimasso.autocasting.application.admin.service.impl;
+package com.padimasso.autocasting.application.admin.users.service.impl;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
-import com.padimasso.autocasting.application.admin.service.AdminUserService;
+import com.padimasso.autocasting.application.admin.users.dto.response.AdminUserRowResponse;
+import com.padimasso.autocasting.application.admin.users.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.users.service.AdminUserService;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
