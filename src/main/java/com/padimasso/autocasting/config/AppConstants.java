@@ -40,8 +40,14 @@ public class AppConstants {
     // Admin
     public static final String ADMIN_API_URL = BASE_API_URL + "/admin";
     public static final String ADMIN_USERS_API_URL = ADMIN_API_URL + "/users";
+    public static final String ADMIN_NOTES_API_URL = ADMIN_API_URL + "/notes";
+    public static final String ADMIN_NOTES_BY_ENTITY_API_URL = ADMIN_NOTES_API_URL + "/entities/{entityType}/{entityId}";
+    public static final String ADMIN_NOTES_BY_RELATED_USER_API_URL = ADMIN_NOTES_API_URL + "/users/{userId}";
+    public static final String ADMIN_NOTE_BY_ID_API_URL = ADMIN_NOTES_API_URL + "/{noteId}";
     public static final String ADMIN_USER_TALENT_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/talent";
     public static final String ADMIN_USER_EMPLOYER_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/employer";
+    public static final String ADMIN_USER_BLOCK_API_URL = ADMIN_USERS_API_URL + "/{userId}/block";
+    public static final String ADMIN_USER_RESTORE_API_URL = ADMIN_USERS_API_URL + "/{userId}/restore";
     // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";

@@ -137,6 +137,10 @@ public class ApiExceptionClassifier {
             return fallbackStatus;
         }
 
+        if (messageKey.equals(AUTH_ACCOUNT_BLOCKED)) {
+            return HttpStatus.FORBIDDEN;
+        }
+
         if (messageKey.equals(AUTH_NOT_AUTHENTICATED)
             || messageKey.equals(AUTH_INVALID_PRINCIPAL)
             || messageKey.equals(AUTH_INVALID_CREDENTIALS)

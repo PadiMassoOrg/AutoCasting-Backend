@@ -11,6 +11,7 @@ public final class ErrorMessageKeys {
     public static final String AUTH_INVALID_TOKEN = "auth.invalid_token";
     public static final String AUTH_NOT_AUTHENTICATED = "auth.not_authenticated";
     public static final String AUTH_PASSWORD_RESET_EXTERNAL = "auth.password_reset_external";
+    public static final String AUTH_ACCOUNT_BLOCKED = "auth.account_blocked";
     public static final String AUTH_TOKEN_EXPIRED = "auth.token_expired";
     public static final String AUTH_USER_EXISTS = "auth.user_exists";
     public static final String AUTH_USER_NOT_FOUND = "auth.user_not_found";
@@ -46,6 +47,11 @@ public final class ErrorMessageKeys {
     public static final String CASTINGS_SECTION_NOT_FOUND = "castings.section.not_found";
     public static final String CASTINGS_SECTION_MISMATCH = "castings.section.mismatch";
     public static final String CASTINGS_ROLE_MISMATCH = "castings.role.mismatch";
+
+    public static final String ADMIN_NOTES_NOT_FOUND = "admin.notes.not_found";
+    public static final String ADMIN_NOTES_BODY_REQUIRED = "admin.notes.body_required";
+    public static final String ADMIN_USER_ALREADY_BLOCKED = "admin.user.already_blocked";
+    public static final String ADMIN_USER_ALREADY_RESTORED = "admin.user.already_restored";
 
     private ErrorMessageKeys() {
         throw new IllegalStateException("Utility class");

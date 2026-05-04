@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -29,6 +30,10 @@ public class UsernamePasswordAuthenticationProvider implements AuthenticationPro
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
+        }
+
+        if (!user.isAccountNonLocked()) {
+            throw new LockedException("Account blocked");
         }
 
         return new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

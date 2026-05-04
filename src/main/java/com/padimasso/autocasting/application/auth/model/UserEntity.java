@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -55,6 +56,15 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(name = "employer_onboarding_status", nullable = false)
     private OnboardingStatus employerOnboardingStatus = OnboardingStatus.NOT_STARTED;
 
+    @Column(nullable = false)
+    private boolean blocked = false;
+
+    @Column(name = "blocked_at")
+    private LocalDateTime blockedAt;
+
+    @Column(name = "blocked_by", length = 255)
+    private String blockedBy;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -87,6 +97,11 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Override
     public String getUsername() {
         return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !blocked;
     }
 
 }

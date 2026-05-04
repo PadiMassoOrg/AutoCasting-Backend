@@ -105,6 +105,10 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
         }
 
+        if (user.isBlocked()) {
+            throw new IllegalArgumentException(AUTH_ACCOUNT_BLOCKED);
+        }
+
         Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
             .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE)));
 
@@ -121,6 +125,10 @@ public class AuthServiceImpl implements AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
+        }
+
+        if (user.isBlocked()) {
+            throw new IllegalArgumentException(AUTH_ACCOUNT_BLOCKED);
         }
 
         boolean isAdmin = user.getRoles().stream().anyMatch(role -> "ADMIN".equals(role.getCode()));
