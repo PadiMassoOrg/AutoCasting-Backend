@@ -292,6 +292,7 @@ public class CastingMapper {
                 : entity.getRequirements().stream()
                   .filter(r -> !isSoftDeleted(r.isDeleted()))
                   .map(this::toRequirementResponse)
+                  .filter(Objects::nonNull)
                   .toList();
 
         return new CastingRequirementsSectionResponse(
