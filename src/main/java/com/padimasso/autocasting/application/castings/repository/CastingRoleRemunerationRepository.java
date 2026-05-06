@@ -20,6 +20,8 @@ public interface CastingRoleRemunerationRepository extends SoftDeleteRepository<
             left join fetch rr.payRateType
             left join fetch rr.currency
             where sec.id = :sectionId
+              and rr.deleted = false
+              and cr.deleted = false
             order by cr.createdAt desc
         """)
     List<CastingRoleRemunerationEntity> findAllByRemunerationSectionId(@Param("sectionId") UUID sectionId);

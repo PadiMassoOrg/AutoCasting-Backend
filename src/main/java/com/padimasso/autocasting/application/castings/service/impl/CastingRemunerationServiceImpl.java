@@ -169,7 +169,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         List<CastingRoleRemunerationEntity> active = entities == null
             ? List.of()
-            : entities.stream().filter(r -> r != null && !r.isDeleted()).toList();
+            : entities.stream().filter(this::isActiveRemuneration).toList();
 
         if (active.isEmpty()) return;
 
@@ -243,7 +243,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         List<CastingRoleRemunerationEntity> active = entities == null
             ? List.of()
-            : entities.stream().filter(r -> r != null && !r.isDeleted()).toList();
+            : entities.stream().filter(this::isActiveRemuneration).toList();
 
         String nextStatusCode;
         if (active.isEmpty()) {
@@ -265,7 +265,7 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
 
         List<CastingRoleRemunerationEntity> active = entities == null
             ? List.of()
-            : entities.stream().filter(r -> r != null && !r.isDeleted()).toList();
+            : entities.stream().filter(this::isActiveRemuneration).toList();
 
         if (active.isEmpty()) return;
 
@@ -283,5 +283,12 @@ public class CastingRemunerationServiceImpl implements CastingRemunerationServic
         }).toList();
 
         castingRoleRemunerationRepository.saveAll(next);
+    }
+
+    private boolean isActiveRemuneration(CastingRoleRemunerationEntity remuneration) {
+        return remuneration != null
+            && !remuneration.isDeleted()
+            && remuneration.getCastingRole() != null
+            && !remuneration.getCastingRole().isDeleted();
     }
 }

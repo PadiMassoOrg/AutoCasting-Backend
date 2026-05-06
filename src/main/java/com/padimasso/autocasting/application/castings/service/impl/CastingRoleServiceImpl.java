@@ -11,7 +11,9 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleRemunerationEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRolesSectionEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
+import com.padimasso.autocasting.application.castings.repository.CastingRequirementRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
+import com.padimasso.autocasting.application.castings.repository.CastingRoleRemunerationRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRolesSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
@@ -42,6 +44,8 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     private final CastingRolesSectionRepository castingRolesSectionRepository;
     private final CastingRoleRepository castingRoleRepository;
+    private final CastingRequirementRepository castingRequirementRepository;
+    private final CastingRoleRemunerationRepository castingRoleRemunerationRepository;
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
@@ -286,6 +290,16 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         UUID castingId = null;
         if (role.getRolesSection() != null && role.getRolesSection().getCasting() != null) {
             castingId = role.getRolesSection().getCasting().getId();
+        }
+
+        CastingRoleRemunerationEntity remuneration = role.getRemuneration();
+        if (remuneration != null && !remuneration.isDeleted()) {
+            castingRoleRemunerationRepository.softDelete(remuneration);
+        }
+
+        var requirements = castingRequirementRepository.findAllByCastingRole_IdAndDeletedFalse(roleId);
+        for (var requirement : requirements) {
+            castingRequirementRepository.softDelete(requirement);
         }
 
         castingRoleRepository.softDelete(role);

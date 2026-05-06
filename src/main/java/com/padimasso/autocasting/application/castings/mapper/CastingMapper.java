@@ -307,6 +307,8 @@ public class CastingMapper {
 
     public CastingRequirementResponse toRequirementResponse(CastingRequirementEntity entity) {
         if (entity == null) return null;
+        if (isSoftDeleted(entity.isDeleted())) return null;
+        if (entity.getCastingRole() != null && isSoftDeleted(entity.getCastingRole().isDeleted())) return null;
 
         UUID castingRoleId =
             entity.getCastingRole() != null ? entity.getCastingRole().getId() : null;
@@ -325,6 +327,7 @@ public class CastingMapper {
         if (entity == null) return null;
 
         var base = toRequirementResponse(entity);
+        if (base == null) return null;
         var roleName = entity.getCastingRole() != null ? entity.getCastingRole().getRoleName() : null;
 
         return new CastingRequirementCardResponse(
@@ -402,6 +405,7 @@ public class CastingMapper {
     public CastingRoleRemunerationRowResponse toRoleRemunerationRowResponse(CastingRoleRemunerationEntity rr) {
         if (rr == null) return null;
         if (isSoftDeleted(rr.isDeleted())) return null;
+        if (rr.getCastingRole() == null || isSoftDeleted(rr.getCastingRole().isDeleted())) return null;
 
         var base = toRoleRemunerationResponse(rr);
         if (base == null) return null;
