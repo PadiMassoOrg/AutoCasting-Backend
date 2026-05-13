@@ -4,11 +4,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
-
 public record CastingRoleRemunerationResponse(
-    UUID id,
-    UUID castingRoleId,
     boolean isComplete,
     SiteMetadataObject payRateType,
     SiteMetadataObject currency,

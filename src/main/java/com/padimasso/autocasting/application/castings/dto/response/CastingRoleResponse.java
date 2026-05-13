@@ -1,7 +1,6 @@
 package com.padimasso.autocasting.application.castings.dto.response;
 
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
-import com.padimasso.autocasting.application.talent.dto.response.CharacteristicsResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.UUID;
 
 public record CastingRoleResponse(
     UUID id,
-    UUID sectionId,
+    UUID castingId,
     String roleName,
     SiteMetadataObject roleType,
     SiteMetadataObject gender,
@@ -17,9 +16,15 @@ public record CastingRoleResponse(
     Short ageMax,
     String description,
     List<SiteMetadataObject> professions,
-    CharacteristicsResponse characteristics,
     List<SiteMetadataObject> skills,
     CastingRoleRemunerationResponse remuneration,
+    SiteMetadataObject ethnicity,
+    Boolean tattoo,
+    Boolean passport,
+    Boolean drivingLicense,
+    boolean requiresAudio,
+    boolean requiresVideo,
+    String requirementDescription,
     LocalDateTime modifiedAt
 ) {
 }

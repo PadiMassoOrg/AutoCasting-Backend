@@ -33,12 +33,20 @@ public final class ErrorMessageKeys {
     public static final String APPLICATIONS_NOT_FOUND_OR_FORBIDDEN = "applications.not_found_or_forbidden";
 
     public static final String CASTING_ID_REQUIRED = "casting.id_required";
+    public static final String CASTING_AGE_RANGE_INVALID = "casting.age_range_invalid";
+    public static final String CASTING_AMOUNT_REQUIRED = "casting.amount_required";
+    public static final String CASTING_AMOUNT_NEGATIVE = "casting.amount_negative";
+    public static final String CASTING_LOCATION_REQUIRED = "casting.location_required";
+    public static final String CASTING_PAY_RATE_TYPE_REQUIRED = "casting.pay_rate_type_required";
+    public static final String CASTING_WARDROBE_FITTING_TEXT_REQUIRED = "casting.wardrobe_fitting_text_required";
     public static final String CASTING_ROLE_REQUIRED = "casting.role.required";
     public static final String CASTING_ROLE_NOT_FOUND = "casting.role.not_found";
+    public static final String CASTING_ROLE_REMUNERATION_REQUIRED = "casting.role.remuneration.required";
     public static final String CASTING_ROLE_REMUNERATION_NOT_FOUND = "casting.role.remuneration.not_found";
     public static final String CASTING_ROLE_REQUIREMENT_ALREADY_EXISTS = "casting.role.requirement.already_exists";
 
     public static final String CASTINGS_NOT_FOUND = "castings.not_found";
+    public static final String CASTINGS_ONLY_DRAFT_EDITABLE = "castings.only_draft_editable";
     public static final String CASTINGS_NOT_PUBLISHABLE = "castings.not_publishable";
     public static final String CASTINGS_DEADLINE_REQUIRED = "castings.deadline_required";
     public static final String CASTINGS_DEADLINE_PASSED = "castings.deadline_passed";

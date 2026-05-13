@@ -22,8 +22,8 @@ public class CastingAttachmentEntity extends AuditableEntity {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casting_basic_info_id", nullable = false)
-    private CastingBasicInfoEntity castingBasicInfo;
+    @JoinColumn(name = "casting_id", nullable = false)
+    private CastingEntity casting;
 
     @Column(nullable = false, columnDefinition = "text")
     private String fileUrl;

@@ -5,7 +5,7 @@ import java.util.UUID;
 public interface ApplicationRequirementSubmissionProjection {
     UUID getApplicationId();
 
-    UUID getCastingRequirementId();
+    UUID getCastingRoleId();
 
     boolean getRequiresAudio();
 

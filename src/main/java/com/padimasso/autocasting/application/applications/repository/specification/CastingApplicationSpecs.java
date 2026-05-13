@@ -3,10 +3,8 @@ package com.padimasso.autocasting.application.applications.repository.specificat
 import com.padimasso.autocasting.application.applications.dto.EmployerCastingApplicantsFilter;
 import com.padimasso.autocasting.application.applications.dto.TalentCastingApplicationsFilter;
 import com.padimasso.autocasting.application.applications.model.CastingApplicationEntity;
-import com.padimasso.autocasting.application.castings.model.CastingBasicInfoEntity;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
-import com.padimasso.autocasting.application.castings.model.CastingRolesSectionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingModalityOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
@@ -25,9 +23,6 @@ public final class CastingApplicationSpecs {
     private CastingApplicationSpecs() {
     }
 
-    // ======================
-    // Public builders
-    // ======================
     public static Specification<CastingApplicationEntity> fromTalentFilter(TalentCastingApplicationsFilter f) {
         Specification<CastingApplicationEntity> spec = null;
         spec = and(spec, deletedFalse());
@@ -44,15 +39,12 @@ public final class CastingApplicationSpecs {
         spec = and(spec, deletedFalse());
         spec = and(spec, forEmployerAndCastingSlug(f.employerProfileId(), f.castingSlug()));
         spec = and(spec, forCastingRoleId(f.castingRoleId()));
-        spec = and(spec, employerSearchText(f.search())); // UPDATED
+        spec = and(spec, employerSearchText(f.search()));
         spec = and(spec, applicationStatusInTokens(f.applicationStatusIdTokens()));
         spec = and(spec, professionIdIn(f.professionIds()));
         return spec;
     }
 
-    // ======================
-    // Base
-    // ======================
     public static Specification<CastingApplicationEntity> deletedFalse() {
         return (root, query, cb) -> cb.isFalse(root.get("deleted"));
     }
@@ -68,8 +60,7 @@ public final class CastingApplicationSpecs {
 
         return (root, query, cb) -> {
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
-            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
-            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
+            Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
 
             return cb.and(
                 cb.equal(casting.get("defaultCode"), slug),
@@ -83,32 +74,20 @@ public final class CastingApplicationSpecs {
         return (root, query, cb) -> cb.equal(root.join("castingRole").get("id"), castingRoleId);
     }
 
-    // ======================
-    // Text search
-    // ======================
     public static Specification<CastingApplicationEntity> talentSearchText(String raw) {
         String q = safeTrim(raw);
         if (q == null) return null;
         return (root, query, cb) -> {
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
-            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
-            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
-            Join<CastingEntity, CastingBasicInfoEntity> bi = casting.join("basicInfo", JoinType.LEFT);
+            Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
             String like = toLikePattern(q);
             return cb.or(
                 cb.like(cb.lower(role.get("roleName")), like, '\\'),
-                cb.like(cb.lower(bi.get("title")), like, '\\')
+                cb.like(cb.lower(casting.get("title")), like, '\\')
             );
         };
     }
 
-    /**
-     * Employer search must filter by:
-     * - roleName (CastingRoleEntity.roleName)
-     * - talent stageName (TalentProfileEntity.basicInfo.stageName)
-     * - casting description (CastingBasicInfoEntity.description)
-     * - role description (CastingRoleEntity.description)
-     */
     public static Specification<CastingApplicationEntity> employerSearchText(String raw) {
         String q = safeTrim(raw);
         if (q == null) return null;
@@ -117,20 +96,15 @@ public final class CastingApplicationSpecs {
             assert query != null;
             query.distinct(true);
 
-            // Talent
             Join<CastingApplicationEntity, TalentProfileEntity> tp = joinOnce(root, "talentProfile", JoinType.INNER);
             Join<TalentProfileEntity, BasicInfoEntity> tbi = tp.join("basicInfo", JoinType.LEFT);
-
-            // Role + Casting + BasicInfo
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
-            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
-            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
-            Join<CastingEntity, CastingBasicInfoEntity> cbi = casting.join("basicInfo", JoinType.LEFT);
+            Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
             String like = toLikePattern(q);
 
             Expression<String> stageName = tbi.get("stageName").as(String.class);
             Expression<String> roleName = role.get("roleName").as(String.class);
-            Expression<String> castingDescription = cbi.get("description").as(String.class);
+            Expression<String> castingDescription = casting.get("description").as(String.class);
             Expression<String> roleDescription = role.get("description").as(String.class);
 
             return cb.or(
@@ -142,71 +116,56 @@ public final class CastingApplicationSpecs {
         };
     }
 
-    // ======================
-    // Filters by tokens (UUID or stringCode)
-    // ======================
     public static Specification<CastingApplicationEntity> castingStatusInTokens(List<String> tokens) {
         if (tokens == null || tokens.isEmpty() || containsNullToken(tokens)) return null;
-
         ParsedTokens parsed = parseUuidOrStringCodes(tokens);
         if (parsed.ids.isEmpty() && parsed.codes.isEmpty()) return null;
 
         return (root, query, cb) -> {
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
-            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
-            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
+            Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
             Join<CastingEntity, CastingStatusOptionEntity> status = casting.join("status", JoinType.LEFT);
 
             if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) return status.get("id").in(parsed.ids);
             if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) return status.get("stringCode").in(parsed.codes);
-
             return cb.or(status.get("id").in(parsed.ids), status.get("stringCode").in(parsed.codes));
         };
     }
 
     public static Specification<CastingApplicationEntity> projectTypeInTokens(List<String> tokens) {
         if (tokens == null || tokens.isEmpty() || containsNullToken(tokens)) return null;
-
         ParsedTokens parsed = parseUuidOrStringCodes(tokens);
         if (parsed.ids.isEmpty() && parsed.codes.isEmpty()) return null;
 
         return (root, query, cb) -> {
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
-            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
-            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
-            Join<CastingEntity, CastingBasicInfoEntity> bi = casting.join("basicInfo", JoinType.LEFT);
-            Join<CastingBasicInfoEntity, ProjectTypeOptionEntity> pt = bi.join("projectType", JoinType.LEFT);
+            Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
+            Join<CastingEntity, ProjectTypeOptionEntity> pt = casting.join("projectType", JoinType.LEFT);
 
             if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) return pt.get("id").in(parsed.ids);
             if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) return pt.get("stringCode").in(parsed.codes);
-
             return cb.or(pt.get("id").in(parsed.ids), pt.get("stringCode").in(parsed.codes));
         };
     }
 
     public static Specification<CastingApplicationEntity> modalityInTokens(List<String> tokens) {
         if (tokens == null || tokens.isEmpty() || containsNullToken(tokens)) return null;
-
         ParsedTokens parsed = parseUuidOrStringCodes(tokens);
         if (parsed.ids.isEmpty() && parsed.codes.isEmpty()) return null;
 
         return (root, query, cb) -> {
             Join<CastingApplicationEntity, CastingRoleEntity> role = joinOnce(root, "castingRole", JoinType.INNER);
-            Join<CastingRoleEntity, CastingRolesSectionEntity> rs = role.join("rolesSection", JoinType.INNER);
-            Join<CastingRolesSectionEntity, CastingEntity> casting = rs.join("casting", JoinType.INNER);
-            Join<CastingEntity, CastingBasicInfoEntity> bi = casting.join("basicInfo", JoinType.LEFT);
-            Join<CastingBasicInfoEntity, CastingModalityOptionEntity> cm = bi.join("castingModality", JoinType.LEFT);
+            Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
+            Join<CastingEntity, CastingModalityOptionEntity> cm = casting.join("castingModality", JoinType.LEFT);
 
             if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) return cm.get("id").in(parsed.ids);
             if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) return cm.get("stringCode").in(parsed.codes);
-
             return cb.or(cm.get("id").in(parsed.ids), cm.get("stringCode").in(parsed.codes));
         };
     }
 
     public static Specification<CastingApplicationEntity> applicationStatusInTokens(List<String> tokens) {
         if (tokens == null || tokens.isEmpty() || containsNullToken(tokens)) return null;
-
         ParsedTokens parsed = parseUuidOrStringCodes(tokens);
         if (parsed.ids.isEmpty() && parsed.codes.isEmpty()) return null;
 
@@ -215,14 +174,10 @@ public final class CastingApplicationSpecs {
 
             if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) return st.get("id").in(parsed.ids);
             if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) return st.get("stringCode").in(parsed.codes);
-
             return cb.or(st.get("id").in(parsed.ids), st.get("stringCode").in(parsed.codes));
         };
     }
 
-    // ======================
-    // Filters by ids
-    // ======================
     public static Specification<CastingApplicationEntity> professionIdIn(List<UUID> professionIds) {
         if (professionIds == null || professionIds.isEmpty()) return null;
 
@@ -238,15 +193,12 @@ public final class CastingApplicationSpecs {
         };
     }
 
-    // ======================
-    // Helpers
-    // ======================
     private static Specification<CastingApplicationEntity> and(
         Specification<CastingApplicationEntity> base,
         Specification<CastingApplicationEntity> next
     ) {
         if (next == null) return base;
-        return (base == null) ? next : base.and(next);
+        return base == null ? next : base.and(next);
     }
 
     private static boolean containsNullToken(List<String> tokens) {
@@ -260,8 +212,7 @@ public final class CastingApplicationSpecs {
         for (String raw : tokens) {
             if (raw == null) continue;
             String t = raw.trim();
-            if (t.isEmpty()) continue;
-            if ("NULL".equalsIgnoreCase(t)) continue;
+            if (t.isEmpty() || "NULL".equalsIgnoreCase(t)) continue;
 
             try {
                 ids.add(UUID.fromString(t));

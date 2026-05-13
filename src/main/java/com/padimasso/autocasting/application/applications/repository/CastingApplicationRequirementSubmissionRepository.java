@@ -14,14 +14,14 @@ public interface CastingApplicationRequirementSubmissionRepository extends SoftD
     @Query("""
         select
             s.application.id as applicationId,
-            cr.id as castingRequirementId,
+            cr.id as castingRoleId,
             cr.requiresAudio as requiresAudio,
             cr.requiresVideo as requiresVideo,
             s.audioUrl as audioUrl,
             s.videoUrl as videoUrl,
             s.notes as notes
         from CastingApplicationRequirementSubmissionEntity s
-            join s.castingRequirement cr
+            join s.castingRole cr
         where s.deleted = false
           and s.application.id in :applicationIds
         """)

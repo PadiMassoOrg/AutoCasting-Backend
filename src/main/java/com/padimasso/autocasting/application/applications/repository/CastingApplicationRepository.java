@@ -41,7 +41,7 @@ public interface CastingApplicationRepository
         from CastingApplicationEntity ca
         where ca.deleted = false
           and ca.talentProfile.id = :talentProfileId
-          and ca.castingRole.rolesSection.casting.id = :castingId
+          and ca.castingRole.casting.id = :castingId
         """)
     List<UUID> findAppliedRoleIdsByTalentProfileIdAndCastingId(
         @Param("talentProfileId") UUID talentProfileId,
@@ -60,14 +60,12 @@ public interface CastingApplicationRepository
         "castingRole.gender",
         "castingRole.professions",
         "castingRole.roleType",
-        "castingRole.rolesSection",
-        "castingRole.rolesSection.casting",
-        "castingRole.rolesSection.casting.basicInfo",
-        "castingRole.rolesSection.casting.basicInfo.projectType",
-        "castingRole.rolesSection.casting.basicInfo.castingModality",
-        "castingRole.rolesSection.casting.status",
-        "castingRole.rolesSection.casting.employerProfile",
-        "castingRole.rolesSection.casting.employerProfile.basicInfo"
+        "castingRole.casting",
+        "castingRole.casting.projectType",
+        "castingRole.casting.castingModality",
+        "castingRole.casting.status",
+        "castingRole.casting.employerProfile",
+        "castingRole.casting.employerProfile.basicInfo"
     })
     @Query("""
         select distinct a
@@ -85,9 +83,9 @@ public interface CastingApplicationRepository
 
         // Role + Casting
         "castingRole",
-        "castingRole.rolesSection",
-        "castingRole.rolesSection.casting",
-        "castingRole.rolesSection.casting.basicInfo",
+        "castingRole.casting",
+        "castingRole.casting.projectType",
+        "castingRole.casting.castingModality",
 
         // Talent
         "talentProfile",
@@ -126,7 +124,7 @@ public interface CastingApplicationRepository
         update CastingApplicationEntity a
            set a.status = :status
          where a.id = :applicationId
-           and a.castingRole.rolesSection.casting.employerProfile.id = :employerProfileId
+           and a.castingRole.casting.employerProfile.id = :employerProfileId
            and a.deleted = false
         """)
     int setStatusIfOwned(
@@ -140,7 +138,7 @@ public interface CastingApplicationRepository
         update CastingApplicationEntity a
            set a.status = :status
          where a.id in :applicationIds
-           and a.castingRole.rolesSection.casting.employerProfile.id = :employerProfileId
+           and a.castingRole.casting.employerProfile.id = :employerProfileId
            and a.deleted = false
         """)
     int setStatusIfOwnedBulk(

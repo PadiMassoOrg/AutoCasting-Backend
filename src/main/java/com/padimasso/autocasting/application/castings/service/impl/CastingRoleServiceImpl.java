@@ -4,25 +4,16 @@ import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFil
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
-import com.padimasso.autocasting.application.castings.dto.response.section.CastingRolesSectionResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
-import com.padimasso.autocasting.application.castings.model.CastingRoleCharacteristicsEntity;
+import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
-import com.padimasso.autocasting.application.castings.model.CastingRoleRemunerationEntity;
-import com.padimasso.autocasting.application.castings.model.CastingRolesSectionEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
-import com.padimasso.autocasting.application.castings.repository.CastingRequirementRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
-import com.padimasso.autocasting.application.castings.repository.CastingRoleRemunerationRepository;
-import com.padimasso.autocasting.application.castings.repository.CastingRolesSectionRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
-import com.padimasso.autocasting.application.castings.service.internal.CastingRemunerationSectionStatusService;
-import com.padimasso.autocasting.application.castings.service.internal.CastingStatusService;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
-import com.padimasso.autocasting.application.sitemetadata.model.*;
-import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
+import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -34,7 +25,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.config.AppConstants.CURRENCY_ARS;
+import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT;
+import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
+import static com.padimasso.autocasting.config.AppConstants.PAY_RATE_TYPE_UNPAID;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Service
@@ -42,132 +36,37 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @SuppressWarnings("unused")
 public class CastingRoleServiceImpl implements CastingRoleService {
 
-    private final CastingRolesSectionRepository castingRolesSectionRepository;
     private final CastingRoleRepository castingRoleRepository;
-    private final CastingRequirementRepository castingRequirementRepository;
-    private final CastingRoleRemunerationRepository castingRoleRemunerationRepository;
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
-    private final CastingRemunerationSectionStatusService remunerationSectionStatusService;
-    private final CastingStatusService castingStatusService;
     private final CastingMapper castingMapper;
 
     @Override
     @Transactional
     public CastingRoleResponse createCastingRole(CastingRoleRequest request) {
+        CastingEntity casting = castingRepository.findByIdAndDeletedFalse(request.castingId())
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
+        assertDraftEditable(casting);
 
-        CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(request.rolesSectionId())
-            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
-
-        Set<UUID> professionIds = request.professionIds() == null ? Set.of() : request.professionIds();
-        var foundProfessions = new HashSet<>(siteMetadataResolver.resolveProfessionsOrThrow(professionIds));
-
-        RoleTypeOptionEntity foundRoleType = siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId());
-
-        GenderOptionEntity foundGender = siteMetadataResolver.resolveGenderOrThrow(request.genderId());
-
-        PayRateTypeOptionEntity payRateTypeUnpaid = siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
-
-        CurrencyOptionEntity currencyARS = siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS);
-
-        var newRole = CastingRoleEntity.builder()
-            .rolesSection(foundSection)
-            .roleName(request.roleName())
-            .professions(foundProfessions)
-            .roleType(foundRoleType)
-            .gender(foundGender)
-            .ageMin(request.ageMin())
-            .ageMax(request.ageMax())
+        CastingRoleEntity role = CastingRoleEntity.builder()
+            .casting(casting)
             .build();
 
-        if (request.description().isPresent()) newRole.setDescription(TextNormalizer.normalizeNullable(request.description().orElse(null)));
-        if (request.skillIds().isPresent()) {
-            Set<UUID> skillIds = request.skillIds().get();
-            var foundSkills = new HashSet<>(siteMetadataResolver.resolveSkillsOrThrow(skillIds));
-            newRole.setSkills(foundSkills);
-        }
-
-        CastingRoleCharacteristicsEntity newCharacteristics = CastingRoleCharacteristicsEntity.builder()
-            .castingRole(newRole)
-            .build();
-
-        if (request.characteristics().isPresent()) {
-            var ch = request.characteristics().get();
-            if (ch.heightCm().isPresent()) newCharacteristics.setHeightCm(ch.heightCm().orElse(null));
-            if (ch.ethnicityId() != null) {
-                EthnicityOptionEntity ethnicityOption = siteMetadataResolver.resolveEthnicityOrThrow(ch.ethnicityId());
-                newCharacteristics.setEthnicity(ethnicityOption);
-            }
-            if (ch.weightKg().isPresent()) newCharacteristics.setWeightKg(ch.weightKg().orElse(null));
-            if (ch.hairColorId() != null) {
-                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.hairColorId());
-                newCharacteristics.setHairColor(color);
-            }
-            if (ch.eyeColorId() != null) {
-                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.eyeColorId());
-                newCharacteristics.setEyeColor(color);
-            }
-            if (ch.chestCm().isPresent()) newCharacteristics.setChestCm(TextNormalizer.normalizeNullable(ch.chestCm().orElse(null)));
-            if (ch.waistCm().isPresent()) newCharacteristics.setWaistCm(TextNormalizer.normalizeNullable(ch.waistCm().orElse(null)));
-            if (ch.hipCm().isPresent()) newCharacteristics.setHipCm(TextNormalizer.normalizeNullable(ch.hipCm().orElse(null)));
-            if (ch.shirtSize().isPresent()) newCharacteristics.setShirtSize(TextNormalizer.normalizeNullable(ch.shirtSize().orElse(null)));
-            if (ch.pantSize().isPresent()) newCharacteristics.setPantSize(TextNormalizer.normalizeNullable(ch.pantSize().orElse(null)));
-            if (ch.dressSize().isPresent()) newCharacteristics.setDressSize(TextNormalizer.normalizeNullable(ch.dressSize().orElse(null)));
-            if (ch.shoeSize().isPresent()) newCharacteristics.setShoeSize(TextNormalizer.normalizeNullable(ch.shoeSize().orElse(null)));
-            if (ch.tattoo().isPresent()) newCharacteristics.setTattoo(ch.tattoo().orElse(null));
-            if (ch.passport().isPresent()) newCharacteristics.setPassport(ch.passport().orElse(null));
-            if (ch.drivingLicense().isPresent()) newCharacteristics.setDrivingLicense(ch.drivingLicense().orElse(null));
-            if (ch.dietOptionId() != null) {
-                DietOptionEntity diet = siteMetadataResolver.resolveDietOrThrow(ch.dietOptionId());
-                newCharacteristics.setDietOption(diet);
-            }
-        }
-
-        CastingRoleRemunerationEntity newRemuneration = CastingRoleRemunerationEntity.builder()
-            .castingRole(newRole)
-            .payRateType(payRateTypeUnpaid)
-            .currency(currencyARS)
-            .build();
-
-        newRole.setCharacteristics(newCharacteristics);
-        newRole.setRemuneration(newRemuneration);
-
-        CastingRoleEntity saved = castingRoleRepository.save(newRole);
-
-        if (foundSection.getId() != null) {
-            updateSectionStatus(foundSection.getId());
-        }
-
-        UUID castingId = foundSection.getCasting() != null ? foundSection.getCasting().getId() : null;
-        if (castingId != null) {
-            remunerationSectionStatusService.recomputeForCasting(castingId);
-            castingStatusService.recomputeAfterSectionChange(castingId);
-        }
-
-        return castingMapper.toRoleResponse(saved);
-    }
-
-    @Override
-    public CastingRolesSectionResponse getBySectionId(UUID sectionId) {
-        CastingRolesSectionEntity foundSection = castingRolesSectionRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
-        return castingMapper.toRolesSectionResponsePublic(foundSection);
+        applyRoleData(role, request);
+        return castingMapper.toRoleResponse(castingRoleRepository.save(role));
     }
 
     @Override
     @Transactional
-    public List<CastingRoleEmployerCardResponse> getCastingRolesBySectionId(EmployerCastingRoleFilter incomingFilter, int page, int size) {
-        var spec = CastingRoleSpecs.fromEmployerFilter(incomingFilter);
-
+    public List<CastingRoleEmployerCardResponse> getCastingRolesByCastingId(EmployerCastingRoleFilter filter, int page, int size) {
         var pageable = PageRequest.of(
             page,
             Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        var result = castingRoleRepository.findAll(spec, pageable);
-
-        return result.getContent()
+        return castingRoleRepository.findAll(CastingRoleSpecs.fromEmployerFilter(filter), pageable)
+            .getContent()
             .stream()
             .map(castingMapper::toEmployerRoleCardResponse)
             .toList();
@@ -176,160 +75,112 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     @Transactional
     public CastingRoleResponse updateCastingRole(UUID roleId, CastingRoleRequest request) {
-        CastingRoleEntity role = castingRoleRepository.findById(roleId)
+        CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
-        if (role.getRolesSection() == null || role.getRolesSection().getId() == null) {
-            throw new IllegalStateException(CASTINGS_SECTION_NOT_FOUND);
+
+        if (role.getCasting() == null || !role.getCasting().getId().equals(request.castingId())) {
+            throw new IllegalArgumentException(CASTINGS_ROLE_MISMATCH);
         }
-        if (!role.getRolesSection().getId().equals(request.rolesSectionId())) {
-            throw new IllegalArgumentException(CASTINGS_SECTION_MISMATCH);
-        }
+        assertDraftEditable(role.getCasting());
 
-        var foundRoleType = siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId());
-        var foundGender = siteMetadataResolver.resolveGenderOrThrow(request.genderId());
-        Set<UUID> professionIds = request.professionIds() == null ? Set.of() : request.professionIds();
-        var foundProfessions = new HashSet<>(siteMetadataResolver.resolveProfessionsOrThrow(professionIds));
-
-        role.setRoleName(request.roleName());
-        role.setRoleType(foundRoleType);
-        role.setGender(foundGender);
-        role.setAgeMin(request.ageMin());
-        role.setAgeMax(request.ageMax());
-        role.setProfessions(foundProfessions);
-
-        role.setDescription(TextNormalizer.normalizeNullable(request.description().orElse(null)));
-        if (request.skillIds().isPresent()) {
-            Set<UUID> skillIds = request.skillIds().get();
-            var foundSkills = new HashSet<>(siteMetadataResolver.resolveSkillsOrThrow(skillIds));
-            role.setSkills(foundSkills);
-        }
-
-        CastingRoleCharacteristicsEntity characteristics = role.getCharacteristics();
-        if (characteristics == null) {
-            characteristics = CastingRoleCharacteristicsEntity.builder()
-                .castingRole(role)
-                .build();
-            role.setCharacteristics(characteristics);
-        }
-
-        CastingRoleRemunerationEntity remuneration = role.getRemuneration();
-        if (remuneration == null) {
-            remuneration = CastingRoleRemunerationEntity.builder()
-                .castingRole(role)
-                .build();
-            role.setRemuneration(remuneration);
-        }
-
-        if (request.characteristics().isPresent()) {
-            var ch = request.characteristics().get();
-
-            if (ch.heightCm().isPresent()) characteristics.setHeightCm(ch.heightCm().orElse(null));
-            if (ch.weightKg().isPresent()) characteristics.setWeightKg(ch.weightKg().orElse(null));
-            if (ch.chestCm().isPresent()) characteristics.setChestCm(TextNormalizer.normalizeNullable(ch.chestCm().orElse(null)));
-            if (ch.waistCm().isPresent()) characteristics.setWaistCm(TextNormalizer.normalizeNullable(ch.waistCm().orElse(null)));
-            if (ch.hipCm().isPresent()) characteristics.setHipCm(TextNormalizer.normalizeNullable(ch.hipCm().orElse(null)));
-            if (ch.shirtSize().isPresent()) characteristics.setShirtSize(TextNormalizer.normalizeNullable(ch.shirtSize().orElse(null)));
-            if (ch.pantSize().isPresent()) characteristics.setPantSize(TextNormalizer.normalizeNullable(ch.pantSize().orElse(null)));
-            if (ch.dressSize().isPresent()) characteristics.setDressSize(TextNormalizer.normalizeNullable(ch.dressSize().orElse(null)));
-            if (ch.shoeSize().isPresent()) characteristics.setShoeSize(TextNormalizer.normalizeNullable(ch.shoeSize().orElse(null)));
-
-            if (ch.tattoo().isPresent()) characteristics.setTattoo(ch.tattoo().orElse(null));
-            if (ch.passport().isPresent()) characteristics.setPassport(ch.passport().orElse(null));
-            if (ch.drivingLicense().isPresent()) characteristics.setDrivingLicense(ch.drivingLicense().orElse(null));
-
-            if (ch.ethnicityId() != null) {
-                EthnicityOptionEntity ethnicityOption = siteMetadataResolver.resolveEthnicityOrThrow(ch.ethnicityId());
-                characteristics.setEthnicity(ethnicityOption);
-            } else {
-                characteristics.setEthnicity(null);
-            }
-
-            if (ch.hairColorId() != null) {
-                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.hairColorId());
-                characteristics.setHairColor(color);
-            } else {
-                characteristics.setHairColor(null);
-            }
-
-            if (ch.eyeColorId() != null) {
-                ColorOptionEntity color = siteMetadataResolver.resolveColorOrThrow(ch.eyeColorId());
-                characteristics.setEyeColor(color);
-            } else {
-                characteristics.setEyeColor(null);
-            }
-
-            if (ch.dietOptionId() != null) {
-                DietOptionEntity diet = siteMetadataResolver.resolveDietOrThrow(ch.dietOptionId());
-                characteristics.setDietOption(diet);
-            } else {
-                characteristics.setDietOption(null);
-            }
-        }
-
-        CastingRoleEntity saved = castingRoleRepository.save(role);
-
-        UUID castingId = role.getRolesSection() != null && role.getRolesSection().getCasting() != null
-            ? role.getRolesSection().getCasting().getId()
-            : null;
-
-        if (castingId != null) {
-            castingStatusService.recomputeAfterSectionChange(castingId);
-        }
-
-        return castingMapper.toRoleResponse(saved);
+        applyRoleData(role, request);
+        return castingMapper.toRoleResponse(castingRoleRepository.save(role));
     }
 
     @Override
     @Transactional
     public LastModifiedResponse deleteCastingRole(UUID roleId) {
-        CastingRoleEntity role = castingRoleRepository.findById(roleId)
+        CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        assertDraftEditable(role.getCasting());
 
-        UUID sectionId = role.getRolesSection() != null ? role.getRolesSection().getId() : null;
-
-        UUID castingId = null;
-        if (role.getRolesSection() != null && role.getRolesSection().getCasting() != null) {
-            castingId = role.getRolesSection().getCasting().getId();
-        }
-
-        CastingRoleRemunerationEntity remuneration = role.getRemuneration();
-        if (remuneration != null && !remuneration.isDeleted()) {
-            castingRoleRemunerationRepository.softDelete(remuneration);
-        }
-
-        var requirements = castingRequirementRepository.findAllByCastingRole_IdAndDeletedFalse(roleId);
-        for (var requirement : requirements) {
-            castingRequirementRepository.softDelete(requirement);
-        }
-
+        UUID castingId = role.getCasting() != null ? role.getCasting().getId() : null;
         castingRoleRepository.softDelete(role);
 
-        if (sectionId != null) {
-            updateSectionStatus(sectionId);
-        }
-
-        if (castingId != null) {
-            remunerationSectionStatusService.recomputeForCasting(castingId);
-            castingStatusService.recomputeAfterSectionChange(castingId);
-            castingRepository.touchModifiedAt(castingId);
-            return new LastModifiedResponse(castingRepository.findModifiedAtById(castingId));
-        }
-
-        return new LastModifiedResponse(null);
+        return new LastModifiedResponse(
+            castingId == null
+                ? null
+                : castingRepository.findByIdAndDeletedFalse(castingId).map(CastingEntity::getModifiedAt).orElse(null)
+        );
     }
 
-    private void updateSectionStatus(UUID sectionId) {
-        CastingRolesSectionEntity section = castingRolesSectionRepository.findById(sectionId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_SECTION_NOT_FOUND));
+    @Override
+    public CastingRoleResponse getById(UUID roleId) {
+        return castingRoleRepository.findByIdAndDeletedFalse(roleId)
+            .map(castingMapper::toRoleResponse)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+    }
 
-        long activeCount = castingRoleRepository.countByRolesSectionIdAndDeletedFalse(sectionId);
+    private void applyRoleData(CastingRoleEntity role, CastingRoleRequest request) {
+        role.setRoleName(TextNormalizer.normalizeNullable(request.roleName()));
+        role.setRoleType(siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId()));
+        role.setGender(siteMetadataResolver.resolveGenderOrThrow(request.genderId()));
+        role.setAgeMin(request.ageMin());
+        role.setAgeMax(request.ageMax());
+        role.setDescription(TextNormalizer.normalizeNullable(request.description()));
 
-        String nextStatusCode = activeCount >= 1
-            ? CASTING_SECTION_STATUS_COMPLETED
-            : CASTING_SECTION_STATUS_IN_PROGRESS;
+        Set<UUID> professionIds = request.professionIds() == null ? Set.of() : request.professionIds();
+        role.setProfessions(new HashSet<>(siteMetadataResolver.resolveProfessionsOrThrow(professionIds)));
 
-        CastingSectionStatusOptionEntity status = siteMetadataResolver.resolveCastingSectionStatusByCodeOrThrow(nextStatusCode);
-        section.setSectionStatus(status);
-        castingRolesSectionRepository.save(section);
+        Set<UUID> skillIds = request.skillIds() == null ? Set.of() : request.skillIds();
+        role.setSkills(new HashSet<>(siteMetadataResolver.resolveSkillsOrThrow(skillIds)));
+
+        role.setPayRateType(siteMetadataResolver.resolvePayRateTypeOrThrow(request.payRateTypeId()));
+        role.setCurrency(request.currencyId() != null ? siteMetadataResolver.resolveCurrencyOrThrow(request.currencyId()) : null);
+        role.setAmount(request.amount());
+        role.setRemunerationNotes(TextNormalizer.normalizeNullable(request.remunerationNotes()));
+
+        role.setRequiresAudio(Boolean.TRUE.equals(request.requiresAudio()));
+        role.setRequiresVideo(Boolean.TRUE.equals(request.requiresVideo()));
+        role.setRequirementDescription(TextNormalizer.normalizeNullable(request.requirementDescription()));
+
+        role.setEthnicity(request.ethnicityId() != null ? siteMetadataResolver.resolveEthnicityOrThrow(request.ethnicityId()) : null);
+        role.setTattoo(request.tattoo());
+        role.setPassport(request.passport());
+        role.setDrivingLicense(request.drivingLicense());
+
+        validateRole(role);
+    }
+
+    private void validateRole(CastingRoleEntity role) {
+        if (role.getAgeMin() != null && role.getAgeMax() != null && role.getAgeMin() > role.getAgeMax()) {
+            throw new IllegalArgumentException(CASTING_AGE_RANGE_INVALID);
+        }
+
+        if (role.getAmount() != null && role.getAmount().signum() < 0) {
+            throw new IllegalArgumentException(CASTING_AMOUNT_NEGATIVE);
+        }
+
+        String payRateCode = role.getPayRateType() != null ? role.getPayRateType().getStringCode() : null;
+        boolean isUnpaidLike = PAY_RATE_TYPE_UNPAID.equals(payRateCode)
+            || endsWith(payRateCode, ".collaborative")
+            || endsWith(payRateCode, ".cooperative");
+
+        if (isUnpaidLike) {
+            role.setAmount(null);
+            if ((endsWith(payRateCode, ".collaborative") || endsWith(payRateCode, ".cooperative")) && role.getCurrency() == null) {
+                role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
+            }
+            return;
+        }
+
+        if (role.getAmount() == null) {
+            throw new IllegalArgumentException(CASTING_AMOUNT_REQUIRED);
+        }
+
+        if (role.getCurrency() == null) {
+            role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
+        }
+    }
+
+    private boolean endsWith(String value, String suffix) {
+        return value != null && value.endsWith(suffix);
+    }
+
+    private void assertDraftEditable(CastingEntity casting) {
+        String statusCode = casting != null && casting.getStatus() != null ? casting.getStatus().getStringCode() : null;
+        if (!CASTING_STATUS_DRAFT.equals(statusCode)) {
+            throw new IllegalStateException(CASTINGS_ONLY_DRAFT_EDITABLE);
+        }
     }
 }

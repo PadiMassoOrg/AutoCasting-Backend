@@ -18,90 +18,68 @@ import java.util.UUID;
 
 public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleEntity, UUID> {
 
-    long countByRolesSectionIdAndDeletedFalse(UUID rolesSectionId);
-
     @Override
-    Page<CastingRoleEntity> findAll(@Nullable Specification<CastingRoleEntity> spec, Pageable pageable);
-
     @EntityGraph(attributePaths = {
-        // Sección y casting padre
-        "rolesSection",
-        "rolesSection.casting",
-        "rolesSection.casting.basicInfo",
-        "rolesSection.casting.basicInfo.projectType",
-        "rolesSection.casting.basicInfo.castingModality",
-        "rolesSection.casting.employerProfile",
-        "rolesSection.casting.employerProfile.basicInfo",
-
-        // Metadata propia del rol
+        "casting",
+        "casting.projectType",
+        "casting.castingModality",
+        "casting.status",
+        "casting.employerProfile",
+        "casting.employerProfile.basicInfo",
         "professions",
         "roleType",
         "gender",
         "skills",
-        "remuneration",
-        "remuneration.currency",
-        "remuneration.payRateType",
-
-        // Subentidades del rol
-        "characteristics",
-        "characteristics.hairColor",
-        "characteristics.eyeColor",
-        "characteristics.ethnicity",
-        "characteristics.dietOption"
+        "payRateType",
+        "currency",
+        "ethnicity"
     })
-    @Query("""
-        select distinct r
-        from CastingRoleEntity r
-        where r.id in :ids
-        """)
-    List<CastingRoleEntity> findAllPublicCardsByIdIn(
-        @Param("ids") List<UUID> ids
-    );
+    Page<CastingRoleEntity> findAll(@Nullable Specification<CastingRoleEntity> spec, Pageable pageable);
 
-    List<CastingRoleEntity> findAllByRolesSection_Casting_IdAndIdInAndDeletedFalse(
-        UUID castingId,
-        Collection<UUID> roleIds
-    );
-
-    // Internal
-    long countByRolesSection_Casting_IdAndDeletedFalse(UUID castingId);
-
-    @Query("""
-        select (count(r) > 0)
-        from CastingRoleEntity r
-            left join r.remuneration rem
-            left join rem.payRateType pr
-        where r.rolesSection.casting.id = :castingId
-          and r.deleted = false
-          and (
-                rem is null
-                or pr is null
-                or rem.currency is null
-                or (
-                    pr.stringCode <> :unpaidCode
-                    and (rem.amount is null or rem.amount <= 0)
-                )
-          )
-        """)
-    boolean existsIncompleteRemunerationByCastingId(
-        @Param("castingId") UUID castingId,
-        @Param("unpaidCode") String unpaidCode
-    );
-
+    @EntityGraph(attributePaths = {
+        "casting",
+        "casting.projectType",
+        "casting.castingModality",
+        "casting.status",
+        "casting.employerProfile",
+        "casting.employerProfile.basicInfo",
+        "professions",
+        "roleType",
+        "gender",
+        "skills",
+        "payRateType",
+        "currency",
+        "ethnicity"
+    })
     Optional<CastingRoleEntity> findByIdAndDeletedFalse(UUID roleId);
+
+    @EntityGraph(attributePaths = {
+        "casting",
+        "casting.projectType",
+        "casting.castingModality",
+        "professions",
+        "roleType",
+        "gender",
+        "skills",
+        "payRateType",
+        "currency",
+        "ethnicity"
+    })
+    List<CastingRoleEntity> findAllByCasting_IdAndDeletedFalse(UUID castingId);
+
+    List<CastingRoleEntity> findAllByCasting_IdAndIdInAndDeletedFalse(UUID castingId, Collection<UUID> roleIds);
+
+    long countByCasting_IdAndDeletedFalse(UUID castingId);
 
     @Query("""
         select
             r.id as roleId,
             r.roleName as roleName
         from CastingRoleEntity r
-            join r.rolesSection rs
-            join rs.casting c
         where r.deleted = false
-          and rs.deleted = false
-          and c.deleted = false
-          and c.defaultCode = :slug
-          and c.employerProfile.id = :employerProfileId
+          and r.casting.deleted = false
+          and r.casting.defaultCode = :slug
+          and r.casting.employerProfile.id = :employerProfileId
         order by lower(r.roleName) asc, r.id asc
         """)
     List<CastingRoleKeyProjection> findRoleKeysByCastingSlugAndEmployer(

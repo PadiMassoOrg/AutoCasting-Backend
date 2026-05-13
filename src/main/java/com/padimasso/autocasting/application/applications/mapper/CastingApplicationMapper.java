@@ -14,23 +14,22 @@ public class CastingApplicationMapper {
 
     public TalentCastingApplicationCardResponse toTalentCardFromEntity(CastingApplicationEntity a) {
         var role = a.getCastingRole();
-        var casting = role.getRolesSection().getCasting();
-        var bi = casting.getBasicInfo();
+        var casting = role.getCasting();
         var employerProfile = casting.getEmployerProfile();
         var employerBasicInfo = employerProfile != null ? employerProfile.getBasicInfo() : null;
 
         return new TalentCastingApplicationCardResponse(
             role.getRoleName(),
-            bi != null ? bi.getTitle() : null,
-            bi != null && bi.getProjectType() != null ? new SiteMetadataObject(
-                bi.getProjectType().getId(),
-                bi.getProjectType().getStringCode(),
-                bi.getProjectType().getCategoryStringCode()
+            casting != null ? casting.getTitle() : null,
+            casting != null && casting.getProjectType() != null ? new SiteMetadataObject(
+                casting.getProjectType().getId(),
+                casting.getProjectType().getStringCode(),
+                casting.getProjectType().getCategoryStringCode()
             ) : null,
-            bi != null && bi.getCastingModality() != null ? new SiteMetadataObject(
-                bi.getCastingModality().getId(),
-                bi.getCastingModality().getStringCode(),
-                bi.getCastingModality().getCategoryStringCode()
+            casting != null && casting.getCastingModality() != null ? new SiteMetadataObject(
+                casting.getCastingModality().getId(),
+                casting.getCastingModality().getStringCode(),
+                casting.getCastingModality().getCategoryStringCode()
             ) : null,
             casting.getStatus() != null ? new SiteMetadataObject(
                 casting.getStatus().getId(),
@@ -41,9 +40,9 @@ public class CastingApplicationMapper {
             casting.getDefaultCode(),
             employerBasicInfo != null ? employerBasicInfo.getCompanyName() : null,
             employerBasicInfo != null ? employerBasicInfo.getImageUrl() : null,
-            bi != null ? bi.getCastingModalityText() : null,
-            bi != null ? bi.getShootingStartDate() : null,
-            bi != null ? bi.getShootingEndDate() : null,
+            casting != null ? casting.getLocationText() : null,
+            casting != null ? casting.getShootingStartDate() : null,
+            casting != null ? casting.getShootingEndDate() : null,
             role.getGender() != null ? new SiteMetadataObject(
                 role.getGender().getId(),
                 role.getGender().getStringCode(),
@@ -76,10 +75,7 @@ public class CastingApplicationMapper {
         var contact = tp != null ? tp.getContact() : null;
         var media = tp != null ? tp.getMedia() : null;
         var role = a.getCastingRole();
-        var casting = (role != null && role.getRolesSection() != null)
-            ? role.getRolesSection().getCasting()
-            : null;
-        var castingBasic = casting != null ? casting.getBasicInfo() : null;
+        var casting = role != null ? role.getCasting() : null;
         SiteMetadataObject status = a.getStatus() != null
             ? new SiteMetadataObject(
             a.getStatus().getId(),
@@ -97,7 +93,7 @@ public class CastingApplicationMapper {
             contact != null ? contact.getEmail() : null,
             contact != null ? contact.getPhoneNumber() : null,
             // Casting / Role
-            castingBasic != null ? castingBasic.getTitle() : null,
+            casting != null ? casting.getTitle() : null,
             role != null ? role.getRoleName() : null,
             role != null ? role.getId().toString() : null,
             casting != null ? casting.getDefaultCode() : null,
