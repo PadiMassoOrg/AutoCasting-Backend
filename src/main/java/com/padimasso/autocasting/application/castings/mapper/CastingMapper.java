@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.castings.mapper;
 import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEditorListItemResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRolePublicCardResponse;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
@@ -153,6 +154,16 @@ public class CastingMapper {
         );
     }
 
+    public CastingRoleEditorListItemResponse toEditorRoleListItemResponse(CastingRoleEntity role) {
+        if (role == null || role.isDeleted()) return null;
+
+        return new CastingRoleEditorListItemResponse(
+            role.getId(),
+            role.getRoleName(),
+            role.getModifiedAt()
+        );
+    }
+
     public CastingRoleResponse toRoleResponse(CastingRoleEntity role) {
         if (role == null || role.isDeleted()) return null;
 
@@ -248,11 +259,11 @@ public class CastingMapper {
     public EmployerCastingEditorResponse toEmployerCastingEditorResponse(CastingEntity casting, boolean publishable) {
         if (casting == null) return null;
 
-        List<CastingRoleEmployerCardResponse> roles = casting.getRoles() == null
+        List<CastingRoleEditorListItemResponse> roles = casting.getRoles() == null
             ? List.of()
             : casting.getRoles().stream()
                 .filter(role -> role != null && !role.isDeleted())
-                .map(this::toEmployerRoleCardResponse)
+                .map(this::toEditorRoleListItemResponse)
                 .toList();
 
         return new EmployerCastingEditorResponse(
@@ -273,7 +284,7 @@ public class CastingMapper {
             publishable,
             maxModifiedAt(
                 casting.getModifiedAt(),
-                roles.stream().map(CastingRoleEmployerCardResponse::modifiedAt).toArray(LocalDateTime[]::new)
+                roles.stream().map(CastingRoleEditorListItemResponse::modifiedAt).toArray(LocalDateTime[]::new)
             )
         );
     }

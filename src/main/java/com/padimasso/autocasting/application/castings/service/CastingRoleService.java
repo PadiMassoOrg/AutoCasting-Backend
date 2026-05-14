@@ -20,4 +20,6 @@ public interface CastingRoleService {
     LastModifiedResponse deleteCastingRole(UUID roleId);
 
     CastingRoleResponse getById(UUID roleId);
+
+    CastingRoleResponse duplicateCastingRole(UUID roleId);
 }

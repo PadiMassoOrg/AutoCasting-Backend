@@ -1,6 +1,6 @@
 package com.padimasso.autocasting.application.castings.dto.response;
 
-import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
+import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEditorListItemResponse;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 
 import java.time.LocalDate;
@@ -22,7 +22,7 @@ public record EmployerCastingEditorResponse(
     LocalDate shootingStartDate,
     LocalDate shootingEndDate,
     String description,
-    List<CastingRoleEmployerCardResponse> roles,
+    List<CastingRoleEditorListItemResponse> roles,
     boolean publishable,
     LocalDateTime modifiedAt
 ) {

@@ -62,4 +62,10 @@ public class CastingRoleController {
     public ResponseEntity<LastModifiedResponse> deleteCastingRole(@PathVariable UUID roleId) {
         return ResponseEntity.ok(castingRoleService.deleteCastingRole(roleId));
     }
+
+    @PostMapping(AppConstants.CASTING_ROLE_URL + "/{roleId}/duplicate")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<CastingRoleResponse> duplicateCastingRole(@PathVariable UUID roleId) {
+        return ResponseEntity.ok(castingRoleService.duplicateCastingRole(roleId));
+    }
 }

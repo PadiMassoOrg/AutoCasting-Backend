@@ -36,6 +36,8 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @SuppressWarnings("unused")
 public class CastingRoleServiceImpl implements CastingRoleService {
 
+    private static final String DUPLICATED_ROLE_PREFIX = "Copy of ";
+
     private final CastingRoleRepository castingRoleRepository;
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
@@ -111,6 +113,40 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
     }
 
+    @Override
+    @Transactional
+    public CastingRoleResponse duplicateCastingRole(UUID roleId) {
+        CastingRoleEntity sourceRole = castingRoleRepository.findByIdAndDeletedFalse(roleId)
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        assertDraftEditable(sourceRole.getCasting());
+
+        CastingRoleEntity duplicatedRole = CastingRoleEntity.builder()
+            .casting(sourceRole.getCasting())
+            .roleName(buildDuplicatedRoleName(sourceRole.getRoleName()))
+            .roleType(sourceRole.getRoleType())
+            .gender(sourceRole.getGender())
+            .ageMin(sourceRole.getAgeMin())
+            .ageMax(sourceRole.getAgeMax())
+            .description(sourceRole.getDescription())
+            .payRateType(sourceRole.getPayRateType())
+            .currency(sourceRole.getCurrency())
+            .amount(sourceRole.getAmount())
+            .remunerationNotes(sourceRole.getRemunerationNotes())
+            .requiresAudio(sourceRole.isRequiresAudio())
+            .requiresVideo(sourceRole.isRequiresVideo())
+            .requirementDescription(sourceRole.getRequirementDescription())
+            .ethnicity(sourceRole.getEthnicity())
+            .tattoo(sourceRole.getTattoo())
+            .passport(sourceRole.getPassport())
+            .drivingLicense(sourceRole.getDrivingLicense())
+            .professions(new HashSet<>(sourceRole.getProfessions() == null ? Set.of() : sourceRole.getProfessions()))
+            .skills(new HashSet<>(sourceRole.getSkills() == null ? Set.of() : sourceRole.getSkills()))
+            .build();
+
+        validateRole(duplicatedRole);
+        return castingMapper.toRoleResponse(castingRoleRepository.save(duplicatedRole));
+    }
+
     private void applyRoleData(CastingRoleEntity role, CastingRoleRequest request) {
         role.setRoleName(TextNormalizer.normalizeNullable(request.roleName()));
         role.setRoleType(siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId()));
@@ -175,6 +211,14 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     private boolean endsWith(String value, String suffix) {
         return value != null && value.endsWith(suffix);
+    }
+
+    private String buildDuplicatedRoleName(String roleName) {
+        String normalizedRoleName = TextNormalizer.normalizeNullable(roleName);
+        if (normalizedRoleName == null) {
+            return DUPLICATED_ROLE_PREFIX.trim();
+        }
+        return DUPLICATED_ROLE_PREFIX + normalizedRoleName;
     }
 
     private void assertDraftEditable(CastingEntity casting) {
