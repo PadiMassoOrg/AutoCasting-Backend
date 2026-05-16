@@ -25,10 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.CURRENCY_ARS;
-import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT;
-import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
-import static com.padimasso.autocasting.config.AppConstants.PAY_RATE_TYPE_UNPAID;
+import static com.padimasso.autocasting.config.AppConstants.*;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Service
@@ -36,7 +33,7 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @SuppressWarnings("unused")
 public class CastingRoleServiceImpl implements CastingRoleService {
 
-    private static final String DUPLICATED_ROLE_PREFIX = "Copy of ";
+    private static final String DUPLICATED_ROLE_PREFIX = "*  ";
 
     private final CastingRoleRepository castingRoleRepository;
     private final CastingRepository castingRepository;

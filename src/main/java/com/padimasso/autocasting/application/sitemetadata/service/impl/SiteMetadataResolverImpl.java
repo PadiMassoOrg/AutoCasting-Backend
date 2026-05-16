@@ -124,6 +124,12 @@ public class SiteMetadataResolverImpl implements SiteMetadataResolver {
     }
 
     @Override
+    public CastingModalityOptionEntity resolveCastingModalityByCodeOrThrow(String stringCode) {
+        return castingModalityOptionRepository.findByStringCode(stringCode)
+            .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_modality.not_found"));
+    }
+
+    @Override
     public CastingCompensationTypeOptionEntity resolveCastingCompensationTypeOrThrow(UUID id) {
         return castingCompensationTypeOptionRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("sitemetadata.casting_compensation_type.not_found"));

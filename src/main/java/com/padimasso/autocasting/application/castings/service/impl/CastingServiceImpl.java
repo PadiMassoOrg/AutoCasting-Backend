@@ -59,6 +59,8 @@ public class CastingServiceImpl implements CastingService {
             .employerProfile(employer.employerProfile())
             .status(draftStatus)
             .title(DEFAULT_EMPTY_CASTING_TITLE)
+            .castingModality(siteMetadataResolver.resolveCastingModalityByCodeOrThrow(CASTING_MODALITY_AUTOCASTING))
+            .hasWardrobeFitting(Boolean.FALSE)
             .build();
 
         CastingEntity saved = castingRepository.save(casting);

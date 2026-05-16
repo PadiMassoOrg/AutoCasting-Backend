@@ -72,6 +72,7 @@ public class AppConstants {
     public static final String CASTING_STATUS_PAUSED = "sitemetadata.casting_status.paused";
     public static final String CASTING_STATUS_ARCHIVED = "sitemetadata.casting_status.archived";
     public static final String CASTING_MODALITY_ON_SITE = "sitemetadata.casting_modality.on_site";
+    public static final String CASTING_MODALITY_AUTOCASTING = "sitemetadata.casting_modality.autocasting";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
     // Application
