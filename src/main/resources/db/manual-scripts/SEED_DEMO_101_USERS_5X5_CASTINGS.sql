@@ -63,9 +63,6 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.casting_status_option WHERE string_code = 'sitemetadata.casting_status.published') THEN
     RAISE EXCEPTION 'Falta casting_status published. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.casting_section_status_option WHERE string_code = 'sitemetadata.casting_section_status.completed') THEN
-    RAISE EXCEPTION 'Falta section_status completed. Ejecutá Flyway antes del seed.';
-  END IF;
   IF NOT EXISTS (SELECT 1 FROM public.project_type_option WHERE string_code = 'sitemetadata.project_type.commercial') THEN
     RAISE EXCEPTION 'Falta project_type commercial. Ejecutá Flyway antes del seed.';
   END IF;
@@ -96,11 +93,8 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.role_type_option WHERE string_code = 'sitemetadata.role_type.host') THEN
     RAISE EXCEPTION 'Falta role_type host. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.casting_compensation_type_option WHERE string_code = 'sitemetadata.compensation_type.paid') THEN
-    RAISE EXCEPTION 'Falta compensation_type paid. Ejecutá Flyway antes del seed.';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.casting_compensation_type_option WHERE string_code = 'sitemetadata.compensation_type.collaborative') THEN
-    RAISE EXCEPTION 'Falta compensation_type collaborative. Ejecutá Flyway antes del seed.';
+  IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.unpaid') THEN
+    RAISE EXCEPTION 'Falta pay_rate_type unpaid. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.fixed') THEN
     RAISE EXCEPTION 'Falta pay_rate_type fixed. Ejecutá Flyway antes del seed.';
@@ -110,9 +104,6 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.per_hour') THEN
     RAISE EXCEPTION 'Falta pay_rate_type per_hour. Ejecutá Flyway antes del seed.';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.collaborative') THEN
-    RAISE EXCEPTION 'Falta pay_rate_type collaborative. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.currency_option WHERE string_code = 'sitemetadata.currency.ars') THEN
     RAISE EXCEPTION 'Falta currency ars. Ejecutá Flyway antes del seed.';
@@ -552,8 +543,7 @@ DELETE FROM public.casting_application ca
 WHERE ca.casting_role_id IN (
   SELECT cr.id
   FROM public.casting_role cr
-  JOIN public.casting_roles_section crs ON crs.id = cr.casting_roles_section_id
-  JOIN public.casting c ON c.id = crs.casting_id
+  JOIN public.casting c ON c.id = cr.casting_id
   WHERE c.employer_profile_id = (SELECT employer_profile_id FROM tmp_base_employer)
 );
 
@@ -565,27 +555,43 @@ CREATE TEMP TABLE tmp_casting_seed (
   title text NOT NULL,
   project_type_code text NOT NULL,
   modality_code text NOT NULL,
-  compensation_code text NOT NULL,
+  payment_model text NOT NULL,
   location_text text NOT NULL
 ) ON COMMIT DROP;
 
-INSERT INTO tmp_casting_seed (casting_seq, title, project_type_code, modality_code, compensation_code, location_text) VALUES
-(1, 'Campaña Urbana: Voces de Ciudad', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'sitemetadata.compensation_type.paid', 'Buenos Aires'),
-(2, 'Microserie Vertical: Medianoche 3AM', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.compensation_type.collaborative', 'Remoto LATAM'),
-(3, 'Videoclip Indie: Luz de Neón', 'sitemetadata.project_type.music_video', 'sitemetadata.casting_modality.on_site', 'sitemetadata.compensation_type.paid', 'CABA'),
-(4, 'Contenido de Marca: Tiempo Real', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.compensation_type.collaborative', 'Remoto Global'),
-(5, 'Spot Internacional: Puerta 9', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'sitemetadata.compensation_type.paid', 'Montevideo');
+INSERT INTO tmp_casting_seed (casting_seq, title, project_type_code, modality_code, payment_model, location_text) VALUES
+(1, 'Campaña Urbana: Voces de Ciudad', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Buenos Aires'),
+(2, 'Microserie Vertical: Medianoche 3AM', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', 'Remoto LATAM'),
+(3, 'Videoclip Indie: Luz de Neón', 'sitemetadata.project_type.music_video', 'sitemetadata.casting_modality.on_site', 'paid', 'CABA'),
+(4, 'Contenido de Marca: Tiempo Real', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', 'Remoto Global'),
+(5, 'Spot Internacional: Puerta 9', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Montevideo');
 
--- Root casting
+-- Castings completos
 INSERT INTO public.casting (
   id, created_at, created_by, deleted, modified_at, modified_by,
-  employer_profile_id, default_code, casting_status_option_id
+  employer_profile_id, default_code, casting_status_option_id,
+  title, project_type_option_id, casting_modality_option_id, location_text,
+  application_deadline, has_wardrobe_fitting, wardrobe_fitting_text,
+  shooting_start_date, shooting_end_date, description
 )
 SELECT
   gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
   be.employer_profile_id,
   format('C-ASD-%s', LPAD(cs.casting_seq::text, 2, '0')),
-  cso.id
+  cso.id,
+  cs.title,
+  pto.id,
+  cmo.id,
+  cs.location_text,
+  CASE
+    WHEN cs.casting_seq = 1 THEN (NOW() + INTERVAL '1 day')::date
+    ELSE (NOW() + ((10 + (abs(hashtext(cs.title)) % 6))::text || ' days')::interval)::date
+  END,
+  (cs.casting_seq % 2 = 1),
+  CASE WHEN cs.casting_seq % 2 = 1 THEN 'Disponible la semana previa al rodaje' ELSE NULL END,
+  (NOW() + ((20 + cs.casting_seq)::text || ' days')::interval)::date,
+  (NOW() + ((25 + cs.casting_seq)::text || ' days')::interval)::date,
+  'Casting generado por seed para probar dashboard employer/talent con datos consistentes.'
 FROM tmp_casting_seed cs
 CROSS JOIN tmp_base_employer be
 CROSS JOIN LATERAL (
@@ -593,101 +599,7 @@ CROSS JOIN LATERAL (
   WHERE string_code = 'sitemetadata.casting_status.published'
   ORDER BY created_at NULLS LAST
   LIMIT 1
-) cso;
-
--- Sections
-INSERT INTO public.casting_roles_section (
-  id, casting_id, section_status_option_id, notes, created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(), c.id, css.id,
-  'Roles listos para pruebas QA y navegación de applicants.',
-  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-FROM public.casting c
-JOIN tmp_casting_seed cs ON c.default_code = format('C-ASD-%s', LPAD(cs.casting_seq::text, 2, '0'))
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_section_status_option
-  WHERE string_code = 'sitemetadata.casting_section_status.completed'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) css;
-
-INSERT INTO public.casting_requirements_section (
-  id, casting_id, section_status_option_id, created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(), c.id, css.id,
-  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-FROM public.casting c
-JOIN tmp_casting_seed cs ON c.default_code = format('C-ASD-%s', LPAD(cs.casting_seq::text, 2, '0'))
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_section_status_option
-  WHERE string_code = 'sitemetadata.casting_section_status.completed'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) css;
-
-INSERT INTO public.casting_remuneration (
-  id, casting_id, section_status_option_id, compensation_type_option_id, notes,
-  created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(), c.id, css.id, cct.id,
-  CASE
-    WHEN cs.compensation_code = 'sitemetadata.compensation_type.paid'
-      THEN 'Remuneración definida por rol. Se permite variación entre perfiles.'
-    ELSE 'Proyecto colaborativo con acreditación y material final.'
-  END,
-  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-FROM public.casting c
-JOIN tmp_casting_seed cs ON c.default_code = format('C-ASD-%s', LPAD(cs.casting_seq::text, 2, '0'))
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_section_status_option
-  WHERE string_code = 'sitemetadata.casting_section_status.completed'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) css
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_compensation_type_option
-  WHERE string_code = cs.compensation_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) cct;
-
--- Basic info por casting
-INSERT INTO public.casting_basic_info (
-  id, casting_id, section_status_option_id,
-  title, project_type_option_id, location_text, casting_modality_option_id, casting_modality_text,
-  application_deadline, has_wardrobe_fitting, wardrobe_fitting_text, shooting_start_date, shooting_end_date, description,
-  created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(),
-  c.id,
-  css.id,
-  cs.title,
-  pto.id,
-  cs.location_text,
-  cmo.id,
-  CASE WHEN cs.modality_code = 'sitemetadata.casting_modality.on_site' THEN 'Presencial con callback híbrido' ELSE 'Autocasting 100% remoto' END,
-  CASE
-    WHEN cs.casting_seq = 1 THEN (NOW() + INTERVAL '1 day')::date
-    ELSE (NOW() + ((10 + (abs(hashtext(cs.title)) % 6))::text || ' days')::interval)::date
-  END,
-  (cs.casting_seq % 2 = 1),
-  CASE WHEN cs.casting_seq % 2 = 1 THEN 'Prueba de vestuario opcional en estudio' ELSE NULL END,
-  (NOW() + ((20 + cs.casting_seq)::text || ' days')::interval)::date,
-  (NOW() + ((25 + cs.casting_seq)::text || ' days')::interval)::date,
-  'Casting generado por seed para probar dashboard employer/talent con datos consistentes.',
-  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-FROM public.casting c
-JOIN tmp_casting_seed cs ON c.default_code = format('C-ASD-%s', LPAD(cs.casting_seq::text, 2, '0'))
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_section_status_option
-  WHERE string_code = 'sitemetadata.casting_section_status.completed'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) css
+) cso
 CROSS JOIN LATERAL (
   SELECT id FROM public.project_type_option
   WHERE string_code = cs.project_type_code
@@ -738,23 +650,23 @@ SELECT
   (r.role_pos % 2 = 0),
   (r.role_pos % 2 = 1),
   CASE
-    WHEN c.compensation_code = 'sitemetadata.compensation_type.collaborative' THEN 'sitemetadata.pay_rate_type.collaborative'
+    WHEN c.payment_model = 'unpaid' THEN 'sitemetadata.pay_rate_type.unpaid'
     WHEN r.role_pos IN (1, 5) THEN 'sitemetadata.pay_rate_type.fixed'
     WHEN r.role_pos IN (2, 4) THEN 'sitemetadata.pay_rate_type.per_day'
     ELSE 'sitemetadata.pay_rate_type.per_hour'
   END,
   CASE
-    WHEN c.compensation_code = 'sitemetadata.compensation_type.collaborative' THEN NULL
+    WHEN c.payment_model = 'unpaid' THEN NULL
     WHEN c.casting_seq % 2 = 0 THEN 'sitemetadata.currency.usd'
     ELSE 'sitemetadata.currency.ars'
   END,
   CASE
-    WHEN c.compensation_code = 'sitemetadata.compensation_type.collaborative' THEN NULL
+    WHEN c.payment_model = 'unpaid' THEN NULL
     ELSE (35000 + (c.casting_seq * 5000) + (r.role_pos * 3500))::numeric
   END,
   CASE
-    WHEN c.compensation_code = 'sitemetadata.compensation_type.collaborative'
-      THEN 'Participación colaborativa + material final para reel.'
+    WHEN c.payment_model = 'unpaid'
+      THEN 'Rol no remunerado con material final para reel.'
     ELSE 'Remuneración variable según rol y disponibilidad.'
   END
 FROM tmp_casting_seed c
@@ -771,23 +683,43 @@ CROSS JOIN LATERAL (
 
 -- Insert roles
 INSERT INTO public.casting_role (
-  id, casting_roles_section_id, role_name, role_type_option_id, gender_option_id,
+  id, casting_id, role_name, role_type_option_id, gender_option_id,
   age_min, age_max, description,
+  pay_rate_type_option_id, currency_option_id, amount, remuneration_notes,
+  requires_audio, requires_video, requirement_description,
+  tattoo, passport, driving_license,
   created_at, created_by, modified_at, modified_by, deleted
 )
 SELECT
   gen_random_uuid(),
-  crs.id,
+  c.id,
   rs.role_name,
   rto.id,
   go.id,
   rs.age_min,
   rs.age_max,
   'Rol generado por seed para pruebas de filtros, cards y applicants.',
+  pr.id,
+  co.id,
+  rs.amount,
+  rs.remuneration_notes,
+  rs.requires_audio,
+  rs.requires_video,
+  CASE
+    WHEN rs.requires_audio AND rs.requires_video
+      THEN 'Enviar self tape (video) + lectura en audio. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
+    WHEN rs.requires_audio
+      THEN 'Enviar sólo lectura en audio. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
+    WHEN rs.requires_video
+      THEN 'Enviar self tape en video. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
+    ELSE 'Requirement simple sin media obligatoria.'
+  END,
+  (rs.role_pos % 3 = 0),
+  (rs.role_pos % 2 = 0),
+  (rs.role_pos % 4 = 0),
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM tmp_role_seed rs
 JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(rs.casting_seq::text, 2, '0'))
-JOIN public.casting_roles_section crs ON crs.casting_id = c.id
 CROSS JOIN LATERAL (
   SELECT id FROM public.role_type_option
   WHERE string_code = rs.role_type_code
@@ -799,7 +731,19 @@ CROSS JOIN LATERAL (
   WHERE string_code = 'sitemetadata.gender.indistinct'
   ORDER BY created_at NULLS LAST
   LIMIT 1
-) go;
+) go
+CROSS JOIN LATERAL (
+  SELECT id FROM public.pay_rate_type_option
+  WHERE string_code = rs.pay_rate_code
+  ORDER BY created_at NULLS LAST
+  LIMIT 1
+) pr
+LEFT JOIN LATERAL (
+  SELECT id FROM public.currency_option
+  WHERE rs.currency_code IS NOT NULL AND string_code = rs.currency_code
+  ORDER BY created_at NULLS LAST
+  LIMIT 1
+) co ON true;
 
 CREATE TEMP TABLE tmp_created_roles ON COMMIT DROP AS
 SELECT
@@ -814,8 +758,7 @@ SELECT
   rs.remuneration_notes
 FROM tmp_role_seed rs
 JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(rs.casting_seq::text, 2, '0'))
-JOIN public.casting_roles_section crs ON crs.casting_id = c.id
-JOIN public.casting_role cr ON cr.casting_roles_section_id = crs.id AND cr.role_name = rs.role_name;
+JOIN public.casting_role cr ON cr.casting_id = c.id AND cr.role_name = rs.role_name;
 
 -- Profession + skill para cada role
 INSERT INTO public.casting_role_profession (casting_role_id, profession_id)
@@ -839,73 +782,6 @@ CROSS JOIN LATERAL (
   LIMIT 1
 ) s
 ON CONFLICT (casting_role_id, skill_id) DO NOTHING;
-
--- Characteristics placeholder por role
-INSERT INTO public.casting_role_characteristics (
-  id, created_at, created_by, deleted, modified_at, modified_by,
-  height_cm, passport, tattoo, casting_role_id
-)
-SELECT
-  gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
-  (165 + ((r.casting_seq + r.role_pos) % 25)),
-  (r.role_pos % 2 = 0),
-  (r.role_pos % 3 = 0),
-  r.casting_role_id
-FROM tmp_created_roles r
-ON CONFLICT (casting_role_id) DO NOTHING;
-
--- Requirements (1 por role)
-INSERT INTO public.casting_requirement (
-  id, casting_requirements_section_id, casting_role_id, description, requires_audio, requires_video,
-  created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(),
-  crs.id,
-  r.casting_role_id,
-  CASE
-    WHEN r.requires_audio AND r.requires_video
-      THEN 'Enviar self tape (video) + lectura en audio. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
-    WHEN r.requires_audio
-      THEN 'Enviar sólo lectura en audio. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
-    WHEN r.requires_video
-      THEN 'Enviar self tape en video. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
-    ELSE 'Requirement simple sin media obligatoria.'
-  END,
-  r.requires_audio,
-  r.requires_video,
-  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-FROM tmp_created_roles r
-JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(r.casting_seq::text, 2, '0'))
-JOIN public.casting_requirements_section crs ON crs.casting_id = c.id;
-
--- Remuneration per role
-INSERT INTO public.casting_role_remuneration (
-  id, casting_role_id, is_complete, pay_rate_type_option_id, currency_option_id, amount, notes,
-  created_at, created_by, modified_at, modified_by, deleted
-)
-SELECT
-  gen_random_uuid(),
-  r.casting_role_id,
-  true,
-  pr.id,
-  co.id,
-  r.amount,
-  r.remuneration_notes,
-  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
-FROM tmp_created_roles r
-CROSS JOIN LATERAL (
-  SELECT id FROM public.pay_rate_type_option
-  WHERE string_code = r.pay_rate_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) pr
-LEFT JOIN LATERAL (
-  SELECT id FROM public.currency_option
-  WHERE r.currency_code IS NOT NULL AND string_code = r.currency_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) co ON true;
 
 -- ------------------------------------------------------------
 -- 4) Aplicaciones talent -> roles del employer base
@@ -978,19 +854,19 @@ FROM inserted_apps;
 
 -- Requirement submissions para cada aplicación
 INSERT INTO public.casting_application_requirement_submission (
-  id, application_id, casting_requirement_id, audio_url, video_url, notes,
+  id, application_id, casting_role_id, audio_url, video_url, notes,
   created_at, created_by, modified_at, modified_by, deleted
 )
 SELECT
   gen_random_uuid(),
   a.id,
-  req.id,
-  CASE WHEN req.requires_audio THEN 'https://www.youtube.com/watch?v=bhagN-pes9Q' ELSE NULL END,
-  CASE WHEN req.requires_video THEN 'https://www.youtube.com/watch?v=bhagN-pes9Q' ELSE NULL END,
+  cr.id,
+  CASE WHEN cr.requires_audio THEN 'https://www.youtube.com/watch?v=bhagN-pes9Q' ELSE NULL END,
+  CASE WHEN cr.requires_video THEN 'https://www.youtube.com/watch?v=bhagN-pes9Q' ELSE NULL END,
   'Submission demo para pruebas funcionales.',
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM tmp_created_applications a
-JOIN public.casting_requirement req ON req.casting_role_id = a.casting_role_id;
+JOIN public.casting_role cr ON cr.id = a.casting_role_id;
 
 
 -- ------------------------------------------------------------
@@ -1017,8 +893,7 @@ END IF;
 IF (
   SELECT COUNT(*)
   FROM public.casting_role cr
-  JOIN public.casting_roles_section crs ON crs.id = cr.casting_roles_section_id
-  JOIN public.casting c ON c.id = crs.casting_id
+  JOIN public.casting c ON c.id = cr.casting_id
   JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
   JOIN public.users u ON u.id = ep.user_id
   WHERE u.email = 'asd@asd.com'
@@ -1034,8 +909,7 @@ IF EXISTS (
       COUNT(*)::int AS applicant_count
     FROM public.casting_application ca
     JOIN public.casting_role cr ON cr.id = ca.casting_role_id
-    JOIN public.casting_roles_section crs ON crs.id = cr.casting_roles_section_id
-    JOIN public.casting c ON c.id = crs.casting_id
+    JOIN public.casting c ON c.id = cr.casting_id
     JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
     JOIN public.users u ON u.id = ep.user_id
     WHERE u.email = 'asd@asd.com'
@@ -1050,8 +924,7 @@ IF (
   SELECT COUNT(*)
   FROM public.casting_application ca
   JOIN public.casting_role cr ON cr.id = ca.casting_role_id
-  JOIN public.casting_roles_section crs ON crs.id = cr.casting_roles_section_id
-  JOIN public.casting c ON c.id = crs.casting_id
+  JOIN public.casting c ON c.id = cr.casting_id
   JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
   JOIN public.users u ON u.id = ep.user_id
   WHERE u.email = 'asd@asd.com'

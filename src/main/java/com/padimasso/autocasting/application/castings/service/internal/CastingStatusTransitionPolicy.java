@@ -1,7 +1,5 @@
 package com.padimasso.autocasting.application.castings.service.internal;
 
-import com.padimasso.autocasting.application.castings.repository.projection.CastingCardStatusGateProjection;
-import com.padimasso.autocasting.application.castings.repository.projection.CastingPublishGateProjection;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -14,165 +12,64 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @Component
 public class CastingStatusTransitionPolicy {
 
-    /**
-     * Fuente única de truth para “qué puede pasar desde el status actual”
-     * (UX). El backend igual vuelve a validar en los endpoints.
-     * <p>
-     * Esta variante se usa en el listado (cards).
-     */
-    public List<String> allowedNextStatuses(CastingCardStatusGateProjection gate) {
-        if (gate == null) return List.of();
+    public List<String> allowedNextStatuses(String currentStatusCode, LocalDate applicationDeadline, boolean publishable) {
+        if (currentStatusCode == null) return List.of();
 
-        GateData g = GateData.from(gate);
-
-        // deadline vencido: el casting no debería seguir "publicable/editable".
-        // Si el job todavía no lo cerró, permitimos cerrar y/o archivar.
-        if (isDeadlinePassed(g)) {
-            String current = g.castingStatusCode();
-            if (CASTING_STATUS_ARCHIVED.equals(current)) return List.of();
-            if (CASTING_STATUS_CLOSED.equals(current)) return List.of(CASTING_STATUS_ARCHIVED);
+        if (applicationDeadline != null && applicationDeadline.isBefore(LocalDate.now())) {
+            if (CASTING_STATUS_ARCHIVED.equals(currentStatusCode)) return List.of();
+            if (CASTING_STATUS_CLOSED.equals(currentStatusCode)) return List.of(CASTING_STATUS_ARCHIVED);
             return List.of(CASTING_STATUS_CLOSED, CASTING_STATUS_ARCHIVED);
         }
 
-        boolean publishAllowedNow = isPublishAllowedNow(g);
-
-        return switch (g.castingStatusCode()) {
-
+        return switch (currentStatusCode) {
             case CASTING_STATUS_CLOSED -> List.of(CASTING_STATUS_ARCHIVED);
-
             case CASTING_STATUS_PUBLISHED -> List.of(CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED);
-
             case CASTING_STATUS_PAUSED -> {
-                var out = new ArrayList<String>();
-                if (publishAllowedNow) out.add(CASTING_STATUS_PUBLISHED);
-                out.add(CASTING_STATUS_CLOSED);
-                yield out;
+                List<String> next = new ArrayList<>();
+                if (publishable) next.add(CASTING_STATUS_PUBLISHED);
+                next.add(CASTING_STATUS_CLOSED);
+                yield next;
             }
-
             default -> List.of();
         };
     }
 
-    /**
-     * Validaciónes
-     */
-    public void assertCanPublish(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
-
-        GateData g = GateData.from(gate);
-
-        if (isPublishableSections(g)) {
+    public void assertCanPublish(String currentStatusCode, LocalDate applicationDeadline, boolean publishable) {
+        if (!publishable) {
             throw new IllegalStateException(CASTINGS_NOT_PUBLISHABLE);
         }
-
-        if (g.applicationDeadline() == null) {
+        if (applicationDeadline == null) {
             throw new IllegalStateException(CASTINGS_DEADLINE_REQUIRED);
         }
-
-        if (isDeadlinePassed(g)) {
+        if (applicationDeadline.isBefore(LocalDate.now())) {
             throw new IllegalStateException(CASTINGS_DEADLINE_PASSED);
         }
-
-        boolean canPublishFromStatus =
-            CASTING_STATUS_DRAFT.equals(g.castingStatusCode()) || CASTING_STATUS_PAUSED.equals(g.castingStatusCode());
-
-        if (!canPublishFromStatus) {
+        if (!(CASTING_STATUS_DRAFT.equals(currentStatusCode) || CASTING_STATUS_PAUSED.equals(currentStatusCode))) {
             throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
-    public void assertCanSetDraft(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
-        String s = gate.getCastingStatusCode();
-        // Permitimos volver a DRAFT desde PUBLISHED o PAUSED (según tu policy)
-        if (!(CASTING_STATUS_PUBLISHED.equals(s) || CASTING_STATUS_PAUSED.equals(s))) {
+    public void assertCanSetDraft(String currentStatusCode) {
+        if (!(CASTING_STATUS_PUBLISHED.equals(currentStatusCode) || CASTING_STATUS_PAUSED.equals(currentStatusCode))) {
             throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
-    public void assertCanPause(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
-        // Pausar solo si está PUBLISHED
-        if (!CASTING_STATUS_PUBLISHED.equals(gate.getCastingStatusCode())) {
+    public void assertCanPause(String currentStatusCode) {
+        if (!CASTING_STATUS_PUBLISHED.equals(currentStatusCode)) {
             throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
-    public void assertCanClose(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
-        // Cerrar si está DRAFT/PUBLISHED/PAUSED (según tu allowedNextStatuses)
-        String s = gate.getCastingStatusCode();
-        if (CASTING_STATUS_ARCHIVED.equals(s) || CASTING_STATUS_CLOSED.equals(s)) {
-            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
-        }
-        // Si deadline ya pasó, allowedNextStatuses igual habilita CLOSED/ARCHIVED.
-        // Acá NO bloqueamos.
-    }
-
-    public void assertCanArchive(CastingPublishGateProjection gate) {
-        if (gate == null) throw new IllegalStateException(CASTINGS_NOT_FOUND);
-        // Archivar si no está ya ARCHIVED
-        if (CASTING_STATUS_ARCHIVED.equals(gate.getCastingStatusCode())) {
+    public void assertCanClose(String currentStatusCode) {
+        if (CASTING_STATUS_ARCHIVED.equals(currentStatusCode) || CASTING_STATUS_CLOSED.equals(currentStatusCode)) {
             throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 
-    // =========================
-    // Shared internal helpers
-    // =========================
-    private boolean isPublishableSections(GateData g) {
-        return !CASTING_SECTION_STATUS_COMPLETED.equals(g.basicInfoStatusCode())
-            || !CASTING_SECTION_STATUS_COMPLETED.equals(g.rolesStatusCode())
-            || !CASTING_SECTION_STATUS_COMPLETED.equals(g.requirementsStatusCode())
-            || !CASTING_SECTION_STATUS_COMPLETED.equals(g.remunerationStatusCode());
-    }
-
-    /**
-     * Publish "ahora" = secciones completas + deadline presente + no vencido.
-     * (Esto es lo que se usa para decidir si mostramos PUBLISHED como opción en DRAFT/PAUSED)
-     */
-    private boolean isPublishAllowedNow(GateData g) {
-        if (isPublishableSections(g)) return false;
-        if (g.applicationDeadline() == null) return false;
-        return !isDeadlinePassed(g);
-    }
-
-    private boolean isDeadlinePassed(GateData g) {
-        LocalDate d = g.applicationDeadline();
-        return d != null && d.isBefore(LocalDate.now());
-    }
-
-    /**
-     * Adapter interno para no duplicar lógica entre proyecciones distintas.
-     */
-    private record GateData(
-        String castingStatusCode,
-        String basicInfoStatusCode,
-        String rolesStatusCode,
-        String requirementsStatusCode,
-        String remunerationStatusCode,
-        LocalDate applicationDeadline
-    ) {
-        static GateData from(CastingCardStatusGateProjection p) {
-            return new GateData(
-                p.getCastingStatusCode(),
-                p.getBasicInfoStatusCode(),
-                p.getRolesStatusCode(),
-                p.getRequirementsStatusCode(),
-                p.getRemunerationStatusCode(),
-                p.getApplicationDeadline()
-            );
-        }
-
-        static GateData from(CastingPublishGateProjection p) {
-            return new GateData(
-                p.getCastingStatusCode(),
-                p.getBasicInfoStatusCode(),
-                p.getRolesStatusCode(),
-                p.getRequirementsStatusCode(),
-                p.getRemunerationStatusCode(),
-                p.getApplicationDeadline()
-            );
+    public void assertCanArchive(String currentStatusCode) {
+        if (CASTING_STATUS_ARCHIVED.equals(currentStatusCode)) {
+            throw new IllegalStateException(CASTINGS_INVALID_STATUS_TRANSITION);
         }
     }
 }

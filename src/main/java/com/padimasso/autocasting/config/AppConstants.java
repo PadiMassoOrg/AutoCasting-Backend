@@ -35,6 +35,7 @@ public class AppConstants {
     // Employer
     public static final String EMPLOYER_PROFILE_API_URL = BASE_API_URL + "/employer";
     public static final String EMPLOYER_CASTINGS_URL = BASE_API_URL + "/employer/castings";
+    public static final String EMPLOYER_CASTINGS_EMPTY_URL = EMPLOYER_CASTINGS_URL + "/empty";
     public static final String EMPLOYER_CASTING_URL = BASE_API_URL + "/employer/casting";
     public static final String EMPLOYER_CASTING_APPLICATIONS_URL = BASE_API_URL + "/employer/applications";
     // Admin
@@ -44,13 +45,8 @@ public class AppConstants {
     public static final String ADMIN_USER_EMPLOYER_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/employer";
     // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
-    public static final String CASTING_BASIC_INFO_URL = CASTING_DETAILS_URL + "/basic-info";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
     public static final String CASTING_ROLE_ROLES_URL = CASTING_ROLE_URL + "/roles";
-    public static final String CASTING_REQUIREMENT_URL = CASTING_DETAILS_URL + "/requirement";
-    public static final String CASTING_REQUIREMENT_REQUIREMENTS_URL = CASTING_REQUIREMENT_URL + "/requirements";
-    public static final String CASTING_REMUNERATION_URL = CASTING_DETAILS_URL + "/remuneration";
-    public static final String CASTING_REMUNERATION_REMUNERATIONS_URL = CASTING_REMUNERATION_URL + "/remunerations";
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
     public static final String LEGAL_REQUIREMENTS_API_URL = BASE_API_URL + "/legal/requirements";
@@ -76,15 +72,8 @@ public class AppConstants {
     public static final String CASTING_STATUS_PAUSED = "sitemetadata.casting_status.paused";
     public static final String CASTING_STATUS_ARCHIVED = "sitemetadata.casting_status.archived";
     public static final String CASTING_MODALITY_ON_SITE = "sitemetadata.casting_modality.on_site";
-    // Section
-    public static final String CASTING_SECTION_STATUS_NOT_STARTED = "sitemetadata.casting_section_status.not_started";
-    public static final String CASTING_SECTION_STATUS_IN_PROGRESS = "sitemetadata.casting_section_status.in_progress";
-    public static final String CASTING_SECTION_STATUS_COMPLETED = "sitemetadata.casting_section_status.completed";
-    // Casting SiteMetadata
-    public static final String CASTING_COMPENSATION_TYPE_PAID = "sitemetadata.compensation_type.paid";
-    public static final String CASTING_COMPENSATION_TYPE_COLLABORATIVE = "sitemetadata.compensation_type.collaborative";
+    public static final String CASTING_MODALITY_AUTOCASTING = "sitemetadata.casting_modality.autocasting";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
-    public static final String PAY_RATE_TYPE_COLLABORATIVE = "sitemetadata.pay_rate_type.collaborative";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";

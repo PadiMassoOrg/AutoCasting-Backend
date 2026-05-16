@@ -8,11 +8,9 @@ import java.util.List;
 import java.util.UUID;
 
 public record CastingRoleEmployerCardResponse(
-    // Casting Role
     UUID id,
-    UUID sectionId,
+    UUID castingId,
     String roleName,
-    // Casting Role
     SiteMetadataObject gender,
     Short ageMin,
     Short ageMax,

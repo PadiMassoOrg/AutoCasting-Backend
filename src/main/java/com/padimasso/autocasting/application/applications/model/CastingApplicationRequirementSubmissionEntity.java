@@ -1,6 +1,6 @@
 package com.padimasso.autocasting.application.applications.model;
 
-import com.padimasso.autocasting.application.castings.model.CastingRequirementEntity;
+import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,8 +27,8 @@ public class CastingApplicationRequirementSubmissionEntity extends AuditableEnti
     private CastingApplicationEntity application;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casting_requirement_id", nullable = false)
-    private CastingRequirementEntity castingRequirement;
+    @JoinColumn(name = "casting_role_id", nullable = false)
+    private CastingRoleEntity castingRole;
 
     @Column(name = "audio_url", columnDefinition = "text")
     private String audioUrl;

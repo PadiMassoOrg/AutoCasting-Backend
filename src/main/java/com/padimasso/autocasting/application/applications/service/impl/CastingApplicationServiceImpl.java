@@ -24,20 +24,17 @@ import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.castings.model.CastingRequirementEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
-import com.padimasso.autocasting.application.castings.repository.CastingRequirementRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
+import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
-import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -62,32 +59,8 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
     private final CastingApplicationRepository castingApplicationRepository;
     private final CastingApplicationRequirementSubmissionRepository castingApplicationRequirementSubmissionRepository;
     private final CastingRoleRepository castingRoleRepository;
-    private final CastingRequirementRepository castingRequirementRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingApplicationMapper castingApplicationMapper;
-
-    // ======================
-    // Helpers
-    // ======================
-    private static @NonNull Set<UUID> getSubmittedIds(
-        List<CastingApplicationRequest.RequirementSubmission> submissions,
-        List<CastingRequirementEntity> requirements
-    ) {
-        if (submissions == null || submissions.isEmpty()) {
-            throw new IllegalArgumentException("applications.requirements_missing");
-        }
-        Set<UUID> requiredIds = new HashSet<>();
-        for (CastingRequirementEntity r : requirements) requiredIds.add(r.getId());
-        Set<UUID> submittedIds = new HashSet<>();
-        for (CastingApplicationRequest.RequirementSubmission s : submissions) {
-            if (s == null || s.castingRequirementId() == null) continue;
-            submittedIds.add(s.castingRequirementId());
-        }
-        if (!submittedIds.containsAll(requiredIds)) {
-            throw new IllegalArgumentException("applications.requirements_missing");
-        }
-        return submittedIds;
-    }
 
     private static String safeTrim(String s) {
         return TextNormalizer.normalizeNullable(s);
@@ -129,22 +102,6 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             throw new IllegalStateException(APPLICATIONS_ALREADY_APPLIED);
         }
 
-        List<CastingRequirementEntity> requirements =
-            castingRequirementRepository.findAllByCastingRole_IdAndDeletedFalse(roleId);
-        List<CastingApplicationRequest.RequirementSubmission> submissions =
-            (request != null && request.submissions() != null) ? request.submissions() : List.of();
-
-        if (!requirements.isEmpty()) {
-            Set<UUID> submittedIds = getSubmittedIds(submissions, requirements);
-
-            List<CastingRequirementEntity> submittedReqEntities =
-                castingRequirementRepository.findAllByCastingRole_IdAndIdInAndDeletedFalse(roleId, submittedIds);
-
-            if (submittedReqEntities.size() != submittedIds.size()) {
-                throw new IllegalArgumentException("applications.requirement_invalid");
-            }
-        }
-
         CastingApplicationStatusOptionEntity blankStatus =
             siteMetadataResolver.resolveCastingApplicationStatusByCodeOrThrow(CASTING_APPLICATION_STATUS_BLANK);
 
@@ -157,26 +114,26 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
 
         app = castingApplicationRepository.save(app);
 
-        if (!requirements.isEmpty()) {
-            Map<UUID, CastingRequirementEntity> reqById = new HashMap<>();
-            for (CastingRequirementEntity r : requirements) reqById.put(r.getId(), r);
+        if (role.isRequiresAudio() || role.isRequiresVideo() || request != null && request.notes() != null) {
+            String audioUrl = request != null ? TextNormalizer.normalizeNullable(request.audioUrl()) : null;
+            String videoUrl = request != null ? TextNormalizer.normalizeNullable(request.videoUrl()) : null;
 
-            for (CastingApplicationRequest.RequirementSubmission s : submissions) {
-                if (s == null || s.castingRequirementId() == null) continue;
-
-                CastingRequirementEntity req = reqById.get(s.castingRequirementId());
-                if (req == null) throw new IllegalArgumentException("applications.requirement_invalid");
-
-                CastingApplicationRequirementSubmissionEntity sub = CastingApplicationRequirementSubmissionEntity.builder()
-                    .application(app)
-                    .castingRequirement(req)
-                    .audioUrl(TextNormalizer.normalizeNullable(s.audioUrl()))
-                    .videoUrl(TextNormalizer.normalizeNullable(s.videoUrl()))
-                    .notes(TextNormalizer.normalizeNullable(s.notes()))
-                    .build();
-
-                castingApplicationRequirementSubmissionRepository.save(sub);
+            if (role.isRequiresAudio() && audioUrl == null) {
+                throw new IllegalArgumentException("applications.audio_required");
             }
+            if (role.isRequiresVideo() && videoUrl == null) {
+                throw new IllegalArgumentException("applications.video_required");
+            }
+
+            CastingApplicationRequirementSubmissionEntity sub = CastingApplicationRequirementSubmissionEntity.builder()
+                .application(app)
+                .castingRole(role)
+                .audioUrl(audioUrl)
+                .videoUrl(videoUrl)
+                .notes(request != null ? TextNormalizer.normalizeNullable(request.notes()) : null)
+                .build();
+
+            castingApplicationRequirementSubmissionRepository.save(sub);
         }
     }
 
@@ -390,7 +347,7 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
                 ApplicationRequirementSubmissionProjection::getApplicationId,
                 Collectors.mapping(
                     s -> new ApplicantRequirementSubmissionRow(
-                        s.getCastingRequirementId(),
+                        s.getCastingRoleId(),
                         s.getRequiresAudio(),
                         s.getRequiresVideo(),
                         s.getAudioUrl(),

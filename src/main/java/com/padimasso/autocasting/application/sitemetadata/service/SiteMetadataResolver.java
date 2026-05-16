@@ -34,6 +34,8 @@ public interface SiteMetadataResolver {
 
     CastingModalityOptionEntity resolveCastingModalityOrThrow(UUID id);
 
+    CastingModalityOptionEntity resolveCastingModalityByCodeOrThrow(String stringCode);
+
     CastingCompensationTypeOptionEntity resolveCastingCompensationTypeOrThrow(UUID id);
 
     CastingCompensationTypeOptionEntity resolveCastingCompensationTypeByCodeOrThrow(String stringCode);

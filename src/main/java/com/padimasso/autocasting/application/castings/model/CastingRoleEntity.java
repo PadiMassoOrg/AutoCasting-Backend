@@ -1,7 +1,10 @@
 package com.padimasso.autocasting.application.castings.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.EthnicityOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.ProfessionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.RoleTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.SkillEntity;
@@ -9,6 +12,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -28,8 +32,8 @@ public class CastingRoleEntity extends AuditableEntity {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casting_roles_section_id", nullable = false)
-    private CastingRolesSectionEntity rolesSection;
+    @JoinColumn(name = "casting_id", nullable = false)
+    private CastingEntity casting;
 
     @Column(nullable = false)
     private String roleName;
@@ -51,6 +55,43 @@ public class CastingRoleEntity extends AuditableEntity {
     @Column(columnDefinition = "text")
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pay_rate_type_option_id", nullable = false)
+    private PayRateTypeOptionEntity payRateType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "currency_option_id")
+    private CurrencyOptionEntity currency;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal amount;
+
+    @Column(columnDefinition = "text")
+    private String remunerationNotes;
+
+    @Column(nullable = false)
+    private boolean requiresAudio;
+
+    @Column(nullable = false)
+    private boolean requiresVideo;
+
+    @Column(columnDefinition = "text")
+    private String requirementDescription;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ethnicity_id")
+    private EthnicityOptionEntity ethnicity;
+
+    @Column
+    private Boolean tattoo;
+
+    @Column
+    private Boolean passport;
+
+    @Column
+    private Boolean drivingLicense;
+
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "casting_role_profession",
@@ -60,6 +101,7 @@ public class CastingRoleEntity extends AuditableEntity {
     )
     private Set<ProfessionEntity> professions = new HashSet<>();
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "casting_role_skill",
@@ -68,18 +110,4 @@ public class CastingRoleEntity extends AuditableEntity {
         uniqueConstraints = @UniqueConstraint(columnNames = {"casting_role_id", "skill_id"})
     )
     private Set<SkillEntity> skills = new HashSet<>();
-
-    @OneToOne(mappedBy = "castingRole", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CastingRoleCharacteristicsEntity characteristics;
-
-    @OneToOne(mappedBy = "castingRole", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CastingRoleRemunerationEntity remuneration;
-
-    @OneToMany(
-        mappedBy = "castingRole",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true,
-        fetch = FetchType.LAZY
-    )
-    private Set<CastingRequirementEntity> actingRequirements = new HashSet<>();
 }

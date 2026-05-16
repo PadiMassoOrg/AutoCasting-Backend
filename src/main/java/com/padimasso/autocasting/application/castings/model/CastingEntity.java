@@ -2,11 +2,16 @@ package com.padimasso.autocasting.application.castings.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.CastingModalityOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptionEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -34,17 +39,45 @@ public class CastingEntity extends AuditableEntity {
     @JoinColumn(name = "casting_status_option_id", nullable = false)
     private CastingStatusOptionEntity status;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CastingBasicInfoEntity basicInfo;
+    @Column(nullable = false)
+    private String title;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CastingRolesSectionEntity roles;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_type_option_id")
+    private ProjectTypeOptionEntity projectType;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CastingRequirementsSectionEntity requirements;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "casting_modality_option_id")
+    private CastingModalityOptionEntity castingModality;
 
-    @OneToOne(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private CastingRemunerationEntity remuneration;
+    @Column
+    private String locationText;
+
+    @Column
+    private LocalDate applicationDeadline;
+
+    @Column
+    private Boolean hasWardrobeFitting;
+
+    @Column
+    private String wardrobeFittingText;
+
+    @Column
+    private LocalDate shootingStartDate;
+
+    @Column
+    private LocalDate shootingEndDate;
+
+    @Column(columnDefinition = "text")
+    private String description;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<CastingRoleEntity> roles = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<CastingAttachmentEntity> attachments = new HashSet<>();
 
     @PrePersist
     @SuppressWarnings("unused")
