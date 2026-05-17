@@ -556,15 +556,21 @@ CREATE TEMP TABLE tmp_casting_seed (
   project_type_code text NOT NULL,
   modality_code text NOT NULL,
   payment_model text NOT NULL,
-  location_text text NOT NULL
+  location_text text,
+  has_wardrobe_fitting boolean NOT NULL,
+  wardrobe_fitting_text text,
+  description text
 ) ON COMMIT DROP;
 
-INSERT INTO tmp_casting_seed (casting_seq, title, project_type_code, modality_code, payment_model, location_text) VALUES
-(1, 'Campaña Urbana: Voces de Ciudad', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Buenos Aires'),
-(2, 'Microserie Vertical: Medianoche 3AM', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', 'Remoto LATAM'),
-(3, 'Videoclip Indie: Luz de Neón', 'sitemetadata.project_type.music_video', 'sitemetadata.casting_modality.on_site', 'paid', 'CABA'),
-(4, 'Contenido de Marca: Tiempo Real', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', 'Remoto Global'),
-(5, 'Spot Internacional: Puerta 9', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Montevideo');
+INSERT INTO tmp_casting_seed (
+  casting_seq, title, project_type_code, modality_code, payment_model,
+  location_text, has_wardrobe_fitting, wardrobe_fitting_text, description
+) VALUES
+(1, 'Campaña Urbana: Voces de Ciudad', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Buenos Aires', true, 'Prueba de vestuario dos días antes del rodaje.', 'Casting completo con datos extendidos para validar dashboard, details y employer card.'),
+(2, 'Microserie Vertical: Medianoche 3AM', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', NULL, false, NULL, NULL),
+(3, 'Videoclip Indie: Luz de Neón', 'sitemetadata.project_type.music_video', 'sitemetadata.casting_modality.on_site', 'paid', 'CABA', true, 'Vestuario coordinado por producción en estudio.', 'Casting completo con locación presencial, texto descriptivo y wardrobe fitting.'),
+(4, 'Contenido de Marca: Tiempo Real', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', NULL, false, NULL, NULL),
+(5, 'Spot Internacional: Puerta 9', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Montevideo', true, 'Prueba rápida de vestuario el mismo día del call.', 'Casting completo para validar deadline, remuneración y datos del employer.');
 
 -- Castings completos
 INSERT INTO public.casting (
@@ -587,11 +593,11 @@ SELECT
     WHEN cs.casting_seq = 1 THEN (NOW() + INTERVAL '1 day')::date
     ELSE (NOW() + ((10 + (abs(hashtext(cs.title)) % 6))::text || ' days')::interval)::date
   END,
-  (cs.casting_seq % 2 = 1),
-  CASE WHEN cs.casting_seq % 2 = 1 THEN 'Disponible la semana previa al rodaje' ELSE NULL END,
+  cs.has_wardrobe_fitting,
+  cs.wardrobe_fitting_text,
   (NOW() + ((20 + cs.casting_seq)::text || ' days')::interval)::date,
   (NOW() + ((25 + cs.casting_seq)::text || ' days')::interval)::date,
-  'Casting generado por seed para probar dashboard employer/talent con datos consistentes.'
+  cs.description
 FROM tmp_casting_seed cs
 CROSS JOIN tmp_base_employer be
 CROSS JOIN LATERAL (
@@ -627,12 +633,19 @@ CREATE TEMP TABLE tmp_role_seed (
   currency_code text,
   amount numeric(12,2),
   remuneration_notes text,
+  role_description text,
+  requirement_description text,
+  tattoo boolean,
+  passport boolean,
+  driving_license boolean,
+  include_skill boolean NOT NULL,
   PRIMARY KEY (casting_seq, role_pos)
 ) ON COMMIT DROP;
 
 INSERT INTO tmp_role_seed (
   casting_seq, role_pos, role_name, role_type_code, age_min, age_max,
-  requires_audio, requires_video, pay_rate_code, currency_code, amount, remuneration_notes
+  requires_audio, requires_video, pay_rate_code, currency_code, amount, remuneration_notes,
+  role_description, requirement_description, tattoo, passport, driving_license, include_skill
 )
 SELECT
   c.casting_seq,
@@ -647,8 +660,8 @@ SELECT
   ])[r.role_pos],
   (18 + r.role_pos + c.casting_seq)::smallint,
   (30 + r.role_pos * 3 + c.casting_seq)::smallint,
-  (r.role_pos % 2 = 0),
-  (r.role_pos % 2 = 1),
+  (r.role_pos IN (2, 4)),
+  (r.role_pos IN (1, 5)),
   CASE
     WHEN c.payment_model = 'unpaid' THEN 'sitemetadata.pay_rate_type.unpaid'
     WHEN r.role_pos IN (1, 5) THEN 'sitemetadata.pay_rate_type.fixed'
@@ -666,9 +679,31 @@ SELECT
   END,
   CASE
     WHEN c.payment_model = 'unpaid'
-      THEN 'Rol no remunerado con material final para reel.'
-    ELSE 'Remuneración variable según rol y disponibilidad.'
-  END
+      THEN CASE WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL ELSE 'Rol no remunerado con material final para reel.' END
+    ELSE CASE WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL ELSE 'Remuneración variable según rol y disponibilidad.' END
+  END,
+  CASE
+    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    ELSE 'Rol generado por seed para pruebas de filtros, cards y applicants.'
+  END,
+  CASE
+    WHEN r.role_pos IN (1, 2) THEN 'Enviar material de referencia según requerimientos del rol.'
+    WHEN r.role_pos IN (4, 5) THEN 'Material adicional valorado, no excluyente.'
+    ELSE NULL
+  END,
+  CASE
+    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    ELSE (r.role_pos % 3 = 0)
+  END,
+  CASE
+    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    ELSE (r.role_pos % 2 = 0)
+  END,
+  CASE
+    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    ELSE (r.role_pos % 4 = 0)
+  END,
+  NOT (c.casting_seq IN (2, 4) AND r.role_pos >= 3)
 FROM tmp_casting_seed c
 CROSS JOIN generate_series(1, 5) AS r(role_pos)
 CROSS JOIN LATERAL (
@@ -698,25 +733,17 @@ SELECT
   go.id,
   rs.age_min,
   rs.age_max,
-  'Rol generado por seed para pruebas de filtros, cards y applicants.',
+  rs.role_description,
   pr.id,
   co.id,
   rs.amount,
   rs.remuneration_notes,
   rs.requires_audio,
   rs.requires_video,
-  CASE
-    WHEN rs.requires_audio AND rs.requires_video
-      THEN 'Enviar self tape (video) + lectura en audio. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
-    WHEN rs.requires_audio
-      THEN 'Enviar sólo lectura en audio. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
-    WHEN rs.requires_video
-      THEN 'Enviar self tape en video. Referencia: https://www.youtube.com/watch?v=bhagN-pes9Q'
-    ELSE 'Requirement simple sin media obligatoria.'
-  END,
-  (rs.role_pos % 3 = 0),
-  (rs.role_pos % 2 = 0),
-  (rs.role_pos % 4 = 0),
+  rs.requirement_description,
+  rs.tattoo,
+  rs.passport,
+  rs.driving_license,
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM tmp_role_seed rs
 JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(rs.casting_seq::text, 2, '0'))
@@ -775,12 +802,16 @@ ON CONFLICT (casting_role_id, profession_id) DO NOTHING;
 INSERT INTO public.casting_role_skill (casting_role_id, skill_id)
 SELECT r.casting_role_id, s.id
 FROM tmp_created_roles r
+JOIN tmp_role_seed rs
+  ON rs.casting_seq = r.casting_seq
+ AND rs.role_pos = r.role_pos
 CROSS JOIN LATERAL (
   SELECT id FROM public.skills
   WHERE string_code = 'sitemetadata.skill.english'
   ORDER BY created_at NULLS LAST
   LIMIT 1
 ) s
+WHERE rs.include_skill
 ON CONFLICT (casting_role_id, skill_id) DO NOTHING;
 
 -- ------------------------------------------------------------

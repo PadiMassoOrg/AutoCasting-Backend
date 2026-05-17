@@ -11,6 +11,7 @@ import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEnt
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
+import com.padimasso.autocasting.application.talent.model.ProfileSocialMediaLinkEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -105,26 +106,132 @@ public class CastingMapper {
         var employerProfile = casting.getEmployerProfile();
         var employerBasicInfo = employerProfile != null ? employerProfile.getBasicInfo() : null;
 
-        List<SiteMetadataObject> professions = role.getProfessions() == null
-            ? List.of()
-            : role.getProfessions().stream().map(TalentProfileMapper::mapToSiteMetadataObject).toList();
-
         return new CastingRolePublicCardResponse(
             role.getId(),
             role.getRoleName(),
+            casting.getTitle(),
             employerBasicInfo != null ? employerBasicInfo.getImageUrl() : null,
-            employerBasicInfo != null ? employerBasicInfo.getCompanyName() : null,
             mapToSiteMetadataObject(casting.getProjectType()),
-            mapToSiteMetadataObject(casting.getCastingModality()),
-            casting.getLocationText(),
             casting.getShootingStartDate(),
             casting.getShootingEndDate(),
-            professions,
             mapToSiteMetadataObject(role.getRoleType()),
             mapToSiteMetadataObject(role.getGender()),
             role.getAgeMin(),
             role.getAgeMax(),
             casting.getDefaultCode()
+        );
+    }
+
+    public PublicCastingResponse toPublicCastingResponse(
+        CastingEntity casting,
+        PublicCastingEmployerInfoResponse employerInfo
+    ) {
+        if (casting == null) return null;
+
+        List<PublicCastingRoleResponse> roles = casting.getRoles() == null
+            ? List.of()
+            : casting.getRoles().stream()
+                .filter(role -> role != null && !role.isDeleted())
+                .map(this::toPublicRoleResponse)
+                .toList();
+
+        return new PublicCastingResponse(
+            employerInfo,
+            casting.getDefaultCode(),
+            casting.getTitle(),
+            mapToSiteMetadataObject(casting.getProjectType()),
+            mapToSiteMetadataObject(casting.getCastingModality()),
+            casting.getLocationText(),
+            casting.getApplicationDeadline(),
+            casting.getWardrobeFittingText(),
+            casting.getShootingStartDate(),
+            casting.getShootingEndDate(),
+            casting.getDescription(),
+            roles
+        );
+    }
+
+    public PublicCastingRoleResponse toPublicRoleResponse(CastingRoleEntity role) {
+        if (role == null || role.isDeleted()) return null;
+
+        List<SiteMetadataObject> professions = role.getProfessions() == null
+            ? List.of()
+            : role.getProfessions().stream().map(TalentProfileMapper::mapToSiteMetadataObject).toList();
+
+        List<SiteMetadataObject> skills = role.getSkills() == null
+            ? List.of()
+            : role.getSkills().stream().map(TalentProfileMapper::mapToSiteMetadataObject).toList();
+
+        return new PublicCastingRoleResponse(
+            role.getId(),
+            role.getRoleName(),
+            mapToSiteMetadataObject(role.getRoleType()),
+            mapToSiteMetadataObject(role.getGender()),
+            role.getAgeMin(),
+            role.getAgeMax(),
+            role.getDescription(),
+            professions,
+            skills,
+            toPublicRoleRemunerationResponse(role),
+            mapToSiteMetadataObject(role.getEthnicity()),
+            role.getTattoo(),
+            role.getPassport(),
+            role.getDrivingLicense(),
+            role.isRequiresAudio(),
+            role.isRequiresVideo(),
+            role.getRequirementDescription()
+        );
+    }
+
+    public PublicCastingEmployerInfoResponse toPublicCastingEmployerInfoResponse(
+        EmployerProfileEntity employerProfile,
+        Long totalCastings,
+        LocalDate memberSince
+    ) {
+        if (employerProfile == null) return null;
+
+        EmployerBasicInfoEntity bi = employerProfile.getBasicInfo();
+
+        return new PublicCastingEmployerInfoResponse(
+            employerProfile.getId(),
+            bi != null ? bi.getCompanyName() : null,
+            mapToSiteMetadataObject(bi != null ? bi.getCompanyType() : null),
+            bi != null ? bi.getImageUrl() : null,
+            bi != null ? toPublicSocialMediaResponse(
+                bi.getSocialMediaLinks() == null ? List.of() : bi.getSocialMediaLinks().stream().toList()
+            ) : null,
+            totalCastings,
+            memberSince,
+            bi != null ? bi.getWebsiteUrl() : null
+        );
+    }
+
+    public PublicSocialMediaResponse toPublicSocialMediaResponse(List<ProfileSocialMediaLinkEntity> links) {
+        return new PublicSocialMediaResponse(
+            TalentProfileMapper.toSocialMediaResponse(links == null ? List.of() : links).links()
+        );
+    }
+
+    public PublicCastingRoleRemunerationResponse toPublicRoleRemunerationResponse(CastingRoleEntity role) {
+        if (role == null || role.isDeleted()) return null;
+
+        boolean complete = role.getPayRateType() != null
+            && (
+                role.getAmount() != null
+                    || (role.getPayRateType().getStringCode() != null
+                    && (
+                        role.getPayRateType().getStringCode().endsWith(".unpaid")
+                            || role.getPayRateType().getStringCode().endsWith(".cooperative")
+                            || role.getPayRateType().getStringCode().endsWith(".collaborative")
+                    ))
+            );
+
+        return new PublicCastingRoleRemunerationResponse(
+            complete,
+            mapToSiteMetadataObject(role.getPayRateType()),
+            mapToSiteMetadataObject(role.getCurrency()),
+            role.getAmount(),
+            role.getRemunerationNotes()
         );
     }
 
