@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PUBLISHED;
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 
 @Service
@@ -25,7 +24,7 @@ public class CastingRoleSearchServiceImpl implements CastingRoleSearchService {
 
     private final CastingRoleRepository castingRoleRepository;
     private final CastingMapper castingMapper;
-    
+
     @Override
     @Transactional
     public SliceResponse<CastingRolePublicCardResponse> search(CastingRoleFilter filter, int page, int size) {
@@ -43,6 +42,6 @@ public class CastingRoleSearchServiceImpl implements CastingRoleSearchService {
             .map(castingMapper::toPublicRoleCardResponse)
             .toList();
 
-        return new SliceResponse<>(items, result.hasNext(), page, ps);
+        return new SliceResponse<>(items, result.hasNext(), page, ps, result.getTotalElements());
     }
 }

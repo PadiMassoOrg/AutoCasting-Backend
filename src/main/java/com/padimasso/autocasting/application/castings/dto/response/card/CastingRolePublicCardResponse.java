@@ -10,6 +10,8 @@ public record CastingRolePublicCardResponse(
     // Casting Role
     UUID id,
     String name,
+    // Casting
+    String castingTitle,
     // Employer Basic Info
     String employerImageUrl,
     String employerCompanyName,

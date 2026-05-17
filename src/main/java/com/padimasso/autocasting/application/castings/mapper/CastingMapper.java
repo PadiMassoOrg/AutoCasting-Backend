@@ -112,6 +112,7 @@ public class CastingMapper {
         return new CastingRolePublicCardResponse(
             role.getId(),
             role.getRoleName(),
+            casting.getTitle(),
             employerBasicInfo != null ? employerBasicInfo.getImageUrl() : null,
             employerBasicInfo != null ? employerBasicInfo.getCompanyName() : null,
             mapToSiteMetadataObject(casting.getProjectType()),
