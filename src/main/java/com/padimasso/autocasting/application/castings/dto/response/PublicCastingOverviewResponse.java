@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record PublicCastingOverviewResponse(
-    CastingResponse casting,
+    PublicCastingResponse casting,
     List<UUID> appliedRoleIds
 ) {
 }

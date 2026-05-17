@@ -239,8 +239,8 @@ public class CastingServiceImpl implements CastingService {
             throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
         }
 
-        CastingResponse response = toCastingResponse(casting);
-        List<CastingRoleResponse> filteredRoles = response.roles().stream()
+        PublicCastingResponse response = toPublicCastingResponse(casting);
+        List<PublicCastingRoleResponse> filteredRoles = response.roles().stream()
             .filter(role -> roleId.equals(role.id()))
             .toList();
 
@@ -248,24 +248,19 @@ public class CastingServiceImpl implements CastingService {
             throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
         }
 
-        CastingResponse roleScoped = new CastingResponse(
-            response.id(),
-            response.defaultCode(),
-            response.castingStatus(),
+        PublicCastingResponse roleScoped = new PublicCastingResponse(
             response.employerInfo(),
+            response.slug(),
             response.title(),
             response.projectType(),
             response.castingModality(),
             response.locationText(),
             response.applicationDeadline(),
-            response.hasWardrobeFitting(),
             response.wardrobeFittingText(),
             response.shootingStartDate(),
             response.shootingEndDate(),
             response.description(),
-            filteredRoles,
-            response.publishable(),
-            response.modifiedAt()
+            filteredRoles
         );
 
         boolean alreadyApplied = authContext.getCurrentUserOptional()
@@ -293,7 +288,25 @@ public class CastingServiceImpl implements CastingService {
             .map(profile -> castingApplicationRepository.findAppliedRoleIdsByTalentProfileIdAndCastingId(profile.getId(), casting.getId()))
             .orElse(List.of());
 
-        return new PublicCastingOverviewResponse(toCastingResponse(casting), appliedRoleIds);
+        return new PublicCastingOverviewResponse(toPublicCastingResponse(casting), appliedRoleIds);
+    }
+
+    private PublicCastingResponse toPublicCastingResponse(CastingEntity casting) {
+        UUID employerProfileId = casting.getEmployerProfile() != null ? casting.getEmployerProfile().getId() : null;
+        Long totalCastings = employerProfileId != null
+            ? castingRepository.countByEmployerProfile_IdAndDeletedFalseAndStatus_StringCodeIn(
+                employerProfileId,
+                List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED)
+            )
+            : null;
+        LocalDate memberSince = casting.getEmployerProfile() != null && casting.getEmployerProfile().getCreatedAt() != null
+            ? casting.getEmployerProfile().getCreatedAt().toLocalDate()
+            : null;
+
+        return castingMapper.toPublicCastingResponse(
+            casting,
+            castingMapper.toPublicCastingEmployerInfoResponse(casting.getEmployerProfile(), totalCastings, memberSince)
+        );
     }
 
     private EmployerCastingEditorResponse transitionCasting(UUID castingId, String targetStatusCode) {
