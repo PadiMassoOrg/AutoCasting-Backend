@@ -55,6 +55,19 @@ public final class ErrorMessageKeys {
     public static final String CASTINGS_SECTION_MISMATCH = "castings.section.mismatch";
     public static final String CASTINGS_ROLE_MISMATCH = "castings.role.mismatch";
 
+    public static final String BILLING_ITEM_NOT_FOUND = "billing.item.not_found";
+    public static final String BILLING_PRICE_NOT_FOUND = "billing.price.not_found";
+    public static final String BILLING_DISCOUNT_NOT_FOUND = "billing.discount.not_found";
+    public static final String BILLING_ITEM_DISCOUNT_NOT_FOUND = "billing.item_discount.not_found";
+    public static final String BILLING_ITEM_CODE_ALREADY_EXISTS = "billing.item.code_already_exists";
+    public static final String BILLING_DISCOUNT_CODE_ALREADY_EXISTS = "billing.discount.code_already_exists";
+    public static final String BILLING_PRICE_VALIDITY_INVALID = "billing.price.validity_invalid";
+    public static final String BILLING_PRICE_WINDOW_OVERLAP = "billing.price.window_overlap";
+    public static final String BILLING_DISCOUNT_VALIDITY_INVALID = "billing.discount.validity_invalid";
+    public static final String BILLING_DISCOUNT_VALUE_SHAPE_INVALID = "billing.discount.value_shape_invalid";
+    public static final String BILLING_ITEM_DISCOUNT_VALIDITY_INVALID = "billing.item_discount.validity_invalid";
+    public static final String BILLING_ITEM_DISCOUNT_WINDOW_OVERLAP = "billing.item_discount.window_overlap";
+
     private ErrorMessageKeys() {
         throw new IllegalStateException("Utility class");
     }

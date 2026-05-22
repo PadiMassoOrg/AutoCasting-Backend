@@ -43,6 +43,15 @@ public class AppConstants {
     public static final String ADMIN_USERS_API_URL = ADMIN_API_URL + "/users";
     public static final String ADMIN_USER_TALENT_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/talent";
     public static final String ADMIN_USER_EMPLOYER_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/employer";
+    public static final String ADMIN_BILLING_API_URL = ADMIN_API_URL + "/billing";
+    public static final String ADMIN_BILLABLE_ITEMS_API_URL = ADMIN_BILLING_API_URL + "/items";
+    public static final String ADMIN_BILLABLE_ITEM_API_URL = ADMIN_BILLABLE_ITEMS_API_URL + "/{itemId}";
+    public static final String ADMIN_BILLABLE_ITEM_PRICES_API_URL = ADMIN_BILLING_API_URL + "/prices";
+    public static final String ADMIN_BILLABLE_ITEM_PRICE_API_URL = ADMIN_BILLABLE_ITEM_PRICES_API_URL + "/{priceId}";
+    public static final String ADMIN_BILLING_DISCOUNTS_API_URL = ADMIN_BILLING_API_URL + "/discounts";
+    public static final String ADMIN_BILLING_DISCOUNT_API_URL = ADMIN_BILLING_DISCOUNTS_API_URL + "/{discountId}";
+    public static final String ADMIN_BILLABLE_ITEM_DISCOUNTS_API_URL = ADMIN_BILLING_API_URL + "/item-discounts";
+    public static final String ADMIN_BILLABLE_ITEM_DISCOUNT_API_URL = ADMIN_BILLABLE_ITEM_DISCOUNTS_API_URL + "/{itemDiscountId}";
     // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
