@@ -34,7 +34,8 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @RequiredArgsConstructor
 class UserProvisioningService {
 
-    public static final String PLAN_FREE = "FREE";
+    public static final String TALENT_FREE_PLAN = "TALENT_FREE";
+    public static final String EMPLOYER_FREE_PLAN = "EMPLOYER_FREE";
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -55,7 +56,9 @@ class UserProvisioningService {
                 .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE))
         );
 
-        final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
+        final PlanEntity talentFreePlan = planRepository.findByCode(TALENT_FREE_PLAN)
+            .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
+        final PlanEntity employerFreePlan = planRepository.findByCode(EMPLOYER_FREE_PLAN)
             .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
 
         // User (nuevo o existente)
@@ -79,7 +82,7 @@ class UserProvisioningService {
             .orElseGet(() -> {
                 TalentProfileEntity p = TalentProfileEntity.builder()
                     .user(finalUser)
-                    .plan(freePlan)
+                    .plan(talentFreePlan)
                     .build();
                 return talentProfileRepository.save(p);
             });
@@ -88,7 +91,7 @@ class UserProvisioningService {
             .orElseGet(() -> {
                 EmployerProfileEntity p = EmployerProfileEntity.builder()
                     .user(finalUser)
-                    .plan(freePlan)
+                    .plan(employerFreePlan)
                     .build();
                 return employerProfileRepository.save(p);
             });

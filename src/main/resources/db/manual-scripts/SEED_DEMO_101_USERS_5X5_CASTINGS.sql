@@ -45,8 +45,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.roles WHERE code = 'EMPLOYER') THEN
     RAISE EXCEPTION 'Falta role EMPLOYER. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public."plans" WHERE code = 'FREE') THEN
-    RAISE EXCEPTION 'Falta plan FREE. Ejecutá Flyway antes del seed.';
+  IF NOT EXISTS (SELECT 1 FROM public."plans" WHERE code = 'TALENT_FREE') THEN
+    RAISE EXCEPTION 'Falta plan TALENT_FREE. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public."plans" WHERE code = 'EMPLOYER_FREE') THEN
+    RAISE EXCEPTION 'Falta plan EMPLOYER_FREE. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.gender_option WHERE string_code = 'sitemetadata.gender.indistinct') THEN
     RAISE EXCEPTION 'Falta gender indistinct. Ejecutá Flyway antes del seed.';
@@ -246,7 +249,7 @@ SELECT
   p.id,
   t.user_id
 FROM tmp_seed_user_ids t
-JOIN public."plans" p ON p.code = 'FREE'
+JOIN public."plans" p ON p.code = 'TALENT_FREE'
 LEFT JOIN public.talent_profile tp ON tp.user_id = t.user_id
 WHERE tp.id IS NULL;
 
@@ -262,7 +265,7 @@ SELECT
   p.id,
   t.user_id
 FROM tmp_seed_user_ids t
-JOIN public."plans" p ON p.code = 'FREE'
+JOIN public."plans" p ON p.code = 'EMPLOYER_FREE'
 LEFT JOIN public.employer_profile ep ON ep.user_id = t.user_id
 WHERE ep.id IS NULL;
 

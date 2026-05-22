@@ -48,6 +48,8 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class AuthServiceImpl implements AuthService {
+    private static final String TALENT_FREE_PLAN = "TALENT_FREE";
+    private static final String EMPLOYER_FREE_PLAN = "EMPLOYER_FREE";
 
     private final SpringTemplateEngine templateEngine;
     private final UserRepository userRepository;
@@ -215,7 +217,9 @@ public class AuthServiceImpl implements AuthService {
         Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
             .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE)));
 
-        final PlanEntity freePlan = planRepository.findByCode("FREE")
+        final PlanEntity talentFreePlan = planRepository.findByCode(TALENT_FREE_PLAN)
+            .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
+        final PlanEntity employerFreePlan = planRepository.findByCode(EMPLOYER_FREE_PLAN)
             .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
 
         // 1) User
@@ -233,13 +237,13 @@ public class AuthServiceImpl implements AuthService {
         // 2) Profiles
         var talentProfile = TalentProfileEntity.builder()
             .user(user)
-            .plan(freePlan)
+            .plan(talentFreePlan)
             .build();
         talentProfileRepository.save(talentProfile);
 
         var employerProfile = EmployerProfileEntity.builder()
             .user(user)
-            .plan(freePlan)
+            .plan(employerFreePlan)
             .build();
         employerProfileRepository.save(employerProfile);
 
