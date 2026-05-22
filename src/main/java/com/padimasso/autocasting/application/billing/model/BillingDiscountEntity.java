@@ -3,9 +3,7 @@ package com.padimasso.autocasting.application.billing.model;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -43,8 +41,7 @@ public class BillingDiscountEntity extends AuditableEntity {
     @Column
     private Long amountMinor;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(length = 3, columnDefinition = "char(3)")
+    @Column(length = 3)
     private String currencyCode;
 
     @Column(nullable = false)

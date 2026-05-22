@@ -10,9 +10,9 @@ import com.padimasso.autocasting.application.billing.dto.response.*;
 import java.util.UUID;
 
 public interface BillingAdminService {
-    BillingPageResponse<BillingCatalogItemListResponse> listItems(int page, int size);
+    BillingPageResponse<BillingCatalogItemListResponse> listItems(int page, int size, String localeTag);
 
-    BillingCatalogItemDetailResponse getItem(UUID itemId);
+    BillingCatalogItemDetailResponse getItem(UUID itemId, String localeTag);
 
     BillingCatalogItemDetailResponse createItem(BillingCatalogItemCreateRequest request);
 

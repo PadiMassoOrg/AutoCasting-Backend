@@ -17,6 +17,7 @@ public record BillingCatalogItemListResponse(
     boolean active,
     String currentPriceCurrencyCode,
     Long currentPriceAmountMinor,
+    String currentPriceDisplay,
     OffsetDateTime currentPriceValidFrom,
     OffsetDateTime currentPriceValidTo,
     LocalDateTime modifiedAt

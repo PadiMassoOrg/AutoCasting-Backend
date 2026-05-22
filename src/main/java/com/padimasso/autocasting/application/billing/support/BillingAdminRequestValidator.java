@@ -9,16 +9,21 @@ import com.padimasso.autocasting.application.billing.repository.BillableItemDisc
 import com.padimasso.autocasting.application.billing.repository.BillableItemPriceRepository;
 import com.padimasso.autocasting.application.billing.repository.BillableItemRepository;
 import com.padimasso.autocasting.application.billing.repository.BillingDiscountRepository;
+import com.padimasso.autocasting.application.sitemetadata.repository.CurrencyOptionRepository;
 import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
+import java.util.Currency;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.application.billing.utils.BillingNormalizationUtils.normalizeCode;
 import static com.padimasso.autocasting.application.billing.utils.BillingNormalizationUtils.normalizeCurrency;
 import static com.padimasso.autocasting.application.billing.utils.BillingNormalizationUtils.normalizeNullableCurrency;
+import static com.padimasso.autocasting.application.billing.utils.BillingCurrencyMetadataUtils.toSiteMetadataStringCode;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.BILLING_CURRENCY_INVALID_ISO;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.BILLING_CURRENCY_NOT_SUPPORTED;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.BILLING_DISCOUNT_CODE_ALREADY_EXISTS;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.BILLING_DISCOUNT_VALIDITY_INVALID;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.BILLING_DISCOUNT_VALUE_SHAPE_INVALID;
@@ -37,6 +42,7 @@ public class BillingAdminRequestValidator {
     private final BillableItemPriceRepository billableItemPriceRepository;
     private final BillingDiscountRepository billingDiscountRepository;
     private final BillableItemDiscountRepository billableItemDiscountRepository;
+    private final CurrencyOptionRepository currencyOptionRepository;
 
     public void validateItemCreate(BillableItemUpsertRequest request) {
         requireAudiences(request);
@@ -60,6 +66,8 @@ public class BillingAdminRequestValidator {
         assertValidWindow(request.validFrom(), request.validTo(), BILLING_PRICE_VALIDITY_INVALID);
 
         String normalizedCurrency = normalizeCurrency(request.currencyCode());
+        assertIsoCurrency(normalizedCurrency);
+        assertSupportedCurrency(normalizedCurrency);
         boolean overlaps = hasPriceWindowOverlap(
             request.billableItemId(),
             normalizedCurrency,
@@ -76,6 +84,8 @@ public class BillingAdminRequestValidator {
         assertValidWindow(request.validFrom(), request.validTo(), BILLING_PRICE_VALIDITY_INVALID);
 
         String normalizedCurrency = normalizeCurrency(request.currencyCode());
+        assertIsoCurrency(normalizedCurrency);
+        assertSupportedCurrency(normalizedCurrency);
         boolean overlaps = hasPriceWindowOverlap(
             request.billableItemId(),
             normalizedCurrency,
@@ -158,6 +168,10 @@ public class BillingAdminRequestValidator {
         if (!validFixedAmountShape) {
             throw ApiException.badRequest(BILLING_DISCOUNT_VALUE_SHAPE_INVALID);
         }
+
+        String normalizedCurrency = normalizeCurrency(request.currencyCode());
+        assertIsoCurrency(normalizedCurrency);
+        assertSupportedCurrency(normalizedCurrency);
     }
 
     private void assertValidWindow(OffsetDateTime start, OffsetDateTime end, String messageKey) {
@@ -219,6 +233,21 @@ public class BillingAdminRequestValidator {
     private void requireAudiences(BillableItemUpsertRequest request) {
         if (request.audiences() == null || request.audiences().isEmpty()) {
             throw ApiException.badRequest(GENERAL_REQUIRED_ONE);
+        }
+    }
+
+    private void assertSupportedCurrency(String normalizedCurrency) {
+        String siteMetadataCode = toSiteMetadataStringCode(normalizedCurrency);
+        if (!currencyOptionRepository.existsByStringCode(siteMetadataCode)) {
+            throw ApiException.badRequest(BILLING_CURRENCY_NOT_SUPPORTED, normalizedCurrency);
+        }
+    }
+
+    private void assertIsoCurrency(String normalizedCurrency) {
+        try {
+            Currency.getInstance(normalizedCurrency);
+        } catch (IllegalArgumentException ex) {
+            throw ApiException.badRequest(BILLING_CURRENCY_INVALID_ISO, normalizedCurrency);
         }
     }
 }

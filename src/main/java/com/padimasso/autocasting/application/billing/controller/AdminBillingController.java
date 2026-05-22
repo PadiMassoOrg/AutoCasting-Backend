@@ -33,15 +33,19 @@ public class AdminBillingController {
     @GetMapping(ADMIN_BILLABLE_ITEMS_API_URL)
     public BillingPageResponse<BillingCatalogItemListResponse> listItems(
         @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
-        @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size,
+        @Parameter(description = "Locale tag for display fields. Example: es-AR, en-US.") @RequestParam(required = false) String locale
     ) {
-        return billingAdminService.listItems(page, size);
+        return billingAdminService.listItems(page, size, locale);
     }
 
     @Operation(summary = "Get billable item by ID", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(ADMIN_BILLABLE_ITEM_API_URL)
-    public BillingCatalogItemDetailResponse getItem(@PathVariable UUID itemId) {
-        return billingAdminService.getItem(itemId);
+    public BillingCatalogItemDetailResponse getItem(
+        @PathVariable UUID itemId,
+        @Parameter(description = "Locale tag for display fields. Example: es-AR, en-US.") @RequestParam(required = false) String locale
+    ) {
+        return billingAdminService.getItem(itemId, locale);
     }
 
     @Operation(summary = "Create billable item with initial price", security = @SecurityRequirement(name = "bearerAuth"))

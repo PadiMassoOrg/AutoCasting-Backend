@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface CurrencyOptionRepository extends SoftDeleteRepository<CurrencyOptionEntity, UUID> {
     Optional<CurrencyOptionEntity> findByStringCode(String stringCode);
+
+    boolean existsByStringCode(String stringCode);
 }

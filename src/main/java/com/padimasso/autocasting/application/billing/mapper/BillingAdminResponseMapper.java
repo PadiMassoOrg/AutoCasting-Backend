@@ -15,7 +15,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+
+import static com.padimasso.autocasting.application.billing.utils.BillingMoneyFormatUtils.formatAmountDisplay;
 
 @Component
 public class BillingAdminResponseMapper {
@@ -93,11 +96,12 @@ public class BillingAdminResponseMapper {
         );
     }
 
-    public BillingCatalogPriceResponse toCatalogPriceResponse(BillableItemPriceEntity entity) {
+    public BillingCatalogPriceResponse toCatalogPriceResponse(BillableItemPriceEntity entity, Locale locale) {
         return new BillingCatalogPriceResponse(
             entity.getId(),
             entity.getCurrencyCode(),
             entity.getAmountMinor(),
+            formatAmountDisplay(entity.getAmountMinor(), entity.getCurrencyCode(), locale),
             entity.getValidFrom(),
             entity.getValidTo(),
             entity.isActive()
@@ -106,10 +110,14 @@ public class BillingAdminResponseMapper {
 
     public BillingCatalogItemListResponse toCatalogItemListResponse(
         BillableItemEntity item,
-        Optional<BillableItemPriceEntity> currentPrice
+        Optional<BillableItemPriceEntity> currentPrice,
+        Locale locale
     ) {
         String currentCurrencyCode = currentPrice.map(BillableItemPriceEntity::getCurrencyCode).orElse(null);
         Long currentAmountMinor = currentPrice.map(BillableItemPriceEntity::getAmountMinor).orElse(null);
+        String currentPriceDisplay = currentPrice
+            .map(price -> formatAmountDisplay(price.getAmountMinor(), price.getCurrencyCode(), locale))
+            .orElse(null);
         OffsetDateTime currentPriceValidFrom = currentPrice.map(BillableItemPriceEntity::getValidFrom).orElse(null);
         OffsetDateTime currentPriceValidTo = currentPrice.map(BillableItemPriceEntity::getValidTo).orElse(null);
 
@@ -122,6 +130,7 @@ public class BillingAdminResponseMapper {
             item.isActive(),
             currentCurrencyCode,
             currentAmountMinor,
+            currentPriceDisplay,
             currentPriceValidFrom,
             currentPriceValidTo,
             item.getModifiedAt()

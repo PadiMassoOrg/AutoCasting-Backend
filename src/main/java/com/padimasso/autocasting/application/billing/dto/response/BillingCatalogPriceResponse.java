@@ -7,6 +7,7 @@ public record BillingCatalogPriceResponse(
     UUID id,
     String currencyCode,
     long amountMinor,
+    String amountDisplay,
     OffsetDateTime validFrom,
     OffsetDateTime validTo,
     boolean active

@@ -28,8 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.application.billing.utils.BillingLocaleUtils.DEFAULT_LOCALE_TAG;
+import static com.padimasso.autocasting.application.billing.utils.BillingLocaleUtils.resolveOrDefault;
 import static com.padimasso.autocasting.application.billing.utils.BillingNormalizationUtils.*;
 import static com.padimasso.autocasting.application.billing.utils.BillingPageUtils.toBillingPageResponse;
 import static com.padimasso.autocasting.application.billing.utils.BillingPriceSelectionUtils.resolveCurrentPrice;
@@ -56,16 +59,18 @@ public class BillingAdminServiceImpl implements BillingAdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public BillingPageResponse<BillingCatalogItemListResponse> listItems(int page, int size) {
+    public BillingPageResponse<BillingCatalogItemListResponse> listItems(int page, int size, String localeTag) {
+        Locale locale = resolveOrDefault(localeTag);
         var pageable = pageRequest(page, size, MAX_PAGE_SIZE, ADMIN_BILLING_SORT);
-        var result = billableItemRepository.findAll(pageable).map(this::toCatalogListRow);
+        var result = billableItemRepository.findAll(pageable).map(item -> toCatalogListRow(item, locale));
         return toBillingPageResponse(result);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public BillingCatalogItemDetailResponse getItem(UUID itemId) {
-        return toCatalogDetailResponse(requireItem(itemId));
+    public BillingCatalogItemDetailResponse getItem(UUID itemId, String localeTag) {
+        Locale locale = resolveOrDefault(localeTag);
+        return toCatalogDetailResponse(requireItem(itemId), locale);
     }
 
     @Override
@@ -93,7 +98,7 @@ public class BillingAdminServiceImpl implements BillingAdminService {
             )
         );
 
-        return getItem(createdItem.id());
+        return getItem(createdItem.id(), DEFAULT_LOCALE_TAG);
     }
 
     @Override
@@ -110,7 +115,7 @@ public class BillingAdminServiceImpl implements BillingAdminService {
                 request.active()
             )
         );
-        return getItem(itemId);
+        return getItem(itemId, DEFAULT_LOCALE_TAG);
     }
 
     @Override
@@ -137,7 +142,7 @@ public class BillingAdminServiceImpl implements BillingAdminService {
                 request.active()
             )
         );
-        return responseMapper.toCatalogPriceResponse(requirePrice(createdPrice.id()));
+        return responseMapper.toCatalogPriceResponse(requirePrice(createdPrice.id()), resolveOrDefault(DEFAULT_LOCALE_TAG));
     }
 
     @Override
@@ -155,7 +160,7 @@ public class BillingAdminServiceImpl implements BillingAdminService {
                 request.active()
             )
         );
-        return responseMapper.toCatalogPriceResponse(requirePrice(priceId));
+        return responseMapper.toCatalogPriceResponse(requirePrice(priceId), resolveOrDefault(DEFAULT_LOCALE_TAG));
     }
 
     @Override
@@ -352,15 +357,15 @@ public class BillingAdminServiceImpl implements BillingAdminService {
         billableItemDiscountRepository.softDelete(requireItemDiscount(itemDiscountId));
     }
 
-    private BillingCatalogItemListResponse toCatalogListRow(BillableItemEntity item) {
+    private BillingCatalogItemListResponse toCatalogListRow(BillableItemEntity item, Locale locale) {
         List<BillableItemPriceEntity> prices = billableItemPriceRepository.findAllByBillableItem_IdOrderByValidFromDesc(item.getId());
-        return responseMapper.toCatalogItemListResponse(item, resolveCurrentPrice(prices, OffsetDateTime.now()));
+        return responseMapper.toCatalogItemListResponse(item, resolveCurrentPrice(prices, OffsetDateTime.now()), locale);
     }
 
-    private BillingCatalogItemDetailResponse toCatalogDetailResponse(BillableItemEntity item) {
+    private BillingCatalogItemDetailResponse toCatalogDetailResponse(BillableItemEntity item, Locale locale) {
         List<BillingCatalogPriceResponse> prices = billableItemPriceRepository.findAllByBillableItem_IdOrderByValidFromDesc(item.getId())
             .stream()
-            .map(responseMapper::toCatalogPriceResponse)
+            .map(price -> responseMapper.toCatalogPriceResponse(price, locale))
             .toList();
 
         List<BillableItemDiscountResponse> itemDiscounts = billableItemDiscountRepository.findAllByBillableItem_IdOrderByValidFromDesc(item.getId())
