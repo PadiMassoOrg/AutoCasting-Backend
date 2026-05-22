@@ -117,6 +117,15 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.casting_application_status_option WHERE string_code = 'sitemetadata.application_status.blank') THEN
     RAISE EXCEPTION 'Falta application_status blank. Ejecutá Flyway antes del seed.';
   END IF;
+  IF to_regclass('public.billable_item') IS NULL THEN
+    RAISE EXCEPTION 'Falta tabla billable_item. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF to_regclass('public.billable_item_price') IS NULL THEN
+    RAISE EXCEPTION 'Falta tabla billable_item_price. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF to_regclass('public.billable_item_audience') IS NULL THEN
+    RAISE EXCEPTION 'Falta tabla billable_item_audience. Ejecutá Flyway antes del seed.';
+  END IF;
 
 -- ------------------------------------------------------------
 -- 1) Usuarios seed
@@ -902,6 +911,62 @@ SELECT
 FROM tmp_created_applications a
 JOIN public.casting_role cr ON cr.id = a.casting_role_id;
 
+-- ------------------------------------------------------------
+-- 4.5) Billing catalog base para pruebas demo
+-- ------------------------------------------------------------
+INSERT INTO public.billable_item (code, string_code, description, billing_type, active)
+VALUES (
+  'CASTING_PUBLISH',
+  'billing.item.casting_publish',
+  'Cobro por publicación de un casting en el catálogo de AutoCasting.',
+  'ONE_TIME',
+  true
+)
+ON CONFLICT (code) DO UPDATE
+SET string_code = EXCLUDED.string_code,
+    description = EXCLUDED.description,
+    billing_type = EXCLUDED.billing_type,
+    active = true,
+    deleted = false,
+    modified_at = NOW(),
+    modified_by = 'SEED_DEMO';
+
+INSERT INTO public.billable_item_audience (billable_item_id, audience)
+SELECT id, 'EMPLOYER'
+FROM public.billable_item
+WHERE code = 'CASTING_PUBLISH'
+ON CONFLICT (billable_item_id, audience) DO NOTHING;
+
+WITH item AS (
+  SELECT id
+  FROM public.billable_item
+  WHERE code = 'CASTING_PUBLISH'
+)
+UPDATE public.billable_item_price p
+SET amount_minor = 100,
+    active = true,
+    deleted = false,
+    valid_to = NULL,
+    modified_at = NOW(),
+    modified_by = 'SEED_DEMO'
+FROM item i
+WHERE p.billable_item_id = i.id
+  AND p.currency_code = 'USD'
+  AND p.valid_to IS NULL;
+
+INSERT INTO public.billable_item_price (billable_item_id, currency_code, amount_minor, valid_from, valid_to, active)
+SELECT i.id, 'USD', 100, NOW(), NULL, true
+FROM public.billable_item i
+WHERE i.code = 'CASTING_PUBLISH'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.billable_item_price p
+    WHERE p.billable_item_id = i.id
+      AND p.currency_code = 'USD'
+      AND p.deleted = false
+      AND p.valid_to IS NULL
+  );
+
 
 -- ------------------------------------------------------------
 -- 5) Validaciones fuertes post-seed
@@ -978,6 +1043,23 @@ IF (
     AND ld.type IN ('TERMS', 'PRIVACY')
 ) <> 202 THEN
   RAISE EXCEPTION 'Seed inválido: aceptaciones legales esperadas para usuarios demo (202) no coinciden';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.billable_item bi
+  JOIN public.billable_item_audience bia ON bia.billable_item_id = bi.id
+  JOIN public.billable_item_price bip ON bip.billable_item_id = bi.id
+  WHERE bi.code = 'CASTING_PUBLISH'
+    AND bi.deleted = false
+    AND bi.active = true
+    AND bia.audience = 'EMPLOYER'
+    AND bip.currency_code = 'USD'
+    AND bip.amount_minor = 100
+    AND bip.valid_to IS NULL
+    AND bip.deleted = false
+) < 1 THEN
+  RAISE EXCEPTION 'Seed inválido: catálogo billing base CASTING_PUBLISH/USD no quedó en estado esperado';
 END IF;
 
 END;

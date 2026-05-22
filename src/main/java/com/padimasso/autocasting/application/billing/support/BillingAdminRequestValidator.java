@@ -60,7 +60,7 @@ public class BillingAdminRequestValidator {
         assertValidWindow(request.validFrom(), request.validTo(), BILLING_PRICE_VALIDITY_INVALID);
 
         String normalizedCurrency = normalizeCurrency(request.currencyCode());
-        boolean overlaps = billableItemPriceRepository.existsOverlappingWindow(
+        boolean overlaps = hasPriceWindowOverlap(
             request.billableItemId(),
             normalizedCurrency,
             request.validFrom(),
@@ -76,7 +76,7 @@ public class BillingAdminRequestValidator {
         assertValidWindow(request.validFrom(), request.validTo(), BILLING_PRICE_VALIDITY_INVALID);
 
         String normalizedCurrency = normalizeCurrency(request.currencyCode());
-        boolean overlaps = billableItemPriceRepository.existsOverlappingWindow(
+        boolean overlaps = hasPriceWindowOverlap(
             request.billableItemId(),
             normalizedCurrency,
             request.validFrom(),
@@ -109,7 +109,7 @@ public class BillingAdminRequestValidator {
     public void validateItemDiscountCreate(BillableItemDiscountUpsertRequest request) {
         assertValidWindow(request.validFrom(), request.validTo(), BILLING_ITEM_DISCOUNT_VALIDITY_INVALID);
 
-        boolean overlaps = billableItemDiscountRepository.existsOverlappingWindow(
+        boolean overlaps = hasItemDiscountWindowOverlap(
             request.billableItemId(),
             request.billingDiscountId(),
             request.validFrom(),
@@ -124,7 +124,7 @@ public class BillingAdminRequestValidator {
     public void validateItemDiscountUpdate(UUID itemDiscountId, BillableItemDiscountUpsertRequest request) {
         assertValidWindow(request.validFrom(), request.validTo(), BILLING_ITEM_DISCOUNT_VALIDITY_INVALID);
 
-        boolean overlaps = billableItemDiscountRepository.existsOverlappingWindow(
+        boolean overlaps = hasItemDiscountWindowOverlap(
             request.billableItemId(),
             request.billingDiscountId(),
             request.validFrom(),
@@ -164,6 +164,56 @@ public class BillingAdminRequestValidator {
         if (start != null && end != null && !end.isAfter(start)) {
             throw ApiException.badRequest(messageKey);
         }
+    }
+
+    private boolean hasPriceWindowOverlap(
+        UUID billableItemId,
+        String currencyCode,
+        OffsetDateTime validFrom,
+        OffsetDateTime validTo,
+        UUID excludeId
+    ) {
+        if (validTo == null) {
+            return billableItemPriceRepository.existsOverlappingWindow(
+                billableItemId,
+                currencyCode,
+                validFrom,
+                excludeId
+            );
+        }
+
+        return billableItemPriceRepository.existsOverlappingWindowUntil(
+            billableItemId,
+            currencyCode,
+            validFrom,
+            validTo,
+            excludeId
+        );
+    }
+
+    private boolean hasItemDiscountWindowOverlap(
+        UUID billableItemId,
+        UUID billingDiscountId,
+        OffsetDateTime validFrom,
+        OffsetDateTime validTo,
+        UUID excludeId
+    ) {
+        if (validTo == null) {
+            return billableItemDiscountRepository.existsOverlappingWindow(
+                billableItemId,
+                billingDiscountId,
+                validFrom,
+                excludeId
+            );
+        }
+
+        return billableItemDiscountRepository.existsOverlappingWindowUntil(
+            billableItemId,
+            billingDiscountId,
+            validFrom,
+            validTo,
+            excludeId
+        );
     }
 
     private void requireAudiences(BillableItemUpsertRequest request) {

@@ -1,31 +1,28 @@
 package com.padimasso.autocasting.application.billing.service;
 
 import com.padimasso.autocasting.application.billing.dto.request.BillableItemDiscountUpsertRequest;
-import com.padimasso.autocasting.application.billing.dto.request.BillableItemPriceUpsertRequest;
-import com.padimasso.autocasting.application.billing.dto.request.BillableItemUpsertRequest;
+import com.padimasso.autocasting.application.billing.dto.request.BillingCatalogItemCreateRequest;
+import com.padimasso.autocasting.application.billing.dto.request.BillingCatalogItemUpdateRequest;
+import com.padimasso.autocasting.application.billing.dto.request.BillingCatalogPriceUpsertRequest;
 import com.padimasso.autocasting.application.billing.dto.request.BillingDiscountUpsertRequest;
 import com.padimasso.autocasting.application.billing.dto.response.*;
 
 import java.util.UUID;
 
 public interface BillingAdminService {
-    BillingPageResponse<BillableItemResponse> listItems(int page, int size);
+    BillingPageResponse<BillingCatalogItemListResponse> listItems(int page, int size);
 
-    BillableItemResponse getItem(UUID itemId);
+    BillingCatalogItemDetailResponse getItem(UUID itemId);
 
-    BillableItemResponse createItem(BillableItemUpsertRequest request);
+    BillingCatalogItemDetailResponse createItem(BillingCatalogItemCreateRequest request);
 
-    BillableItemResponse updateItem(UUID itemId, BillableItemUpsertRequest request);
+    BillingCatalogItemDetailResponse updateItem(UUID itemId, BillingCatalogItemUpdateRequest request);
 
     void deleteItem(UUID itemId);
 
-    BillingPageResponse<BillableItemPriceResponse> listPrices(int page, int size);
+    BillingCatalogPriceResponse createPrice(UUID itemId, BillingCatalogPriceUpsertRequest request);
 
-    BillableItemPriceResponse getPrice(UUID priceId);
-
-    BillableItemPriceResponse createPrice(BillableItemPriceUpsertRequest request);
-
-    BillableItemPriceResponse updatePrice(UUID priceId, BillableItemPriceUpsertRequest request);
+    BillingCatalogPriceResponse updatePrice(UUID priceId, BillingCatalogPriceUpsertRequest request);
 
     void deletePrice(UUID priceId);
 

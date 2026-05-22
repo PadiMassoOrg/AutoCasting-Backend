@@ -1,6 +1,5 @@
 package com.padimasso.autocasting.application.billing.dto.response;
 
-import com.padimasso.autocasting.application.billing.model.BillingDiscountEntity;
 import com.padimasso.autocasting.application.billing.model.BillingDiscountType;
 
 import java.time.LocalDateTime;
@@ -26,25 +25,4 @@ public record BillingDiscountResponse(
     LocalDateTime modifiedAt,
     String modifiedBy
 ) {
-    public static BillingDiscountResponse from(BillingDiscountEntity entity) {
-        return new BillingDiscountResponse(
-            entity.getId(),
-            entity.getCode(),
-            entity.getStringCode(),
-            entity.getDescription(),
-            entity.getDiscountType(),
-            entity.getPercentageBps(),
-            entity.getAmountMinor(),
-            entity.getCurrencyCode(),
-            entity.isStackable(),
-            entity.isActive(),
-            entity.getStartsAt(),
-            entity.getEndsAt(),
-            entity.isDeleted(),
-            entity.getCreatedAt(),
-            entity.getCreatedBy(),
-            entity.getModifiedAt(),
-            entity.getModifiedBy()
-        );
-    }
 }

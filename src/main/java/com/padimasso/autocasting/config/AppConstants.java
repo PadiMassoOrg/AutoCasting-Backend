@@ -46,6 +46,7 @@ public class AppConstants {
     public static final String ADMIN_BILLING_API_URL = ADMIN_API_URL + "/billing";
     public static final String ADMIN_BILLABLE_ITEMS_API_URL = ADMIN_BILLING_API_URL + "/items";
     public static final String ADMIN_BILLABLE_ITEM_API_URL = ADMIN_BILLABLE_ITEMS_API_URL + "/{itemId}";
+    public static final String ADMIN_BILLABLE_ITEM_PRICES_BY_ITEM_API_URL = ADMIN_BILLABLE_ITEM_API_URL + "/prices";
     public static final String ADMIN_BILLABLE_ITEM_PRICES_API_URL = ADMIN_BILLING_API_URL + "/prices";
     public static final String ADMIN_BILLABLE_ITEM_PRICE_API_URL = ADMIN_BILLABLE_ITEM_PRICES_API_URL + "/{priceId}";
     public static final String ADMIN_BILLING_DISCOUNTS_API_URL = ADMIN_BILLING_API_URL + "/discounts";

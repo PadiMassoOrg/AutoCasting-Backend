@@ -4,21 +4,21 @@ import com.padimasso.autocasting.application.billing.model.BillingAudience;
 import com.padimasso.autocasting.application.billing.model.BillingType;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.UUID;
 
-public record BillableItemResponse(
+public record BillingCatalogItemListResponse(
     UUID id,
     String code,
     String stringCode,
-    String description,
     Set<BillingAudience> audiences,
     BillingType billingType,
     boolean active,
-    boolean deleted,
-    LocalDateTime createdAt,
-    String createdBy,
-    LocalDateTime modifiedAt,
-    String modifiedBy
+    String currentPriceCurrencyCode,
+    Long currentPriceAmountMinor,
+    OffsetDateTime currentPriceValidFrom,
+    OffsetDateTime currentPriceValidTo,
+    LocalDateTime modifiedAt
 ) {
 }

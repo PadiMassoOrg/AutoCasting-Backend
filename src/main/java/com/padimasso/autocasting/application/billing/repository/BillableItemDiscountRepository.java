@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public interface BillableItemDiscountRepository extends SoftDeleteRepository<BillableItemDiscountEntity, UUID> {
+
+    List<BillableItemDiscountEntity> findAllByBillableItem_IdOrderByValidFromDesc(UUID billableItemId);
 
     @Query("""
         SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END
@@ -17,9 +20,24 @@ public interface BillableItemDiscountRepository extends SoftDeleteRepository<Bil
           AND d.billingDiscount.id = :billingDiscountId
           AND (:excludeId IS NULL OR d.id <> :excludeId)
           AND (d.validTo IS NULL OR d.validTo > :validFrom)
-          AND (:validTo IS NULL OR d.validFrom < :validTo)
         """)
     boolean existsOverlappingWindow(
+        @Param("billableItemId") UUID billableItemId,
+        @Param("billingDiscountId") UUID billingDiscountId,
+        @Param("validFrom") OffsetDateTime validFrom,
+        @Param("excludeId") UUID excludeId
+    );
+
+    @Query("""
+        SELECT CASE WHEN COUNT(d) > 0 THEN true ELSE false END
+        FROM BillableItemDiscountEntity d
+        WHERE d.billableItem.id = :billableItemId
+          AND d.billingDiscount.id = :billingDiscountId
+          AND (:excludeId IS NULL OR d.id <> :excludeId)
+          AND (d.validTo IS NULL OR d.validTo > :validFrom)
+          AND d.validFrom < :validTo
+        """)
+    boolean existsOverlappingWindowUntil(
         @Param("billableItemId") UUID billableItemId,
         @Param("billingDiscountId") UUID billingDiscountId,
         @Param("validFrom") OffsetDateTime validFrom,

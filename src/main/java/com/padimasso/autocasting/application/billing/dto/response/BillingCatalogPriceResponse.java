@@ -1,21 +1,14 @@
 package com.padimasso.autocasting.application.billing.dto.response;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record BillableItemPriceResponse(
+public record BillingCatalogPriceResponse(
     UUID id,
-    UUID billableItemId,
     String currencyCode,
     long amountMinor,
     OffsetDateTime validFrom,
     OffsetDateTime validTo,
-    boolean active,
-    boolean deleted,
-    LocalDateTime createdAt,
-    String createdBy,
-    LocalDateTime modifiedAt,
-    String modifiedBy
+    boolean active
 ) {
 }

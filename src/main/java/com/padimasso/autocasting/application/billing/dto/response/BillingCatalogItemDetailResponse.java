@@ -4,10 +4,11 @@ import com.padimasso.autocasting.application.billing.model.BillingAudience;
 import com.padimasso.autocasting.application.billing.model.BillingType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public record BillableItemResponse(
+public record BillingCatalogItemDetailResponse(
     UUID id,
     String code,
     String stringCode,
@@ -19,6 +20,8 @@ public record BillableItemResponse(
     LocalDateTime createdAt,
     String createdBy,
     LocalDateTime modifiedAt,
-    String modifiedBy
+    String modifiedBy,
+    List<BillingCatalogPriceResponse> prices,
+    List<BillableItemDiscountResponse> itemDiscounts
 ) {
 }

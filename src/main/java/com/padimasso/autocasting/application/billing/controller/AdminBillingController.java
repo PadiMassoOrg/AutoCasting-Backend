@@ -1,8 +1,9 @@
 package com.padimasso.autocasting.application.billing.controller;
 
 import com.padimasso.autocasting.application.billing.dto.request.BillableItemDiscountUpsertRequest;
-import com.padimasso.autocasting.application.billing.dto.request.BillableItemPriceUpsertRequest;
-import com.padimasso.autocasting.application.billing.dto.request.BillableItemUpsertRequest;
+import com.padimasso.autocasting.application.billing.dto.request.BillingCatalogItemCreateRequest;
+import com.padimasso.autocasting.application.billing.dto.request.BillingCatalogItemUpdateRequest;
+import com.padimasso.autocasting.application.billing.dto.request.BillingCatalogPriceUpsertRequest;
 import com.padimasso.autocasting.application.billing.dto.request.BillingDiscountUpsertRequest;
 import com.padimasso.autocasting.application.billing.dto.response.*;
 import com.padimasso.autocasting.application.billing.service.BillingAdminService;
@@ -30,7 +31,7 @@ public class AdminBillingController {
 
     @Operation(summary = "List billable items", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(ADMIN_BILLABLE_ITEMS_API_URL)
-    public BillingPageResponse<BillableItemResponse> listItems(
+    public BillingPageResponse<BillingCatalogItemListResponse> listItems(
         @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
         @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size
     ) {
@@ -39,21 +40,21 @@ public class AdminBillingController {
 
     @Operation(summary = "Get billable item by ID", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping(ADMIN_BILLABLE_ITEM_API_URL)
-    public BillableItemResponse getItem(@PathVariable UUID itemId) {
+    public BillingCatalogItemDetailResponse getItem(@PathVariable UUID itemId) {
         return billingAdminService.getItem(itemId);
     }
 
-    @Operation(summary = "Create billable item", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Create billable item with initial price", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(ADMIN_BILLABLE_ITEMS_API_URL)
-    public ResponseEntity<BillableItemResponse> createItem(@Valid @RequestBody BillableItemUpsertRequest request) {
+    public ResponseEntity<BillingCatalogItemDetailResponse> createItem(@Valid @RequestBody BillingCatalogItemCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(billingAdminService.createItem(request));
     }
 
     @Operation(summary = "Update billable item", security = @SecurityRequirement(name = "bearerAuth"))
     @PutMapping(ADMIN_BILLABLE_ITEM_API_URL)
-    public BillableItemResponse updateItem(
+    public BillingCatalogItemDetailResponse updateItem(
         @PathVariable UUID itemId,
-        @Valid @RequestBody BillableItemUpsertRequest request
+        @Valid @RequestBody BillingCatalogItemUpdateRequest request
     ) {
         return billingAdminService.updateItem(itemId, request);
     }
@@ -65,32 +66,20 @@ public class AdminBillingController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "List item prices", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(ADMIN_BILLABLE_ITEM_PRICES_API_URL)
-    public BillingPageResponse<BillableItemPriceResponse> listPrices(
-        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
-        @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size
-    ) {
-        return billingAdminService.listPrices(page, size);
-    }
-
-    @Operation(summary = "Get item price by ID", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping(ADMIN_BILLABLE_ITEM_PRICE_API_URL)
-    public BillableItemPriceResponse getPrice(@PathVariable UUID priceId) {
-        return billingAdminService.getPrice(priceId);
-    }
-
     @Operation(summary = "Create item price", security = @SecurityRequirement(name = "bearerAuth"))
-    @PostMapping(ADMIN_BILLABLE_ITEM_PRICES_API_URL)
-    public ResponseEntity<BillableItemPriceResponse> createPrice(@Valid @RequestBody BillableItemPriceUpsertRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(billingAdminService.createPrice(request));
+    @PostMapping(ADMIN_BILLABLE_ITEM_PRICES_BY_ITEM_API_URL)
+    public ResponseEntity<BillingCatalogPriceResponse> createPrice(
+        @PathVariable UUID itemId,
+        @Valid @RequestBody BillingCatalogPriceUpsertRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(billingAdminService.createPrice(itemId, request));
     }
 
     @Operation(summary = "Update item price", security = @SecurityRequirement(name = "bearerAuth"))
     @PutMapping(ADMIN_BILLABLE_ITEM_PRICE_API_URL)
-    public BillableItemPriceResponse updatePrice(
+    public BillingCatalogPriceResponse updatePrice(
         @PathVariable UUID priceId,
-        @Valid @RequestBody BillableItemPriceUpsertRequest request
+        @Valid @RequestBody BillingCatalogPriceUpsertRequest request
     ) {
         return billingAdminService.updatePrice(priceId, request);
     }
