@@ -39,6 +39,7 @@ public record CastingRoleRequest(
     String remunerationNotes,
     Boolean requiresAudio,
     Boolean requiresVideo,
+    @Size(max = 3000, message = "casting.requirement_description_max_length")
     String requirementDescription,
     UUID ethnicityId,
     Boolean tattoo,

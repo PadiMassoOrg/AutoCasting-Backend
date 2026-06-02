@@ -21,6 +21,7 @@ public record CastingUpsertRequest(
     String wardrobeFittingText,
     LocalDate shootingStartDate,
     LocalDate shootingEndDate,
+    @Size(max = 3000, message = "casting.description_max_length")
     String description
 ) {
     @AssertTrue(message = "casting.shooting_date_range_invalid")
