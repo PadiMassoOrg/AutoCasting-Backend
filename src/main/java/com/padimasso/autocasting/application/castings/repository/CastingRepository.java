@@ -105,6 +105,36 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
     })
     Optional<CastingEntity> findByIdAndDeletedFalse(UUID id);
 
+    @Query(value = """
+        select c.*
+        from casting c
+        join casting_status_option status on status.id = c.casting_status_option_id
+        join casting_modality_option modality on modality.id = c.casting_modality_option_id
+        where c.deleted = false
+          and c.employer_profile_id = :employerProfileId
+          and status.string_code = :draftStatusCode
+          and c.title = :defaultTitle
+          and c.project_type_option_id is null
+          and modality.string_code = :defaultModalityCode
+          and c.location_text is null
+          and c.application_deadline is null
+          and c.has_wardrobe_fitting = false
+          and c.wardrobe_fitting_text is null
+          and c.shooting_start_date is null
+          and c.shooting_end_date is null
+          and c.description is null
+          and not exists (select 1 from casting_role r where r.casting_id = c.id and r.deleted = false)
+          and not exists (select 1 from casting_attachment a where a.casting_id = c.id and a.deleted = false)
+        order by c.created_at desc
+        limit 1
+        """, nativeQuery = true)
+    Optional<CastingEntity> findLatestPristineDraftByEmployerProfileId(
+        @Param("employerProfileId") UUID employerProfileId,
+        @Param("draftStatusCode") String draftStatusCode,
+        @Param("defaultTitle") String defaultTitle,
+        @Param("defaultModalityCode") String defaultModalityCode
+    );
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         update CastingEntity c

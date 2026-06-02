@@ -14,6 +14,7 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
+import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
@@ -41,6 +42,7 @@ public class CastingServiceImpl implements CastingService {
     private final AuthContext authContext;
     private final TalentProfileRepository talentProfileRepository;
     private final EmployerContext employerContext;
+    private final EmployerProfileRepository employerProfileRepository;
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingStatusTransitionPolicy castingStatusTransitionPolicy;
@@ -51,6 +53,20 @@ public class CastingServiceImpl implements CastingService {
     @Transactional
     public String createEmptyCasting() {
         EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        var employerProfileId = employer.employerProfile().getId();
+
+        employerProfileRepository.findByIdForUpdate(employerProfileId)
+            .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_PRINCIPAL));
+
+        var existingPristineDraft = castingRepository.findLatestPristineDraftByEmployerProfileId(
+            employerProfileId,
+            CASTING_STATUS_DRAFT,
+            DEFAULT_EMPTY_CASTING_TITLE,
+            CASTING_MODALITY_AUTOCASTING
+        );
+        if (existingPristineDraft.isPresent()) {
+            return existingPristineDraft.get().getDefaultCode();
+        }
 
         CastingStatusOptionEntity draftStatus =
             siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_DRAFT);
