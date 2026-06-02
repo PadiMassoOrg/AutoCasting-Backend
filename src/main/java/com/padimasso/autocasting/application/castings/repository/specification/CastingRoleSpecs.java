@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 public final class CastingRoleSpecs {
@@ -38,10 +39,28 @@ public final class CastingRoleSpecs {
         }
 
         if (filter.genderIdTokens() != null && !filter.genderIdTokens().isEmpty()) {
-            spec = spec.and((root, query, cb) -> root.get("gender").get("stringCode").in(filter.genderIdTokens()));
+            boolean all = filter.genderIdTokens().stream().anyMatch("NULL"::equalsIgnoreCase);
+            if (!all) {
+                var ids = filter.genderIdTokens().stream()
+                    .filter(Objects::nonNull)
+                    .map(UUID::fromString)
+                    .toList();
+                if (!ids.isEmpty()) {
+                    spec = spec.and((root, query, cb) -> root.get("gender").get("id").in(ids));
+                }
+            }
         }
         if (filter.ethnicityIdTokens() != null && !filter.ethnicityIdTokens().isEmpty()) {
-            spec = spec.and((root, query, cb) -> root.get("ethnicity").get("stringCode").in(filter.ethnicityIdTokens()));
+            boolean all = filter.ethnicityIdTokens().stream().anyMatch("NULL"::equalsIgnoreCase);
+            if (!all) {
+                var ids = filter.ethnicityIdTokens().stream()
+                    .filter(Objects::nonNull)
+                    .map(UUID::fromString)
+                    .toList();
+                if (!ids.isEmpty()) {
+                    spec = spec.and((root, query, cb) -> root.get("ethnicity").get("id").in(ids));
+                }
+            }
         }
 
         spec = spec.and(matchIds("professions", filter.professionIds(), filter.professionsMode()));
