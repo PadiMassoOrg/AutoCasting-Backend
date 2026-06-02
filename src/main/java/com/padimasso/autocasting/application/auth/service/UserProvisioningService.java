@@ -11,8 +11,6 @@ import com.padimasso.autocasting.application.employer.model.EmployerProfileEntit
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
-import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
-import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.model.*;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
@@ -27,7 +25,6 @@ import java.util.Set;
 import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
 import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
 import static com.padimasso.autocasting.application.auth.service.impl.AuthServiceImpl.normalizeUser;
-import static com.padimasso.autocasting.config.AppConstants.GENDER_OPTION_INDISTINCT;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
 @Component
@@ -41,7 +38,6 @@ class UserProvisioningService {
     private final TalentProfileRepository talentProfileRepository;
     private final EmployerProfileRepository employerProfileRepository;
     private final PlanRepository planRepository;
-    private final SiteMetadataResolver siteMetadataResolver;
 
     @Transactional
     void ensureUser(String email, String name) {
@@ -93,16 +89,10 @@ class UserProvisioningService {
                 return employerProfileRepository.save(p);
             });
 
-
-        // Basic Info
-        GenderOptionEntity indistinctGender =
-            siteMetadataResolver.resolveGenderByCodeOrThrow(GENDER_OPTION_INDISTINCT);
-
         if (talentProfile.getBasicInfo() == null) {
             BasicInfoEntity basicInfo = BasicInfoEntity.builder()
                 .stageName(name) // podemos usar el nombre de OAuth como nombre artístico inicial
                 .talentProfile(talentProfile)
-                .gender(indistinctGender)
                 .build();
             talentProfile.setBasicInfo(basicInfo);
         } else {
