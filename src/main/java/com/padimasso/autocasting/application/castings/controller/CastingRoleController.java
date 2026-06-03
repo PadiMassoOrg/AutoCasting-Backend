@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.castings.controller;
 
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
+import com.padimasso.autocasting.application.castings.dto.request.DuplicateCastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingRoleEmployerCardResponse;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
@@ -65,7 +66,10 @@ public class CastingRoleController {
 
     @PostMapping(AppConstants.CASTING_ROLE_URL + "/{roleId}/duplicate")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<CastingRoleResponse> duplicateCastingRole(@PathVariable UUID roleId) {
-        return ResponseEntity.ok(castingRoleService.duplicateCastingRole(roleId));
+    public ResponseEntity<CastingRoleResponse> duplicateCastingRole(
+        @PathVariable UUID roleId,
+        @RequestBody(required = false) DuplicateCastingRoleRequest request
+    ) {
+        return ResponseEntity.ok(castingRoleService.duplicateCastingRole(roleId, request != null ? request.roleName() : null));
     }
 }

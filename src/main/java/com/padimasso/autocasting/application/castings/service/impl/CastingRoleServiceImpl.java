@@ -32,9 +32,6 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 @RequiredArgsConstructor
 @SuppressWarnings("unused")
 public class CastingRoleServiceImpl implements CastingRoleService {
-
-    private static final String DUPLICATED_ROLE_PREFIX = "*  ";
-
     private final CastingRoleRepository castingRoleRepository;
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
@@ -112,14 +109,15 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     @Override
     @Transactional
-    public CastingRoleResponse duplicateCastingRole(UUID roleId) {
+    public CastingRoleResponse duplicateCastingRole(UUID roleId, String roleName) {
         CastingRoleEntity sourceRole = castingRoleRepository.findByIdAndDeletedFalse(roleId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
         assertDraftEditable(sourceRole.getCasting());
+        String duplicatedRoleName = TextNormalizer.normalizeNullable(roleName);
 
         CastingRoleEntity duplicatedRole = CastingRoleEntity.builder()
             .casting(sourceRole.getCasting())
-            .roleName(buildDuplicatedRoleName(sourceRole.getRoleName()))
+            .roleName(duplicatedRoleName != null ? duplicatedRoleName : sourceRole.getRoleName())
             .roleType(sourceRole.getRoleType())
             .gender(sourceRole.getGender())
             .ageMin(sourceRole.getAgeMin())
@@ -208,14 +206,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     private boolean endsWith(String value, String suffix) {
         return value != null && value.endsWith(suffix);
-    }
-
-    private String buildDuplicatedRoleName(String roleName) {
-        String normalizedRoleName = TextNormalizer.normalizeNullable(roleName);
-        if (normalizedRoleName == null) {
-            return DUPLICATED_ROLE_PREFIX.trim();
-        }
-        return DUPLICATED_ROLE_PREFIX + normalizedRoleName;
     }
 
     private void assertDraftEditable(CastingEntity casting) {
