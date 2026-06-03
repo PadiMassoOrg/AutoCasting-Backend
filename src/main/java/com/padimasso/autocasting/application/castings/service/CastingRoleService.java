@@ -21,5 +21,5 @@ public interface CastingRoleService {
 
     CastingRoleResponse getById(UUID roleId);
 
-    CastingRoleResponse duplicateCastingRole(UUID roleId);
+    CastingRoleResponse duplicateCastingRole(UUID roleId, String roleName);
 }
