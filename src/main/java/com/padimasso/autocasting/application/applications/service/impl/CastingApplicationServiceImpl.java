@@ -31,6 +31,7 @@ import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.talent.TalentMediaRequirements;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
@@ -96,6 +97,9 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        if (!TalentMediaRequirements.hasRequiredPhotos(profile.getMedia())) {
+            throw new IllegalArgumentException("profile.media.required_for_application");
+        }
         CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
         if (castingApplicationRepository.existsByCastingRoleIdAndTalentProfileId(roleId, profile.getId())) {

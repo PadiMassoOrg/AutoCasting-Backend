@@ -19,12 +19,18 @@ public final class TalentProfileSpecs {
     private TalentProfileSpecs() {
     }
 
-    public static Specification<TalentProfileEntity> hasHeadshot() {
+    public static Specification<TalentProfileEntity> hasRequiredMedia() {
         return (root, q, cb) -> {
             var m = root.join("media", JoinType.LEFT);
-            var notNull = cb.isNotNull(m.get("headshotImageUrl"));
-            var notBlank = cb.notEqual(cb.trim(m.get("headshotImageUrl")), "");
-            return cb.and(notNull, notBlank);
+            var hasHeadshot = cb.and(
+                cb.isNotNull(m.get("headshotImageUrl")),
+                cb.notEqual(cb.trim(m.get("headshotImageUrl")), "")
+            );
+            var hasFullBody = cb.and(
+                cb.isNotNull(m.get("fullBodyImageUrl")),
+                cb.notEqual(cb.trim(m.get("fullBodyImageUrl")), "")
+            );
+            return cb.and(hasHeadshot, hasFullBody);
         };
     }
 
@@ -177,7 +183,7 @@ public final class TalentProfileSpecs {
 
     public static Specification<TalentProfileEntity> fromFilter(TalentFilter f) {
         Specification<TalentProfileEntity> spec = Specification
-            .where(f.includeNoHeadshot() != Boolean.TRUE ? hasHeadshot() : null)
+            .where(f.includeNoHeadshot() != Boolean.TRUE ? hasRequiredMedia() : null)
             .and(stageNameContains(f.stageName()))
             .and(ageBetween(f.ageMin(), f.ageMax()))
             .and(genderInTokens(f.genderIdTokens()))

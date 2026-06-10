@@ -12,7 +12,6 @@ import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaService;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
-import com.padimasso.autocasting.exception.ApiException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,10 +40,6 @@ public class MediaServiceImpl implements MediaService {
         MediaEntity media = mediaRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> mediaRepository.save(MediaEntity.builder().talentProfile(profile).build()));
 
-        if (wouldLeaveWithoutPhotos(media, request)) {
-            throw ApiException.badRequest("profile.media.must_have_one_photo");
-        }
-
         if (request.headshotImageUrl().isPresent()) {
             media.setHeadshotImageUrl(TextNormalizer.normalizeNullable(request.headshotImageUrl().orElse(null)));
         }
@@ -70,29 +65,5 @@ public class MediaServiceImpl implements MediaService {
         }
 
         return talentProfileMapper.toMediaResponse(mediaRepository.saveAndFlush(media));
-    }
-
-    private boolean wouldLeaveWithoutPhotos(MediaEntity media, MediaPatchRequest request) {
-        boolean hasHeadshot = request.headshotImageUrl().isPresent()
-            ? TextNormalizer.normalizeNullable(request.headshotImageUrl().orElse(null)) != null
-            : TextNormalizer.normalizeNullable(media.getHeadshotImageUrl()) != null;
-        boolean hasFullBody = request.fullBodyImageUrl().isPresent()
-            ? TextNormalizer.normalizeNullable(request.fullBodyImageUrl().orElse(null)) != null
-            : TextNormalizer.normalizeNullable(media.getFullBodyImageUrl()) != null;
-
-        List<String> otherPictures = media.getOtherPicturesUrl() == null
-            ? new ArrayList<>()
-            : new ArrayList<>(media.getOtherPicturesUrl());
-        if (request.otherPictures() != null) {
-            for (OtherPicturePatch otherPicture : request.otherPictures()) {
-                while (otherPictures.size() <= otherPicture.index()) {
-                    otherPictures.add(null);
-                }
-                otherPictures.set(otherPicture.index(), TextNormalizer.normalizeNullable(otherPicture.url()));
-            }
-        }
-
-        boolean hasOtherPicture = otherPictures.stream().anyMatch(url -> TextNormalizer.normalizeNullable(url) != null);
-        return !hasHeadshot && !hasFullBody && !hasOtherPicture;
     }
 }

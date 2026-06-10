@@ -54,11 +54,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.company_type_option WHERE string_code = 'sitemetadata.company_type.company') THEN
     RAISE EXCEPTION 'Falta company type company. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.professions WHERE string_code = 'sitemetadata.profession.actor') THEN
-    RAISE EXCEPTION 'Falta profession actor. Ejecutá Flyway antes del seed.';
+  IF (SELECT COUNT(*) FROM public.professions WHERE string_code LIKE 'sitemetadata.profession.%') < 8 THEN
+    RAISE EXCEPTION 'Faltan professions metadata. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.skills WHERE string_code = 'sitemetadata.skill.english') THEN
-    RAISE EXCEPTION 'Falta skill english. Ejecutá Flyway antes del seed.';
+  IF (SELECT COUNT(*) FROM public.skills WHERE string_code LIKE 'sitemetadata.skill.%') < 20 THEN
+    RAISE EXCEPTION 'Faltan skills metadata. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.casting_status_option WHERE string_code = 'sitemetadata.casting_status.published') THEN
     RAISE EXCEPTION 'Falta casting_status published. Ejecutá Flyway antes del seed.';
@@ -324,7 +324,7 @@ FROM public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 WHERE tc.talent_profile_id = tp.id;
 
--- Talent media (mínimo onboarding: stageName + headshot)
+-- Talent media (catálogo/aplicaciones: headshot + full body)
 CREATE TEMP TABLE tmp_headshot_pool (
   idx int PRIMARY KEY,
   url text NOT NULL
@@ -397,13 +397,54 @@ INSERT INTO tmp_headshot_pool (idx, url) VALUES
   (64, 'https://images.pexels.com/photos/1188971/pexels-photo-1188971.jpeg?cs=srgb&dl=pexels-krivitskiy-1188971.jpg&fm=jpg'),
   (65, 'https://images.pexels.com/photos/34461415/pexels-photo-34461415.jpeg?cs=srgb&dl=pexels-2mephoto-34461415.jpg&fm=jpg');
 
+CREATE TEMP TABLE tmp_seed_profession_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_seed_profession_pool (idx, string_code) VALUES
+  (1, 'sitemetadata.profession.actor'),
+  (2, 'sitemetadata.profession.dancer'),
+  (3, 'sitemetadata.profession.singer'),
+  (4, 'sitemetadata.profession.influencer'),
+  (5, 'sitemetadata.profession.model'),
+  (6, 'sitemetadata.profession.musician'),
+  (7, 'sitemetadata.profession.standup'),
+  (8, 'sitemetadata.profession.voice_talent');
+
+CREATE TEMP TABLE tmp_seed_skill_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL,
+  category_string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_seed_skill_pool (idx, string_code, category_string_code) VALUES
+  (1,  'sitemetadata.skill.english', 'sitemetadata.category.language'),
+  (2,  'sitemetadata.skill.french', 'sitemetadata.category.language'),
+  (3,  'sitemetadata.skill.italian', 'sitemetadata.category.language'),
+  (4,  'sitemetadata.skill.portuguese_br', 'sitemetadata.category.language'),
+  (5,  'sitemetadata.skill.spanish_neutral', 'sitemetadata.category.accent'),
+  (6,  'sitemetadata.skill.english_us', 'sitemetadata.category.accent'),
+  (7,  'sitemetadata.skill.english_uk', 'sitemetadata.category.accent'),
+  (8,  'sitemetadata.skill.stage_combat', 'sitemetadata.category.physical'),
+  (9,  'sitemetadata.skill.martial_arts', 'sitemetadata.category.physical'),
+  (10, 'sitemetadata.skill.acrobatics', 'sitemetadata.category.physical'),
+  (11, 'sitemetadata.skill.skating', 'sitemetadata.category.physical'),
+  (12, 'sitemetadata.skill.horseback_riding', 'sitemetadata.category.physical'),
+  (13, 'sitemetadata.skill.football', 'sitemetadata.category.sport'),
+  (14, 'sitemetadata.skill.tennis', 'sitemetadata.category.sport'),
+  (15, 'sitemetadata.skill.swimming', 'sitemetadata.category.sport'),
+  (16, 'sitemetadata.skill.volleyball', 'sitemetadata.category.sport'),
+  (17, 'sitemetadata.skill.basketball', 'sitemetadata.category.sport'),
+  (18, 'sitemetadata.skill.padel', 'sitemetadata.category.sport');
+
 INSERT INTO public.talent_media (
   id, created_at, created_by, deleted, modified_at, modified_by,
   full_body_image_url, headshot_image_url, introduction_video_url, show_reel_video_url, talent_profile_id
 )
 SELECT
   gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
-  NULL,
+  split_part(fbp.url, '?', 1) || '?auto=compress&cs=tinysrgb&fit=max&w=900&h=1400&dpr=1',
   split_part(hp.url, '?', 1) || '?auto=compress&cs=tinysrgb&fit=crop&w=480&h=640&dpr=1',
   NULL,
   NULL,
@@ -411,27 +452,31 @@ SELECT
 FROM (
   SELECT
     tp.id AS talent_profile_id,
-    ((abs(hashtext(t.email)) % 65) + 1) AS headshot_idx
+    ((abs(hashtext(t.email || ':headshot')) % 65) + 1) AS headshot_idx,
+    ((abs(hashtext(t.email || ':fullbody')) % 65) + 1) AS full_body_idx
   FROM public.talent_profile tp
   JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 ) m
 JOIN tmp_headshot_pool hp ON hp.idx = m.headshot_idx
+JOIN tmp_headshot_pool fbp ON fbp.idx = m.full_body_idx
 LEFT JOIN public.talent_media tm ON tm.talent_profile_id = m.talent_profile_id
 WHERE tm.id IS NULL;
 
 UPDATE public.talent_media tm
 SET headshot_image_url = split_part(hp.url, '?', 1) || '?auto=compress&cs=tinysrgb&fit=crop&w=480&h=640&dpr=1',
-    full_body_image_url = NULL,
+    full_body_image_url = split_part(fbp.url, '?', 1) || '?auto=compress&cs=tinysrgb&fit=max&w=900&h=1400&dpr=1',
     modified_at = NOW(),
     modified_by = 'SEED_DEMO'
 FROM (
   SELECT
     tp.id AS talent_profile_id,
-    ((abs(hashtext(t.email)) % 65) + 1) AS headshot_idx
+    ((abs(hashtext(t.email || ':headshot')) % 65) + 1) AS headshot_idx,
+    ((abs(hashtext(t.email || ':fullbody')) % 65) + 1) AS full_body_idx
   FROM public.talent_profile tp
   JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 ) m
 JOIN tmp_headshot_pool hp ON hp.idx = m.headshot_idx
+JOIN tmp_headshot_pool fbp ON fbp.idx = m.full_body_idx
 WHERE tm.talent_profile_id = m.talent_profile_id;
 
 -- Talent characteristics (placeholder)
@@ -458,30 +503,92 @@ JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 WHERE tc.talent_profile_id = tp.id;
 
 -- Relation profession por talent
-INSERT INTO public.talent_basic_info_profession (talent_basic_info_id, profession_id)
-SELECT tbi.id, p.id
-FROM public.talent_basic_info tbi
+DELETE FROM public.talent_basic_info_profession tbip
+USING public.talent_basic_info tbi
 JOIN public.talent_profile tp ON tp.id = tbi.talent_profile_id
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
-CROSS JOIN LATERAL (
-  SELECT id FROM public.professions
-  WHERE string_code = 'sitemetadata.profession.actor'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) p
+WHERE tbip.talent_basic_info_id = tbi.id;
+
+INSERT INTO public.talent_basic_info_profession (talent_basic_info_id, profession_id)
+SELECT
+  talent_professions.talent_basic_info_id,
+  p.id
+FROM (
+  SELECT
+    tbi.id AS talent_basic_info_id,
+    profession_code
+  FROM public.talent_basic_info tbi
+  JOIN public.talent_profile tp ON tp.id = tbi.talent_profile_id
+  JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+  CROSS JOIN LATERAL (
+    SELECT profession_code
+    FROM (
+      SELECT spp1.string_code AS profession_code
+      FROM tmp_seed_profession_pool spp1
+      WHERE spp1.idx = ((abs(hashtext(t.email || ':profession:1')) % 8) + 1)
+
+      UNION ALL
+
+      SELECT spp2.string_code AS profession_code
+      FROM tmp_seed_profession_pool spp2
+      WHERE (abs(hashtext(t.email || ':profession:count')) % 100) < 45
+        AND spp2.idx = ((abs(hashtext(t.email || ':profession:2')) % 8) + 1)
+        AND spp2.string_code <> (
+          SELECT spp_first.string_code
+          FROM tmp_seed_profession_pool spp_first
+          WHERE spp_first.idx = ((abs(hashtext(t.email || ':profession:1')) % 8) + 1)
+        )
+    ) chosen_professions
+  ) talent_professions
+) talent_professions
+JOIN public.professions p ON p.string_code = talent_professions.profession_code
 ON CONFLICT (talent_basic_info_id, profession_id) DO NOTHING;
 
 -- Relation skill por talent
-INSERT INTO public.talent_skill (talent_profile_id, skill_id)
-SELECT tp.id, s.id
-FROM public.talent_profile tp
+DELETE FROM public.talent_skill ts
+USING public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+WHERE ts.talent_profile_id = tp.id;
+
+INSERT INTO public.talent_skill (talent_profile_id, skill_id)
+SELECT
+  talent_skills.talent_profile_id,
+  s.id
+FROM (
+  SELECT
+    tp.id AS talent_profile_id,
+    skill_code
+  FROM public.talent_profile tp
+  JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
   CROSS JOIN LATERAL (
-  SELECT id FROM public.skills
-  WHERE string_code = 'sitemetadata.skill.english'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) s
+    SELECT DISTINCT skill_code
+    FROM (
+      SELECT ssp1.string_code AS skill_code
+      FROM tmp_seed_skill_pool ssp1
+      WHERE ssp1.idx = ((abs(hashtext(t.email || ':skill:1')) % 18) + 1)
+
+      UNION ALL
+
+      SELECT ssp2.string_code AS skill_code
+      FROM tmp_seed_skill_pool ssp2
+      WHERE ssp2.idx = ((abs(hashtext(t.email || ':skill:2')) % 18) + 1)
+
+      UNION ALL
+
+      SELECT ssp3.string_code AS skill_code
+      FROM tmp_seed_skill_pool ssp3
+      WHERE ssp3.idx = ((abs(hashtext(t.email || ':skill:3')) % 18) + 1)
+
+      UNION ALL
+
+      SELECT ssp4.string_code AS skill_code
+      FROM tmp_seed_skill_pool ssp4
+      WHERE (abs(hashtext(t.email || ':skill:count')) % 100) < 35
+        AND ssp4.idx = ((abs(hashtext(t.email || ':skill:4')) % 18) + 1)
+    ) chosen_skills
+  ) talent_skills
+) talent_skills
+JOIN public.skills s ON s.string_code = talent_skills.skill_code
 ON CONFLICT (talent_profile_id, skill_id) DO NOTHING;
 
 -- Employer basic info
@@ -788,30 +895,136 @@ JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(rs.casting_seq
 JOIN public.casting_role cr ON cr.casting_id = c.id AND cr.role_name = rs.role_name;
 
 -- Profession + skill para cada role
+DELETE FROM public.casting_role_profession crp
+USING tmp_created_roles r
+WHERE crp.casting_role_id = r.casting_role_id;
+
 INSERT INTO public.casting_role_profession (casting_role_id, profession_id)
-SELECT r.casting_role_id, p.id
-FROM tmp_created_roles r
-CROSS JOIN LATERAL (
-  SELECT id FROM public.professions
-  WHERE string_code = 'sitemetadata.profession.actor'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) p
+SELECT
+  role_professions.casting_role_id,
+  p.id
+FROM (
+  SELECT
+    r.casting_role_id,
+    profession_code
+  FROM tmp_created_roles r
+  JOIN tmp_role_seed rs
+    ON rs.casting_seq = r.casting_seq
+   AND rs.role_pos = r.role_pos
+  CROSS JOIN LATERAL (
+    SELECT profession_code
+    FROM (
+      SELECT CASE rs.role_type_code
+        WHEN 'sitemetadata.role_type.voice' THEN
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:voice:1')) % 3) + 1)
+            WHEN 1 THEN 'sitemetadata.profession.voice_talent'
+            WHEN 2 THEN 'sitemetadata.profession.singer'
+            ELSE 'sitemetadata.profession.actor'
+          END
+        WHEN 'sitemetadata.role_type.host' THEN
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:host:1')) % 3) + 1)
+            WHEN 1 THEN 'sitemetadata.profession.influencer'
+            WHEN 2 THEN 'sitemetadata.profession.actor'
+            ELSE 'sitemetadata.profession.singer'
+          END
+        WHEN 'sitemetadata.role_type.extra' THEN
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:extra:1')) % 3) + 1)
+            WHEN 1 THEN 'sitemetadata.profession.actor'
+            WHEN 2 THEN 'sitemetadata.profession.model'
+            ELSE 'sitemetadata.profession.dancer'
+          END
+        ELSE
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:default:1')) % 4) + 1)
+            WHEN 1 THEN 'sitemetadata.profession.actor'
+            WHEN 2 THEN 'sitemetadata.profession.model'
+            WHEN 3 THEN 'sitemetadata.profession.singer'
+            ELSE 'sitemetadata.profession.dancer'
+          END
+      END AS profession_code
+
+      UNION ALL
+
+      SELECT CASE rs.role_type_code
+        WHEN 'sitemetadata.role_type.voice' THEN 'sitemetadata.profession.actor'
+        WHEN 'sitemetadata.role_type.host' THEN 'sitemetadata.profession.influencer'
+        WHEN 'sitemetadata.role_type.extra' THEN 'sitemetadata.profession.model'
+        ELSE 'sitemetadata.profession.actor'
+      END
+      WHERE (abs(hashtext(r.casting_role_id::text || ':role:profession:count')) % 100) < 30
+    ) chosen_role_professions
+  ) role_professions
+) role_professions
+JOIN public.professions p ON p.string_code = role_professions.profession_code
 ON CONFLICT (casting_role_id, profession_id) DO NOTHING;
 
+DELETE FROM public.casting_role_skill crs
+USING tmp_created_roles r
+WHERE crs.casting_role_id = r.casting_role_id;
+
 INSERT INTO public.casting_role_skill (casting_role_id, skill_id)
-SELECT r.casting_role_id, s.id
-FROM tmp_created_roles r
-JOIN tmp_role_seed rs
-  ON rs.casting_seq = r.casting_seq
- AND rs.role_pos = r.role_pos
-CROSS JOIN LATERAL (
-  SELECT id FROM public.skills
-  WHERE string_code = 'sitemetadata.skill.english'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) s
-WHERE rs.include_skill
+SELECT
+  role_skills.casting_role_id,
+  s.id
+FROM (
+  SELECT
+    r.casting_role_id,
+    skill_code
+  FROM tmp_created_roles r
+  JOIN tmp_role_seed rs
+    ON rs.casting_seq = r.casting_seq
+   AND rs.role_pos = r.role_pos
+  CROSS JOIN LATERAL (
+    SELECT DISTINCT skill_code
+    FROM (
+      SELECT CASE rs.role_type_code
+        WHEN 'sitemetadata.role_type.voice' THEN
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:skill:1')) % 4) + 1)
+            WHEN 1 THEN 'sitemetadata.skill.english'
+            WHEN 2 THEN 'sitemetadata.skill.spanish_neutral'
+            WHEN 3 THEN 'sitemetadata.skill.italian'
+            ELSE 'sitemetadata.skill.portuguese_br'
+          END
+        WHEN 'sitemetadata.role_type.host' THEN
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:skill:1')) % 4) + 1)
+            WHEN 1 THEN 'sitemetadata.skill.english'
+            WHEN 2 THEN 'sitemetadata.skill.french'
+            WHEN 3 THEN 'sitemetadata.skill.english_us'
+            ELSE 'sitemetadata.skill.spanish_neutral'
+          END
+        WHEN 'sitemetadata.role_type.extra' THEN
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:skill:1')) % 5) + 1)
+            WHEN 1 THEN 'sitemetadata.skill.football'
+            WHEN 2 THEN 'sitemetadata.skill.swimming'
+            WHEN 3 THEN 'sitemetadata.skill.basketball'
+            WHEN 4 THEN 'sitemetadata.skill.skating'
+            ELSE 'sitemetadata.skill.volleyball'
+          END
+        ELSE
+          CASE ((abs(hashtext(r.casting_role_id::text || ':role:skill:1')) % 6) + 1)
+            WHEN 1 THEN 'sitemetadata.skill.english'
+            WHEN 2 THEN 'sitemetadata.skill.stage_combat'
+            WHEN 3 THEN 'sitemetadata.skill.martial_arts'
+            WHEN 4 THEN 'sitemetadata.skill.acrobatics'
+            WHEN 5 THEN 'sitemetadata.skill.tennis'
+            ELSE 'sitemetadata.skill.horseback_riding'
+          END
+      END AS skill_code
+
+      UNION ALL
+
+      SELECT CASE rs.role_type_code
+        WHEN 'sitemetadata.role_type.voice' THEN 'sitemetadata.skill.english_uk'
+        WHEN 'sitemetadata.role_type.host' THEN 'sitemetadata.skill.portuguese_br'
+        WHEN 'sitemetadata.role_type.extra' THEN 'sitemetadata.skill.padel'
+        ELSE 'sitemetadata.skill.french'
+      END
+      WHERE rs.include_skill
+        AND (abs(hashtext(r.casting_role_id::text || ':role:skill:count')) % 100) < 45
+    ) chosen_role_skills
+  ) role_skills
+  WHERE rs.include_skill
+) role_skills
+JOIN public.skills s ON s.string_code = role_skills.skill_code
 ON CONFLICT (casting_role_id, skill_id) DO NOTHING;
 
 -- ------------------------------------------------------------
