@@ -12,6 +12,7 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.BasicInfoRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.BasicInfoService;
+import com.padimasso.autocasting.application.talent.TalentProfessionConstraints;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,9 @@ public class BasicInfoServiceImpl implements BasicInfoService {
         }
         if (req.professionIds() != null) {
             Set<UUID> ids = req.professionIds();
+            if (ids.size() > TalentProfessionConstraints.MAX_PROFESSIONS) {
+                throw new IllegalArgumentException("talent.professions_max");
+            }
             if (ids.isEmpty()) {
                 basicInfo.getProfessions().clear();
             } else {
