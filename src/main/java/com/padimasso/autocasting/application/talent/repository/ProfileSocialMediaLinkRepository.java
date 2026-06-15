@@ -2,27 +2,34 @@ package com.padimasso.autocasting.application.talent.repository;
 
 import com.padimasso.autocasting.application.talent.model.ProfileSocialMediaLinkEntity;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 public interface ProfileSocialMediaLinkRepository
     extends SoftDeleteRepository<ProfileSocialMediaLinkEntity, UUID> {
 
-    default Set<ProfileSocialMediaLinkEntity> findAllByTalentProfileId(UUID talentProfileId) {
-        return Set.copyOf(
-            findAllByPropertyEquals("talentProfile.id", talentProfileId)
-        );
-    }
+    @EntityGraph(attributePaths = {"option"})
+    @Query("""
+        select l
+        from ProfileSocialMediaLinkEntity l
+        where l.talentProfile.id = :talentProfileId
+          and l.deleted = false
+        """)
+    List<ProfileSocialMediaLinkEntity> findAllByTalentProfileId(UUID talentProfileId);
 
-    default Set<ProfileSocialMediaLinkEntity> findAllByEmployerBasicInfoId(UUID employerBasicInfoId) {
-        return Set.copyOf(
-            findAllByPropertyEquals("employerBasicInfo.id", employerBasicInfoId)
-        );
-    }
+    @EntityGraph(attributePaths = {"option"})
+    @Query("""
+        select l
+        from ProfileSocialMediaLinkEntity l
+        where l.employerBasicInfo.id = :employerBasicInfoId
+          and l.deleted = false
+        """)
+    List<ProfileSocialMediaLinkEntity> findAllByEmployerBasicInfoId(UUID employerBasicInfoId);
 
     default Optional<ProfileSocialMediaLinkEntity> findIncludingDeletedByTalentProfileIdAndOptionId(
         UUID talentProfileId,
