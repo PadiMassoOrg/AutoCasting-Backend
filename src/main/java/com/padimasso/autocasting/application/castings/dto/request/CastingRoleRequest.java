@@ -19,7 +19,6 @@ public record CastingRoleRequest(
     String roleName,
     @NotNull(message = "casting.role_type_required")
     UUID roleTypeId,
-    @NotNull(message = "casting.gender_required")
     UUID genderId,
     @NotNull(message = "casting.age_min_required")
     @Min(value = 0, message = "casting.age_min")
@@ -32,7 +31,6 @@ public record CastingRoleRequest(
     String description,
     Set<@NotNull(message = "talent.professions_required") UUID> professionIds,
     Set<@NotNull(message = "talent.skills_required") UUID> skillIds,
-    @NotNull(message = "casting.pay_rate_type_required")
     UUID payRateTypeId,
     UUID currencyId,
     BigDecimal amount,

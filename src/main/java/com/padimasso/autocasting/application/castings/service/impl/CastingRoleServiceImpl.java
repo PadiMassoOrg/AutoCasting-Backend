@@ -13,6 +13,8 @@ import com.padimasso.autocasting.application.castings.repository.specification.C
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
+import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -145,7 +147,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private void applyRoleData(CastingRoleEntity role, CastingRoleRequest request) {
         role.setRoleName(TextNormalizer.normalizeNullable(request.roleName()));
         role.setRoleType(siteMetadataResolver.resolveRoleTypeOrThrow(request.roleTypeId()));
-        role.setGender(siteMetadataResolver.resolveGenderOrThrow(request.genderId()));
+        role.setGender(resolveGenderOrDefault(request.genderId()));
         role.setAgeMin(request.ageMin());
         role.setAgeMax(request.ageMax());
         role.setDescription(TextNormalizer.normalizeNullable(request.description()));
@@ -156,7 +158,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         Set<UUID> skillIds = request.skillIds() == null ? Set.of() : request.skillIds();
         role.setSkills(new HashSet<>(siteMetadataResolver.resolveSkillsOrThrow(skillIds)));
 
-        role.setPayRateType(siteMetadataResolver.resolvePayRateTypeOrThrow(request.payRateTypeId()));
+        role.setPayRateType(resolvePayRateTypeOrDefault(request.payRateTypeId()));
         role.setCurrency(request.currencyId() != null ? siteMetadataResolver.resolveCurrencyOrThrow(request.currencyId()) : null);
         role.setAmount(request.amount());
         role.setRemunerationNotes(TextNormalizer.normalizeNullable(request.remunerationNotes()));
@@ -171,6 +173,18 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         role.setDrivingLicense(request.drivingLicense());
 
         validateRole(role);
+    }
+
+    private GenderOptionEntity resolveGenderOrDefault(UUID genderId) {
+        return genderId != null
+            ? siteMetadataResolver.resolveGenderOrThrow(genderId)
+            : siteMetadataResolver.resolveGenderByCodeOrThrow(GENDER_OPTION_INDISTINCT);
+    }
+
+    private PayRateTypeOptionEntity resolvePayRateTypeOrDefault(UUID payRateTypeId) {
+        return payRateTypeId != null
+            ? siteMetadataResolver.resolvePayRateTypeOrThrow(payRateTypeId)
+            : siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID);
     }
 
     private void validateRole(CastingRoleEntity role) {
