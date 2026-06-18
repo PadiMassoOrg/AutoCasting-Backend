@@ -3,9 +3,9 @@ package com.padimasso.autocasting.config;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
 import com.padimasso.autocasting.application.auth.service.*;
+import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.legal.security.LegalAcceptanceEnforcementFilter;
 import com.padimasso.autocasting.application.legal.service.LegalService;
-import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.exception.ApiAccessDeniedHandler;
 import com.padimasso.autocasting.exception.ApiAuthenticationFailureHandler;
@@ -176,6 +176,7 @@ public class SecurityConfig {
         // Allowed frontend URLs (without wildcards)
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173",
+            "http://localhost:5174",
             "http://localhost:8080",
             "https://autocasting.app",
             "https://app-autocasting.vercel.app",
