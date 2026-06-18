@@ -42,15 +42,15 @@ spring:
                         user-name-attribute: email
 
     mail:
-        host: smtp.gmail.com
-        port: 587
-        username: ${GOOGLE_MAIL_USER}
-        password: ${GOOGLE_MAIL_PASS}
+        host: smtp.hostinger.com
+        port: 465
+        username: ${MAIL_USER:info@autocasting.app}
+        password: ${MAIL_PASS}
         properties:
             mail:
                 smtp:
                     auth: true
-                    starttls:
+                    ssl:
                         enable: true
 
 app:

@@ -6,6 +6,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -18,6 +19,9 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
+    @Value("${spring.mail.username:info@autocasting.app}")
+    private String fromEmail;
+
     @Override
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
@@ -27,7 +31,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
-            helper.setFrom("noreply@autocasting.com");
+            helper.setFrom(fromEmail);
             helper.addInline("autocasting-logo", new ClassPathResource("static/email/autocasting_logo.png"));
 
             mailSender.send(message);

@@ -59,10 +59,7 @@ public class AppConstants {
     public static final long RESET_PASSWORD_EXPIRATION_TIME = 900; // 15min
     public static final long RESET_PASSWORD_EXPIRATION_TIME_MIN = 15; // 15min
     // Company
-    public static final String SUPPORT_EMAIL = "support@autocasting.com";
-    public static final String INSTA_URL = "instagram.com";
-    public static final String LINKEDIN_URL = "linkedin.com";
-
+    public static final String SUPPORT_EMAIL = "info@autocasting.app";
     // Gender
     public static final String GENDER_OPTION_INDISTINCT = "sitemetadata.gender.indistinct";
     // Casting
