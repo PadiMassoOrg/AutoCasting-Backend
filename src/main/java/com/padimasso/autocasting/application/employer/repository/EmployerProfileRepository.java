@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,5 +33,13 @@ public interface EmployerProfileRepository extends SoftDeleteRepository<Employer
         where e.user.id = :userId
         """)
     Optional<EmployerProfileEntity> findEmployerProfileForAdminByUserId(@Param("userId") UUID userId);
+
+    @EntityGraph(attributePaths = {"user", "basicInfo"})
+    @Query("""
+        select distinct e
+        from EmployerProfileEntity e
+        where e.user.id in :userIds
+        """)
+    List<EmployerProfileEntity> findAllByUserIdInForAdmin(@Param("userIds") List<UUID> userIds);
 
 }

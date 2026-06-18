@@ -10,6 +10,8 @@ import java.util.UUID;
 public record AdminUserRowResponse(
     UUID id,
     String email,
+    String employerCompanyName,
+    String talentStageName,
     List<String> roles,
     UserAccountProvider userAccountProvider,
     UserMode activeMode,
@@ -21,7 +23,11 @@ public record AdminUserRowResponse(
     LocalDateTime modifiedAt,
     String modifiedBy
 ) {
-    public static AdminUserRowResponse from(UserEntity user) {
+    public static AdminUserRowResponse from(
+        UserEntity user,
+        String employerCompanyName,
+        String talentStageName
+    ) {
         List<String> roleCodes = user.getRoles().stream()
             .map(RoleEntity::getCode)
             .sorted(Comparator.naturalOrder())
@@ -30,6 +36,8 @@ public record AdminUserRowResponse(
         return new AdminUserRowResponse(
             user.getId(),
             user.getEmail(),
+            employerCompanyName,
+            talentStageName,
             roleCodes,
             user.getUserAccountProvider(),
             user.getActiveMode(),

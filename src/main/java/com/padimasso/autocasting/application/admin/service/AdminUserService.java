@@ -7,7 +7,7 @@ import com.padimasso.autocasting.application.talent.dto.response.PublicProfileRe
 import java.util.UUID;
 
 public interface AdminUserService {
-    AdminUsersPageResponse listUsers(int page, int size);
+    AdminUsersPageResponse listUsers(int page, int size, String q);
 
     PublicProfileResponse getTalentProfileForAdmin(UUID userId);
 

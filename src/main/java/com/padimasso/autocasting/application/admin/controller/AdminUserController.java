@@ -35,9 +35,11 @@ public class AdminUserController {
     @GetMapping(ADMIN_USERS_API_URL)
     public AdminUsersPageResponse listUsers(
         @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
-        @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size,
+        @Parameter(description = "Free text search over email, employer company name and talent stage name.")
+        @RequestParam(required = false) String q
     ) {
-        return adminUserService.listUsers(page, size);
+        return adminUserService.listUsers(page, size, q);
     }
 
     @Operation(

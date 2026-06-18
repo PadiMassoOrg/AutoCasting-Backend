@@ -2,7 +2,9 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
+import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
@@ -15,6 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
@@ -31,7 +36,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final EmployerProfileMapper employerProfileMapper;
 
     @Override
-    public AdminUsersPageResponse listUsers(int page, int size) {
+    public AdminUsersPageResponse listUsers(int page, int size, String q) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
@@ -41,9 +46,37 @@ public class AdminUserServiceImpl implements AdminUserService {
             Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
         );
 
-        var result = userRepository.findAllIncludingDeleted(pageable);
-        var items = result.getContent().stream()
-            .map(AdminUserRowResponse::from)
+        var result = userRepository.findAllIncludingDeleted(AdminUserSpecs.fromSearchText(q), pageable);
+
+        List<UserEntity> users = result.getContent();
+        List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
+
+        Map<UUID, String> employerCompanyNames = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            employerProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
+                var basicInfo = profile.getBasicInfo();
+                if (basicInfo != null && basicInfo.getCompanyName() != null) {
+                    employerCompanyNames.put(profile.getUser().getId(), basicInfo.getCompanyName());
+                }
+            });
+        }
+
+        Map<UUID, String> talentStageNames = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            talentProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
+                var basicInfo = profile.getBasicInfo();
+                if (basicInfo != null && basicInfo.getStageName() != null) {
+                    talentStageNames.put(profile.getUser().getId(), basicInfo.getStageName());
+                }
+            });
+        }
+
+        var items = users.stream()
+            .map(user -> AdminUserRowResponse.from(
+                user,
+                employerCompanyNames.get(user.getId()),
+                talentStageNames.get(user.getId())
+            ))
             .toList();
 
         return new AdminUsersPageResponse(
