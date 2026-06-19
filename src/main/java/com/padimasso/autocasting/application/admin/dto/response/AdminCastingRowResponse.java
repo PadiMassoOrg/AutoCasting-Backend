@@ -17,6 +17,7 @@ public record AdminCastingRowResponse(
     String createdBy,
     LocalDateTime modifiedAt,
     String modifiedBy,
+    boolean suspended,
     boolean deleted
 ) {
 }

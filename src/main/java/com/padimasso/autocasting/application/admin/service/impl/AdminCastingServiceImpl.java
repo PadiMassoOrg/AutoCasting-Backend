@@ -70,6 +70,7 @@ public class AdminCastingServiceImpl implements AdminCastingService {
             casting.getCreatedBy(),
             casting.getModifiedAt(),
             casting.getModifiedBy(),
+            employerProfile != null && employerProfile.getUser() != null && employerProfile.getUser().isSuspended(),
             casting.isDeleted()
         );
     }
