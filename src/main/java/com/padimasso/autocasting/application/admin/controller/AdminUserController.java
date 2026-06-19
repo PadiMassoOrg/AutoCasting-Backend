@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.admin.controller;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
@@ -11,12 +12,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_EMPLOYER_PROFILE_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_SUSPENSION_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_TALENT_PROFILE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_API_URL;
 
@@ -40,6 +44,19 @@ public class AdminUserController {
         @RequestParam(required = false) String q
     ) {
         return adminUserService.listUsers(page, size, q);
+    }
+
+    @Operation(
+        summary = "Update user suspension",
+        description = "Suspends or unsuspends a user account for administrative moderation.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping(ADMIN_USER_SUSPENSION_API_URL)
+    public void updateSuspension(
+        @Parameter(description = "User ID.") @PathVariable UUID userId,
+        @RequestBody AdminUserSuspensionRequest request
+    ) {
+        adminUserService.updateSuspension(userId, request);
     }
 
     @Operation(

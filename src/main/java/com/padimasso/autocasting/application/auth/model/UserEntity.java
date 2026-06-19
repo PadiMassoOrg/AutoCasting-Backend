@@ -55,6 +55,9 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(name = "employer_onboarding_status", nullable = false)
     private OnboardingStatus employerOnboardingStatus = OnboardingStatus.NOT_STARTED;
 
+    @Column(nullable = false)
+    private boolean suspended = false;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -87,6 +90,16 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Override
     public String getUsername() {
         return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !suspended;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return !suspended;
     }
 
 }

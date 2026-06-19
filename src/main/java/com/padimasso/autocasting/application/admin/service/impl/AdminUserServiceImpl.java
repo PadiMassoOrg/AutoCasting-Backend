@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
@@ -87,6 +88,15 @@ public class AdminUserServiceImpl implements AdminUserService {
             result.getTotalPages(),
             result.hasNext()
         );
+    }
+
+    @Override
+    public void updateSuspension(UUID userId, AdminUserSuspensionRequest request) {
+        var user = userRepository.findByIdIncludingDeleted(userId)
+            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+
+        user.setSuspended(request.suspended());
+        userRepository.save(user);
     }
 
     @Override
