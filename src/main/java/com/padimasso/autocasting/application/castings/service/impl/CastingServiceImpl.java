@@ -250,6 +250,12 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findByDefaultCodeAndDeletedFalse(slug.trim())
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
+        if (casting.getEmployerProfile() != null
+            && casting.getEmployerProfile().getUser() != null
+            && casting.getEmployerProfile().getUser().isSuspended()) {
+            throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
+        }
+
         String statusCode = casting.getStatus() != null ? casting.getStatus().getStringCode() : null;
         if (!List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED).contains(statusCode)) {
             throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
@@ -293,6 +299,12 @@ public class CastingServiceImpl implements CastingService {
 
         CastingEntity casting = castingRepository.findByDefaultCodeAndDeletedFalse(slug.trim())
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
+
+        if (casting.getEmployerProfile() != null
+            && casting.getEmployerProfile().getUser() != null
+            && casting.getEmployerProfile().getUser().isSuspended()) {
+            throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
+        }
 
         String statusCode = casting.getStatus() != null ? casting.getStatus().getStringCode() : null;
         if (!List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED).contains(statusCode)) {
