@@ -182,13 +182,20 @@ public final class TalentProfileSpecs {
     }
 
     public static Specification<TalentProfileEntity> fromFilter(TalentFilter f) {
-        Specification<TalentProfileEntity> spec = Specification
-            .where(f.includeNoHeadshot() != Boolean.TRUE ? hasRequiredMedia() : null)
-            .and(stageNameContains(f.stageName()))
-            .and(ageBetween(f.ageMin(), f.ageMax()))
-            .and(genderInTokens(f.genderIdTokens()))
-            // 👇 Ethnicity ya viene dentro de `characteristics(f)`
-            .and(characteristics(f));
+        Specification<TalentProfileEntity> spec = (root, query, cb) -> {
+            var user = root.join("user", JoinType.INNER);
+            return cb.and(
+                cb.isFalse(root.get("deleted")),
+                cb.isFalse(user.get("suspended"))
+            );
+        };
+
+        spec = spec.and(f.includeNoHeadshot() != Boolean.TRUE ? hasRequiredMedia() : null);
+        spec = spec.and(stageNameContains(f.stageName()));
+        spec = spec.and(ageBetween(f.ageMin(), f.ageMax()));
+        spec = spec.and(genderInTokens(f.genderIdTokens()));
+        // 👇 Ethnicity ya viene dentro de `characteristics(f)`
+        spec = spec.and(characteristics(f));
 
         // Professions
         if (f.professionIds() != null && !f.professionIds().isEmpty()) {

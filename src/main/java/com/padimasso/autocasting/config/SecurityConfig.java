@@ -2,6 +2,7 @@ package com.padimasso.autocasting.config;
 
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.security.filter.JwtAuthenticationFilter;
+import com.padimasso.autocasting.application.auth.security.filter.SuspendedUserEnforcementFilter;
 import com.padimasso.autocasting.application.auth.service.*;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.legal.security.LegalAcceptanceEnforcementFilter;
@@ -47,6 +48,7 @@ public class SecurityConfig {
     private final AppProperties appProperties;
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final SuspendedUserEnforcementFilter suspendedUserEnforcementFilter;
     private final LegalAcceptanceEnforcementFilter legalAcceptanceEnforcementFilter;
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -140,7 +142,8 @@ public class SecurityConfig {
                 .accessDeniedHandler(apiAccessDeniedHandler))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(legalAcceptanceEnforcementFilter, JwtAuthenticationFilter.class);
+            .addFilterAfter(suspendedUserEnforcementFilter, JwtAuthenticationFilter.class)
+            .addFilterAfter(legalAcceptanceEnforcementFilter, SuspendedUserEnforcementFilter.class);
 
         return http.build();
     }

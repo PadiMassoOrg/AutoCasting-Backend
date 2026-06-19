@@ -19,12 +19,20 @@ public final class CastingRoleSpecs {
     }
 
     public static Specification<CastingRoleEntity> fromFilter(CastingRoleFilter filter) {
-        Specification<CastingRoleEntity> spec = (root, query, cb) -> cb.isFalse(root.get("deleted"));
+        Specification<CastingRoleEntity> spec = (root, query, cb) -> {
+            var casting = root.join("casting", JoinType.INNER);
+            var employerProfile = casting.join("employerProfile", JoinType.INNER);
+            var employerUser = employerProfile.join("user", JoinType.INNER);
+
+            return cb.and(
+                cb.isFalse(root.get("deleted")),
+                cb.equal(casting.get("status").get("stringCode"), "sitemetadata.casting_status.published"),
+                cb.isFalse(casting.get("deleted")),
+                cb.isFalse(employerUser.get("suspended"))
+            );
+        };
 
         if (filter == null) return spec;
-
-        spec = spec.and((root, query, cb) -> cb.equal(root.get("casting").get("status").get("stringCode"), "sitemetadata.casting_status.published"));
-        spec = spec.and((root, query, cb) -> cb.isFalse(root.get("casting").get("deleted")));
 
         if (filter.roleName() != null && !filter.roleName().isBlank()) {
             String pattern = "%" + filter.roleName().trim().toLowerCase(Locale.ROOT) + "%";

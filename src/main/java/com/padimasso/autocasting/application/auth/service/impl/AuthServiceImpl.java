@@ -100,6 +100,7 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
         }
+        ensureNotSuspended(user);
 
         Set<RoleEntity> roles = new HashSet<>(roleRepository.findAllByCodeIn(List.of(TALENT.name(), EMPLOYER.name()))
             .orElseThrow(() -> new IllegalArgumentException(AUTH_INVALID_ROLE)));
@@ -118,6 +119,7 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
         }
+        ensureNotSuspended(user);
 
         boolean isAdmin = user.getRoles().stream().anyMatch(role -> "ADMIN".equals(role.getCode()));
         if (!isAdmin) {
@@ -135,6 +137,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getUserAccountProvider() != UserAccountProvider.LOCAL) {
             throw new IllegalArgumentException(AUTH_PASSWORD_RESET_EXTERNAL);
         }
+        ensureNotSuspended(user);
 
         var profileOpt = talentProfileRepository.findByUserId(user.getId());
         String talentProfileSlug = profileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
@@ -175,6 +178,7 @@ public class AuthServiceImpl implements AuthService {
 
         var user = userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException(AUTH_USER_NOT_FOUND + "|" + email));
+        ensureNotSuspended(user);
 
         if (!jwtService.isTokenValid(request.token(), user)) {
             throw new IllegalArgumentException(AUTH_INVALID_TOKEN);
@@ -307,4 +311,9 @@ public class AuthServiceImpl implements AuthService {
         return new AuthResponse(jwt);
     }
 
+    private static void ensureNotSuspended(UserEntity user) {
+        if (user.isSuspended()) {
+            throw new IllegalArgumentException(AUTH_INVALID_CREDENTIALS);
+        }
+    }
 }

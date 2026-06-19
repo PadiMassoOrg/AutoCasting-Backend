@@ -54,6 +54,10 @@ public class TalentProfileServiceImpl implements TalentProfileService {
             .findByDefaultSlugOrPremiumSlug(slug, slug)
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
 
+        if (foundProfile.getUser() != null && foundProfile.getUser().isSuspended()) {
+            throw new IllegalArgumentException(PROFILE_NOT_FOUND);
+        }
+
         return talentProfileMapper.toPublicProfileResponse(foundProfile);
     }
 
