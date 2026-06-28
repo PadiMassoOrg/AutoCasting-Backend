@@ -1,1 +1,1 @@
-web: java -Dfile.encoding=UTF-8 -XX:+UseSerialGC -Xmx192m -Xss256k -XX:MaxMetaspaceSize=128m -XX:MaxDirectMemorySize=32m -XX:ReservedCodeCacheSize=64m -Dserver.port=$PORT -jar build/libs/autocasting-1.0.2.jar
+web: java -Dfile.encoding=UTF-8 -XX:+UseSerialGC -Xmx192m -Xss256k -XX:MaxMetaspaceSize=128m -XX:MaxDirectMemorySize=32m -XX:ReservedCodeCacheSize=64m -Dserver.port=$PORT -jar build/libs/autocasting-1.0.3.jar
