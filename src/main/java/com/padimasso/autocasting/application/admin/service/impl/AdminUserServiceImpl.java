@@ -1,8 +1,9 @@
 package com.padimasso.autocasting.application.admin.service.impl;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
@@ -22,8 +23,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,6 +40,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final TalentProfileMapper talentProfileMapper;
     private final EmployerProfileRepository employerProfileRepository;
     private final EmployerProfileMapper employerProfileMapper;
+    private final AdminUserMapper adminUserMapper;
     private final NoteService noteService;
 
     @Override
@@ -78,21 +80,22 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         var items = users.stream()
-            .map(user -> AdminUserRowResponse.from(
+            .map(user -> adminUserMapper.toRowResponse(
                 user,
                 employerCompanyNames.get(user.getId()),
                 talentStageNames.get(user.getId())
             ))
             .toList();
 
-        return new AdminUsersPageResponse(
-            items,
-            result.getNumber(),
-            result.getSize(),
-            result.getTotalElements(),
-            result.getTotalPages(),
-            result.hasNext()
-        );
+        return adminUserMapper.toPageResponse(items, result);
+    }
+
+    @Override
+    public AdminUserDetailResponse getUserDetail(UUID userId) {
+        var user = userRepository.findByIdIncludingDeleted(userId)
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+
+        return adminUserMapper.toDetailResponse(user);
     }
 
     @Override

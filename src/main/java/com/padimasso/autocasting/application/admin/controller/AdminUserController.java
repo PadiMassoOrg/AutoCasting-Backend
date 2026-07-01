@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.admin.controller;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
@@ -45,6 +46,18 @@ public class AdminUserController {
         @RequestParam(required = false) String q
     ) {
         return adminUserService.listUsers(page, size, q);
+    }
+
+    @Operation(
+        summary = "Get admin user detail",
+        description = "Returns the account-level details for a user for administrative review.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(ADMIN_USERS_API_URL + "/{userId}")
+    public AdminUserDetailResponse getUserDetail(
+        @Parameter(description = "User ID.") @PathVariable UUID userId
+    ) {
+        return adminUserService.getUserDetail(userId);
     }
 
     @Operation(
