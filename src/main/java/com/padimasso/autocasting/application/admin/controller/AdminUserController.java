@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -54,7 +55,7 @@ public class AdminUserController {
     @PatchMapping(ADMIN_USER_SUSPENSION_API_URL)
     public void updateSuspension(
         @Parameter(description = "User ID.") @PathVariable UUID userId,
-        @RequestBody AdminUserSuspensionRequest request
+        @Valid @RequestBody AdminUserSuspensionRequest request
     ) {
         adminUserService.updateSuspension(userId, request);
     }

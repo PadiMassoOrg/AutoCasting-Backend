@@ -7,16 +7,20 @@ import com.padimasso.autocasting.application.admin.repository.specification.Admi
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
+import com.padimasso.autocasting.application.notes.service.NoteService;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
+import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.HashMap;
@@ -35,6 +39,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final TalentProfileMapper talentProfileMapper;
     private final EmployerProfileRepository employerProfileRepository;
     private final EmployerProfileMapper employerProfileMapper;
+    private final NoteService noteService;
 
     @Override
     public AdminUsersPageResponse listUsers(int page, int size, String q) {
@@ -91,18 +96,20 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
+    @Transactional
     public void updateSuspension(UUID userId, AdminUserSuspensionRequest request) {
         var user = userRepository.findByIdIncludingDeleted(userId)
-            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
         user.setSuspended(request.suspended());
         userRepository.save(user);
+        noteService.createNote(EntityType.USER, userId, request.reason());
     }
 
     @Override
     public PublicProfileResponse getTalentProfileForAdmin(UUID userId) {
         var profile = talentProfileRepository.findTalentProfileForAdminByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
         return talentProfileMapper.toPublicProfileResponse(profile);
     }
@@ -110,7 +117,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     public EmployerProfileResponse getEmployerProfileForAdmin(UUID userId) {
         var profile = employerProfileRepository.findEmployerProfileForAdminByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
         return employerProfileMapper.toProfileResponse(profile, profile.getUser());
     }
