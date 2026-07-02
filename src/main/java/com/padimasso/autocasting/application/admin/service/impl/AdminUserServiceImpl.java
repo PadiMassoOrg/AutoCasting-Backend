@@ -107,6 +107,8 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         var nextEmail = request.email().trim();
         var nextActiveMode = request.activeMode();
+        var nextSuspended = request.suspended();
+        var nextDeleted = request.deleted();
         var changes = new ArrayList<HistoryChangeEntry>();
 
         if (!Objects.equals(user.getEmail(), nextEmail)) {
@@ -117,6 +119,16 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (!Objects.equals(user.getActiveMode(), nextActiveMode)) {
             changes.add(new HistoryChangeEntry("activeMode", user.getActiveMode(), nextActiveMode));
             user.setActiveMode(nextActiveMode);
+        }
+
+        if (user.isSuspended() != nextSuspended) {
+            changes.add(new HistoryChangeEntry("suspended", user.isSuspended(), nextSuspended));
+            user.setSuspended(nextSuspended);
+        }
+
+        if (user.isDeleted() != nextDeleted) {
+            changes.add(new HistoryChangeEntry("deleted", user.isDeleted(), nextDeleted));
+            user.setDeleted(nextDeleted);
         }
 
         if (changes.isEmpty()) {

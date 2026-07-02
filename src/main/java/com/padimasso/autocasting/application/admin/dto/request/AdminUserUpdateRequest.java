@@ -9,6 +9,8 @@ public record AdminUserUpdateRequest(
     @Email(message = "auth.email_invalid")
     String email,
     UserMode activeMode,
+    boolean suspended,
+    boolean deleted,
     @NotBlank(message = "validation.required")
     String note
 ) {
