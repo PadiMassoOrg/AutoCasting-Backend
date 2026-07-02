@@ -2,7 +2,7 @@ package com.padimasso.autocasting.application.admin.mapper;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import org.springframework.stereotype.Component;
@@ -56,11 +56,11 @@ public class AdminUserMapper {
         );
     }
 
-    public AdminUsersPageResponse toPageResponse(
+    public PageResponse<AdminUserRowResponse> toPageResponse(
         List<AdminUserRowResponse> items,
         Page<?> result
     ) {
-        return new AdminUsersPageResponse(
+        return new PageResponse<>(
             items,
             result.getNumber(),
             result.getSize(),

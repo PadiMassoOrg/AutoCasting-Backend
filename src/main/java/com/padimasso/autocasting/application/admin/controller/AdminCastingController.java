@@ -1,8 +1,9 @@
 package com.padimasso.autocasting.application.admin.controller;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminCastingsPageResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
 import com.padimasso.autocasting.application.admin.service.AdminCastingService;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,7 +36,7 @@ public class AdminCastingController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ADMIN_CASTINGS_API_URL)
-    public AdminCastingsPageResponse listCastings(
+    public PageResponse<AdminCastingRowResponse> listCastings(
         @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
         @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size,
         @Parameter(description = "Free text search over casting title.") @RequestParam(required = false) String q,

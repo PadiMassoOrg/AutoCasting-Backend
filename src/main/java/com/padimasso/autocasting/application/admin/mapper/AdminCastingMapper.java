@@ -7,8 +7,10 @@ import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRe
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
@@ -47,12 +49,12 @@ public class AdminCastingMapper {
         var roles = casting.getRoles() == null
             ? List.<AdminCastingRoleRowResponse>of()
             : casting.getRoles().stream()
-                .filter(role -> role != null && !role.isDeleted())
-                .sorted(Comparator
-                    .comparing((CastingRoleEntity role) -> role.getRoleName() == null ? "" : role.getRoleName().toLowerCase())
-                    .thenComparing(CastingRoleEntity::getId))
-                .map(this::toRoleRowResponse)
-                .toList();
+            .filter(role -> role != null && !role.isDeleted())
+            .sorted(Comparator
+                .comparing((CastingRoleEntity role) -> role.getRoleName() == null ? "" : role.getRoleName().toLowerCase())
+                .thenComparing(CastingRoleEntity::getId))
+            .map(this::toRoleRowResponse)
+            .toList();
 
         return new AdminCastingDetailsResponse(
             casting.getId(),
@@ -86,6 +88,17 @@ public class AdminCastingMapper {
         return new AdminCastingRoleRowResponse(
             role.getId(),
             role.getRoleName()
+        );
+    }
+
+    public PageResponse<AdminCastingRowResponse> toPageResponse(List<AdminCastingRowResponse> items, Page<?> result) {
+        return new PageResponse<>(
+            items,
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages(),
+            result.hasNext()
         );
     }
 }

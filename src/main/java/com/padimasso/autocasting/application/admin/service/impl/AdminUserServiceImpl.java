@@ -2,17 +2,18 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
-import com.padimasso.autocasting.application.notes.service.NoteService;
+import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
@@ -41,17 +42,17 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final EmployerProfileRepository employerProfileRepository;
     private final EmployerProfileMapper employerProfileMapper;
     private final AdminUserMapper adminUserMapper;
-    private final NoteService noteService;
+    private final HistoryService historyService;
 
     @Override
-    public AdminUsersPageResponse listUsers(int page, int size, String q) {
+    public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
         var pageable = PageRequest.of(
             normalizedPage,
             normalizedSize,
-            Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
+            Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
         var result = userRepository.findAllIncludingDeleted(AdminUserSpecs.fromSearchText(q), pageable);
@@ -106,7 +107,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         user.setSuspended(request.suspended());
         userRepository.save(user);
-        noteService.createNote(EntityType.USER, userId, request.reason());
+        historyService.createHistoryEntry(EntityType.USER, userId, request.reason());
     }
 
     @Override

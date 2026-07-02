@@ -1,9 +1,10 @@
 package com.padimasso.autocasting.application.admin.controller;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +40,7 @@ public class AdminUserController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ADMIN_USERS_API_URL)
-    public AdminUsersPageResponse listUsers(
+    public PageResponse<AdminUserRowResponse> listUsers(
         @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
         @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size,
         @Parameter(description = "Free text search over email, employer company name and talent stage name.")

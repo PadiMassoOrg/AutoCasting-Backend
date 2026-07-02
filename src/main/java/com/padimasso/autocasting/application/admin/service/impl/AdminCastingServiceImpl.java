@@ -1,10 +1,11 @@
 package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
-import com.padimasso.autocasting.application.admin.dto.response.AdminCastingsPageResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminCastingMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminCastingSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminCastingService;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
@@ -31,7 +32,7 @@ public class AdminCastingServiceImpl implements AdminCastingService {
     private final AdminCastingMapper adminCastingMapper;
 
     @Override
-    public AdminCastingsPageResponse listCastings(int page, int size, String q, List<String> statusIdTokens) {
+    public PageResponse<AdminCastingRowResponse> listCastings(int page, int size, String q, List<String> statusIdTokens) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
@@ -52,14 +53,7 @@ public class AdminCastingServiceImpl implements AdminCastingService {
             .map(adminCastingMapper::toRowResponse)
             .toList();
 
-        return new AdminCastingsPageResponse(
-            items,
-            result.getNumber(),
-            result.getSize(),
-            result.getTotalElements(),
-            result.getTotalPages(),
-            result.hasNext()
-        );
+        return adminCastingMapper.toPageResponse(items, result);
     }
 
     @Override

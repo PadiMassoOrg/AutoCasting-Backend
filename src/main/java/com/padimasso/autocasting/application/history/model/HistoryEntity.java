@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.notes.model;
+package com.padimasso.autocasting.application.history.model;
 
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.common.model.EntityType;
@@ -20,10 +20,10 @@ import java.util.UUID;
 
 @Entity
 @Table(
-    name = "entity_notes",
+    name = "entity_history",
     indexes = {
-        @Index(name = "idx_entity_notes_entity", columnList = "entity_type, entity_id"),
-        @Index(name = "idx_entity_notes_deleted", columnList = "deleted")
+        @Index(name = "idx_entity_history_entity", columnList = "entity_type, entity_id"),
+        @Index(name = "idx_entity_history_deleted", columnList = "deleted")
     }
 )
 @Getter
@@ -31,7 +31,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NoteEntity extends AuditableEntity {
+public class HistoryEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue
@@ -44,6 +44,6 @@ public class NoteEntity extends AuditableEntity {
     @Column(name = "entity_id", nullable = false)
     private UUID entityId;
 
-    @Column(nullable = false, columnDefinition = "text")
-    private String reason;
+    @Column(columnDefinition = "text")
+    private String note;
 }
