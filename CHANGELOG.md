@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-02
+
+- Versión: `1.0.4`
+- Admin tool handles User Upsert
+- Fetch Pages
+
 ## 2026-06-23
 
 - Versión: `1.0.3`
