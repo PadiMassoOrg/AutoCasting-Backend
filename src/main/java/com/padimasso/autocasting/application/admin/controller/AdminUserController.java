@@ -1,8 +1,11 @@
 package com.padimasso.autocasting.application.admin.controller;
 
-import com.padimasso.autocasting.application.admin.dto.response.AdminUsersPageResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
+import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,13 +41,38 @@ public class AdminUserController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ADMIN_USERS_API_URL)
-    public AdminUsersPageResponse listUsers(
+    public PageResponse<AdminUserRowResponse> listUsers(
         @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
         @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size,
         @Parameter(description = "Free text search over email, employer company name and talent stage name.")
         @RequestParam(required = false) String q
     ) {
         return adminUserService.listUsers(page, size, q);
+    }
+
+    @Operation(
+        summary = "Get admin user detail",
+        description = "Returns the account-level details for a user for administrative review.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(ADMIN_USERS_API_URL + "/{userId}")
+    public AdminUserDetailResponse getUserDetail(
+        @Parameter(description = "User ID.") @PathVariable UUID userId
+    ) {
+        return adminUserService.getUserDetail(userId);
+    }
+
+    @Operation(
+        summary = "Update admin user detail",
+        description = "Updates editable account-level fields for a user and stores the audit diff.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping(ADMIN_USERS_API_URL + "/{userId}")
+    public AdminUserDetailResponse updateUserDetail(
+        @Parameter(description = "User ID.") @PathVariable UUID userId,
+        @Valid @RequestBody AdminUserUpdateRequest request
+    ) {
+        return adminUserService.updateUserDetail(userId, request);
     }
 
     @Operation(
@@ -54,7 +83,7 @@ public class AdminUserController {
     @PatchMapping(ADMIN_USER_SUSPENSION_API_URL)
     public void updateSuspension(
         @Parameter(description = "User ID.") @PathVariable UUID userId,
-        @RequestBody AdminUserSuspensionRequest request
+        @Valid @RequestBody AdminUserSuspensionRequest request
     ) {
         adminUserService.updateSuspension(userId, request);
     }
