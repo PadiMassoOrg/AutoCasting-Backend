@@ -10,6 +10,7 @@ public record AdminHistoryRowResponse(
     EntityType entityType,
     UUID entityId,
     String note,
+    String changes,
     LocalDateTime createdAt,
     String createdBy,
     LocalDateTime modifiedAt,

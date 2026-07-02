@@ -17,6 +17,7 @@ public class AdminHistoryMapper {
             historyEntry.getEntityType(),
             historyEntry.getEntityId(),
             historyEntry.getNote(),
+            historyEntry.getChanges(),
             historyEntry.getCreatedAt(),
             historyEntry.getCreatedBy(),
             historyEntry.getModifiedAt(),

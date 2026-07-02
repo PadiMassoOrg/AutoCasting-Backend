@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface HistoryService {
 
-    void createHistoryEntry(EntityType entityType, UUID entityId, String note);
+    void createHistoryEntry(EntityType entityType, UUID entityId, String note, Object changes);
 
     Page<HistoryEntity> listHistoryByEntity(EntityType entityType, UUID entityId, Pageable pageable);
 }

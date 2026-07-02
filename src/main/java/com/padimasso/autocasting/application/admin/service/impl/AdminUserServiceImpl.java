@@ -13,6 +13,7 @@ import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
 import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
+import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
@@ -105,9 +106,16 @@ public class AdminUserServiceImpl implements AdminUserService {
         var user = userRepository.findByIdIncludingDeleted(userId)
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
+        var previousSuspended = user.isSuspended();
+
         user.setSuspended(request.suspended());
         userRepository.save(user);
-        historyService.createHistoryEntry(EntityType.USER, userId, request.reason());
+        historyService.createHistoryEntry(
+            EntityType.USER,
+            userId,
+            request.reason(),
+            List.of(new HistoryChangeEntry("suspended", previousSuspended, request.suspended()))
+        );
     }
 
     @Override

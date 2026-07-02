@@ -46,4 +46,7 @@ public class HistoryEntity extends AuditableEntity {
 
     @Column(columnDefinition = "text")
     private String note;
+
+    @Column(columnDefinition = "text")
+    private String changes;
 }
