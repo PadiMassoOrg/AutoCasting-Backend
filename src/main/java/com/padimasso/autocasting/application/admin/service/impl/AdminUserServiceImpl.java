@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
@@ -25,12 +26,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.ADMIN_USER_UPDATE_NO_CHANGES;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
@@ -96,6 +95,36 @@ public class AdminUserServiceImpl implements AdminUserService {
     public AdminUserDetailResponse getUserDetail(UUID userId) {
         var user = userRepository.findByIdIncludingDeleted(userId)
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+
+        return adminUserMapper.toDetailResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public AdminUserDetailResponse updateUserDetail(UUID userId, AdminUserUpdateRequest request) {
+        var user = userRepository.findByIdIncludingDeleted(userId)
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+
+        var nextEmail = request.email().trim();
+        var nextActiveMode = request.activeMode();
+        var changes = new ArrayList<HistoryChangeEntry>();
+
+        if (!Objects.equals(user.getEmail(), nextEmail)) {
+            changes.add(new HistoryChangeEntry("email", user.getEmail(), nextEmail));
+            user.setEmail(nextEmail);
+        }
+
+        if (!Objects.equals(user.getActiveMode(), nextActiveMode)) {
+            changes.add(new HistoryChangeEntry("activeMode", user.getActiveMode(), nextActiveMode));
+            user.setActiveMode(nextActiveMode);
+        }
+
+        if (changes.isEmpty()) {
+            throw ApiException.badRequest(ADMIN_USER_UPDATE_NO_CHANGES);
+        }
+
+        userRepository.save(user);
+        historyService.createHistoryEntry(EntityType.USER, userId, request.note(), changes);
 
         return adminUserMapper.toDetailResponse(user);
     }

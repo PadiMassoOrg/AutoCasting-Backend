@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.admin.controller;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
@@ -59,6 +60,19 @@ public class AdminUserController {
         @Parameter(description = "User ID.") @PathVariable UUID userId
     ) {
         return adminUserService.getUserDetail(userId);
+    }
+
+    @Operation(
+        summary = "Update admin user detail",
+        description = "Updates editable account-level fields for a user and stores the audit diff.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping(ADMIN_USERS_API_URL + "/{userId}")
+    public AdminUserDetailResponse updateUserDetail(
+        @Parameter(description = "User ID.") @PathVariable UUID userId,
+        @Valid @RequestBody AdminUserUpdateRequest request
+    ) {
+        return adminUserService.updateUserDetail(userId, request);
     }
 
     @Operation(
