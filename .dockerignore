@@ -1,0 +1,16 @@
+.git
+.gitignore
+.gradle
+build/
+bin/
+out/
+.idea
+.vscode
+*.iml
+mcp.json
+.codex
+HELP.md
+README.md
+CHANGELOG.md
+Procfile
+system.properties
