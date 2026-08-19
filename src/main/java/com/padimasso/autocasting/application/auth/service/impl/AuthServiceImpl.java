@@ -13,17 +13,22 @@ import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.auth.service.AuthService;
 import com.padimasso.autocasting.application.auth.service.EmailService;
+import com.padimasso.autocasting.application.auth.service.GoogleIdTokenVerifierService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
+import com.padimasso.autocasting.application.auth.service.UserProvisioningService;
 import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerBasicInfoRepository;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
+import com.padimasso.autocasting.application.legal.service.LegalService;
 import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.talent.model.*;
 import com.padimasso.autocasting.application.talent.repository.*;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
+import com.padimasso.autocasting.exception.ApiException;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -35,6 +40,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
@@ -63,6 +69,9 @@ public class AuthServiceImpl implements AuthService {
     private final AppProperties appProperties;
     private final MessageSource messageSource;
     private final AuthContext authContext;
+    private final GoogleIdTokenVerifierService googleIdTokenVerifierService;
+    private final UserProvisioningService userProvisioningService;
+    private final LegalService legalService;
 
     /**
      * Normaliza un usuario "legacy" o recién creado:
@@ -125,6 +134,47 @@ public class AuthServiceImpl implements AuthService {
         if (!isAdmin) {
             throw new IllegalArgumentException(AUTH_ACCESS_DENIED);
         }
+
+        return buildAuthResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse loginOrRegisterWithGoogleMobile(GoogleMobileLoginRequest request) {
+        GoogleIdToken.Payload payload = googleIdTokenVerifierService.verify(request.idToken());
+
+        String googleId = payload.getSubject();
+        String email = payload.getEmail();
+        String givenName = (String) payload.getOrDefault("given_name", "");
+        String familyName = (String) payload.getOrDefault("family_name", "");
+        String name = (givenName + " " + familyName).trim();
+
+        Optional<UserEntity> byGoogleId = userRepository.findByGoogleId(googleId);
+        UserEntity user;
+
+        if (byGoogleId.isPresent()) {
+            user = byGoogleId.get();
+        } else {
+            Optional<UserEntity> byEmail = userRepository.findByEmail(email);
+            if (byEmail.isPresent()) {
+                UserEntity existing = byEmail.get();
+                if (existing.getGoogleId() == null && existing.getUserAccountProvider() != UserAccountProvider.LOCAL) {
+                    existing.setGoogleId(googleId);
+                    existing.setUserAccountProvider(UserAccountProvider.GOOGLE);
+                    user = userRepository.save(existing);
+                } else {
+                    throw ApiException.conflict(AUTH_GOOGLE_EMAIL_EXISTS_DIFFERENT_PROVIDER);
+                }
+            } else {
+                userProvisioningService.ensureUser(email, name, googleId);
+                user = userRepository.findByGoogleId(googleId)
+                    .orElseThrow(() -> ApiException.internal(GENERAL_UNEXPECTED));
+            }
+        }
+
+        ensureNotSuspended(user);
+
+        legalService.acceptCurrentRequired(user.getId(), "es", null, null);
 
         return buildAuthResponse(user);
     }

@@ -73,6 +73,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, AppConstants.ADMIN_LOGIN_API_URL).permitAll()
                     .requestMatchers(HttpMethod.POST, AppConstants.FORGOT_PASS_URL).permitAll()
                     .requestMatchers(HttpMethod.POST, AppConstants.RESET_PASS_URL).permitAll()
+                    .requestMatchers(HttpMethod.POST, AppConstants.GOOGLE_MOBILE_LOGIN_API_URL).permitAll()
                     // Public Content Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.SITE_METADATA_URL).permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.SITE_METADATA_VERSION_URL).permitAll()

@@ -1,10 +1,17 @@
 -- ============================================================
 -- DEMO SEED (DEV/TEST)
--- - 1 employer base: asd@asd.com (password: asdasd)
--- - 100 talents: asd1@asd.com ... asd100@asd.com (password: asdasd)
--- - 5 castings del employer base, cada uno con 5 roles
--- - cada role recibe entre 3 y 15 applicants (distribución determinística)
--- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los 101 usuarios seed
+-- - 3 employers: asd@asd.com / asd10@asd.com / asd20@asd.com (password: asdasd)
+--   * asd@asd.com   -> ASD Studios (company)
+--   * asd10@asd.com -> Agencia Vértice Talentos (talent_agency)
+--   * asd20@asd.com -> Sur Content Producciones (producer)
+-- - 30 talents: asd1@asd.com ... asd30@asd.com (password: asdasd)
+-- - 6 castings (2 por employer: 1 draft + 1 published), cada uno con 5 roles (30 roles totales)
+-- - cada role de casting PUBLISHED recibe entre 3 y 15 applicants (distribución determinística);
+--   roles de castings DRAFT no reciben applicants (aún no publicados)
+-- - talent gender/ethnicity/hair/eye/diet/height/weight/measurements/tattoo/passport/driving_license
+--   y casting_role gender/ethnicity/pay_rate_type varían de forma determinística (hash-based) para
+--   habilitar pruebas reales de los filtros de búsqueda de talent-database y casting-database
+-- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
 --
 -- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
 -- Requiere schema y metadata al día (Flyway aplicado).
@@ -15,25 +22,25 @@
 -- 3) Si falla algo => rollback completo
 -- ============================================================
 
-DROP PROCEDURE IF EXISTS public.seed_demo_101_users_5x5();
+DROP PROCEDURE IF EXISTS public.seed_demo_30_users_3_employers();
 
-CREATE PROCEDURE public.seed_demo_101_users_5x5()
+CREATE PROCEDURE public.seed_demo_30_users_3_employers()
 LANGUAGE plpgsql
 AS $proc$
 BEGIN
 -- ============================================================
 -- DEMO SEED (DEV/TEST)
--- - 1 employer base: asd@asd.com (password: asdasd)
--- - 100 talents: asd1@asd.com ... asd100@asd.com (password: asdasd)
--- - 5 castings del employer base, cada uno con 5 roles
--- - cada role recibe entre 3 y 15 applicants (distribución determinística)
--- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los 101 usuarios seed
+-- - 3 employers: asd@asd.com / asd10@asd.com / asd20@asd.com (password: asdasd)
+-- - 30 talents: asd1@asd.com ... asd30@asd.com (password: asdasd)
+-- - 6 castings (2 por employer: 1 draft + 1 published), cada uno con 5 roles
+-- - cada role de casting PUBLISHED recibe entre 3 y 15 applicants (distribución determinística)
+-- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
 --
 -- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
 -- ============================================================
 
   -- Evita ejecuciones concurrentes del seed en la misma base.
-  PERFORM pg_advisory_xact_lock(hashtext('seed_demo_101_users_5x5')::bigint);
+  PERFORM pg_advisory_xact_lock(hashtext('seed_demo_30_users_3_employers')::bigint);
 
 
 -- ------------------------------------------------------------
@@ -48,20 +55,41 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public."plans" WHERE code = 'FREE') THEN
     RAISE EXCEPTION 'Falta plan FREE. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.gender_option WHERE string_code = 'sitemetadata.gender.indistinct') THEN
-    RAISE EXCEPTION 'Falta gender indistinct. Ejecutá Flyway antes del seed.';
+  IF (SELECT COUNT(*) FROM public.gender_option WHERE string_code LIKE 'sitemetadata.gender.%') < 6 THEN
+    RAISE EXCEPTION 'Faltan gender_option metadata (se requieren 6). Ejecutá Flyway antes del seed.';
+  END IF;
+  IF (SELECT COUNT(*) FROM public.ethnicity_option WHERE string_code LIKE 'sitemetadata.ethnicity.%') < 8 THEN
+    RAISE EXCEPTION 'Faltan ethnicity_option metadata (se requieren 8). Ejecutá Flyway antes del seed.';
+  END IF;
+  IF (SELECT COUNT(*) FROM public.color_option WHERE category_string_code = 'sitemetadata.category.hair_color') < 11 THEN
+    RAISE EXCEPTION 'Faltan color_option (hair_color) metadata (se requieren 11). Ejecutá Flyway antes del seed.';
+  END IF;
+  IF (SELECT COUNT(*) FROM public.color_option WHERE category_string_code = 'sitemetadata.category.eye_color') < 9 THEN
+    RAISE EXCEPTION 'Faltan color_option (eye_color) metadata (se requieren 9). Ejecutá Flyway antes del seed.';
+  END IF;
+  IF (SELECT COUNT(*) FROM public.diet_option WHERE string_code LIKE 'sitemetadata.diet.%') < 11 THEN
+    RAISE EXCEPTION 'Faltan diet_option metadata (se requieren 11). Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.company_type_option WHERE string_code = 'sitemetadata.company_type.company') THEN
     RAISE EXCEPTION 'Falta company type company. Ejecutá Flyway antes del seed.';
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.company_type_option WHERE string_code = 'sitemetadata.company_type.talent_agency') THEN
+    RAISE EXCEPTION 'Falta company type talent_agency. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.company_type_option WHERE string_code = 'sitemetadata.company_type.producer') THEN
+    RAISE EXCEPTION 'Falta company type producer. Ejecutá Flyway antes del seed.';
+  END IF;
   IF (SELECT COUNT(*) FROM public.professions WHERE string_code LIKE 'sitemetadata.profession.%') < 8 THEN
     RAISE EXCEPTION 'Faltan professions metadata. Ejecutá Flyway antes del seed.';
   END IF;
-  IF (SELECT COUNT(*) FROM public.skills WHERE string_code LIKE 'sitemetadata.skill.%') < 20 THEN
-    RAISE EXCEPTION 'Faltan skills metadata. Ejecutá Flyway antes del seed.';
+  IF (SELECT COUNT(*) FROM public.skills WHERE string_code LIKE 'sitemetadata.skill.%') < 45 THEN
+    RAISE EXCEPTION 'Faltan skills metadata (se requieren >=45). Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.casting_status_option WHERE string_code = 'sitemetadata.casting_status.published') THEN
     RAISE EXCEPTION 'Falta casting_status published. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.casting_status_option WHERE string_code = 'sitemetadata.casting_status.draft') THEN
+    RAISE EXCEPTION 'Falta casting_status draft. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.project_type_option WHERE string_code = 'sitemetadata.project_type.commercial') THEN
     RAISE EXCEPTION 'Falta project_type commercial. Ejecutá Flyway antes del seed.';
@@ -69,8 +97,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.project_type_option WHERE string_code = 'sitemetadata.project_type.digital_content') THEN
     RAISE EXCEPTION 'Falta project_type digital_content. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.project_type_option WHERE string_code = 'sitemetadata.project_type.music_video') THEN
-    RAISE EXCEPTION 'Falta project_type music_video. Ejecutá Flyway antes del seed.';
+  IF NOT EXISTS (SELECT 1 FROM public.project_type_option WHERE string_code = 'sitemetadata.project_type.documentary') THEN
+    RAISE EXCEPTION 'Falta project_type documentary. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.project_type_option WHERE string_code = 'sitemetadata.project_type.short_film') THEN
+    RAISE EXCEPTION 'Falta project_type short_film. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.casting_modality_option WHERE string_code = 'sitemetadata.casting_modality.on_site') THEN
     RAISE EXCEPTION 'Falta casting_modality on_site. Ejecutá Flyway antes del seed.';
@@ -78,20 +109,8 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.casting_modality_option WHERE string_code = 'sitemetadata.casting_modality.autocasting') THEN
     RAISE EXCEPTION 'Falta casting_modality autocasting. Ejecutá Flyway antes del seed.';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.role_type_option WHERE string_code = 'sitemetadata.role_type.lead') THEN
-    RAISE EXCEPTION 'Falta role_type lead. Ejecutá Flyway antes del seed.';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.role_type_option WHERE string_code = 'sitemetadata.role_type.secondary') THEN
-    RAISE EXCEPTION 'Falta role_type secondary. Ejecutá Flyway antes del seed.';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.role_type_option WHERE string_code = 'sitemetadata.role_type.extra') THEN
-    RAISE EXCEPTION 'Falta role_type extra. Ejecutá Flyway antes del seed.';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.role_type_option WHERE string_code = 'sitemetadata.role_type.voice') THEN
-    RAISE EXCEPTION 'Falta role_type voice. Ejecutá Flyway antes del seed.';
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.role_type_option WHERE string_code = 'sitemetadata.role_type.host') THEN
-    RAISE EXCEPTION 'Falta role_type host. Ejecutá Flyway antes del seed.';
+  IF (SELECT COUNT(*) FROM public.role_type_option WHERE string_code LIKE 'sitemetadata.role_type.%') < 8 THEN
+    RAISE EXCEPTION 'Faltan role_type_option metadata (se requieren 8). Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.unpaid') THEN
     RAISE EXCEPTION 'Falta pay_rate_type unpaid. Ejecutá Flyway antes del seed.';
@@ -104,6 +123,15 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.per_hour') THEN
     RAISE EXCEPTION 'Falta pay_rate_type per_hour. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.per_week') THEN
+    RAISE EXCEPTION 'Falta pay_rate_type per_week. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.to_be_agreed') THEN
+    RAISE EXCEPTION 'Falta pay_rate_type to_be_agreed. Ejecutá Flyway antes del seed.';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.pay_rate_type_option WHERE string_code = 'sitemetadata.pay_rate_type.collaborative') THEN
+    RAISE EXCEPTION 'Falta pay_rate_type collaborative. Ejecutá Flyway antes del seed.';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.currency_option WHERE string_code = 'sitemetadata.currency.ars') THEN
     RAISE EXCEPTION 'Falta currency ars. Ejecutá Flyway antes del seed.';
@@ -143,7 +171,7 @@ SELECT
       'Larreta','Noguera','Pizarro','Valente','Soria','Del Río','Maldini','Carrizo','Balmaceda','Serrat'
     ])[(((gs.i - 1) * 7) % 20) + 1]
   ) AS stage_name
-FROM generate_series(1, 100) AS gs(i);
+FROM generate_series(1, 30) AS gs(i);
 
 -- Upsert users con password común: asdasd
 INSERT INTO public.users (
@@ -182,6 +210,22 @@ CREATE TEMP TABLE tmp_seed_user_ids ON COMMIT DROP AS
 SELECT u.id AS user_id, u.email, s.is_base, s.stage_name
 FROM public.users u
 JOIN tmp_seed_users s ON s.email = u.email;
+
+-- Employer personas (3): base + 2 upgrades sobre usuarios talent existentes
+CREATE TEMP TABLE tmp_employer_personas (
+  email text PRIMARY KEY,
+  company_type_code text NOT NULL,
+  company_name text NOT NULL,
+  tax_number text NOT NULL,
+  address text NOT NULL,
+  website_url text NOT NULL,
+  about text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_employer_personas (email, company_type_code, company_name, tax_number, address, website_url, about) VALUES
+('asd@asd.com',   'sitemetadata.company_type.company',       'ASD Studios',               'ASD-0001', 'Buenos Aires, AR', 'https://autocasting.app',        'Productora demo para QA de castings y aplicaciones.'),
+('asd10@asd.com', 'sitemetadata.company_type.talent_agency', 'Agencia Vértice Talentos',   'AVT-0010', 'Rosario, AR',       'https://verticetalentos.com.ar', 'Agencia de representación de talento para publicidad, cine y streaming.'),
+('asd20@asd.com', 'sitemetadata.company_type.producer',      'Sur Content Producciones',   'SCP-0020', 'Córdoba, AR',       'https://surcontent.com.ar',      'Productora audiovisual independiente especializada en documentales y ficción.');
 
 -- ------------------------------------------------------------
 -- 1.5) Aceptaciones legales seed (current TERMS + PRIVACY, locale es)
@@ -224,7 +268,7 @@ SELECT
   d.id,
   NOW() - interval '5 minutes',
   '127.0.0.1',
-  'SEED_DEMO_101_USERS_5X5',
+  'SEED_DEMO_30_USERS_3_EMPLOYERS',
   d.content_hash,
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM tmp_seed_user_ids su
@@ -266,7 +310,21 @@ JOIN public."plans" p ON p.code = 'FREE'
 LEFT JOIN public.employer_profile ep ON ep.user_id = t.user_id
 WHERE ep.id IS NULL;
 
--- Talent basic info
+-- Gender pool (6 valores)
+CREATE TEMP TABLE tmp_gender_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_gender_pool (idx, string_code) VALUES
+  (1, 'sitemetadata.gender.male'),
+  (2, 'sitemetadata.gender.female'),
+  (3, 'sitemetadata.gender.male_trans'),
+  (4, 'sitemetadata.gender.female_trans'),
+  (5, 'sitemetadata.gender.non_binary'),
+  (6, 'sitemetadata.gender.indistinct');
+
+-- Talent basic info (gender + birth_date con variedad determinística)
 INSERT INTO public.talent_basic_info (
   id, created_at, created_by, deleted, modified_at, modified_by,
   stage_name, gender_id, birth_date, talent_profile_id
@@ -276,29 +334,32 @@ SELECT
   t.stage_name,
   go.id,
   make_date(
-    (1988 + ((row_number() OVER (ORDER BY t.email) % 12))::int),
-    (1 + ((row_number() OVER (ORDER BY t.email) % 12))::int),
-    (1 + ((row_number() OVER (ORDER BY t.email) % 27))::int)
+    (EXTRACT(YEAR FROM NOW())::int - 18 - (abs(hashtext(t.email || ':birth_year')) % 42)),
+    (1 + (abs(hashtext(t.email || ':birth_month')) % 12)),
+    (1 + (abs(hashtext(t.email || ':birth_day')) % 28))
   ),
   tp.id
 FROM tmp_seed_user_ids t
 JOIN public.talent_profile tp ON tp.user_id = t.user_id
 LEFT JOIN public.talent_basic_info tbi ON tbi.talent_profile_id = tp.id
-CROSS JOIN LATERAL (
-  SELECT id
-  FROM public.gender_option
-  WHERE string_code = 'sitemetadata.gender.indistinct'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) go
+JOIN tmp_gender_pool gp ON gp.idx = ((abs(hashtext(t.email || ':gender')) % 6) + 1)
+JOIN public.gender_option go ON go.string_code = gp.string_code
 WHERE tbi.id IS NULL;
 
 UPDATE public.talent_basic_info tbi
 SET stage_name = t.stage_name,
+    gender_id = go.id,
+    birth_date = make_date(
+      (EXTRACT(YEAR FROM NOW())::int - 18 - (abs(hashtext(t.email || ':birth_year')) % 42)),
+      (1 + (abs(hashtext(t.email || ':birth_month')) % 12)),
+      (1 + (abs(hashtext(t.email || ':birth_day')) % 28))
+    ),
     modified_at = NOW(),
     modified_by = 'SEED_DEMO'
 FROM public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+JOIN tmp_gender_pool gp ON gp.idx = ((abs(hashtext(t.email || ':gender')) % 6) + 1)
+JOIN public.gender_option go ON go.string_code = gp.string_code
 WHERE tbi.talent_profile_id = tp.id;
 
 -- Talent contact
@@ -324,7 +385,7 @@ FROM public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 WHERE tc.talent_profile_id = tp.id;
 
--- Talent media (catálogo/aplicaciones: headshot + full body)
+-- Talent media (catálogo/aplicaciones: headshot + full body) -- SIN CAMBIOS respecto al pool original
 CREATE TEMP TABLE tmp_headshot_pool (
   idx int PRIMARY KEY,
   url text NOT NULL
@@ -412,6 +473,7 @@ INSERT INTO tmp_seed_profession_pool (idx, string_code) VALUES
   (7, 'sitemetadata.profession.standup'),
   (8, 'sitemetadata.profession.voice_talent');
 
+-- Skill pool ampliado: las 49 skills elegibles del catálogo (excluye spanish_pe/spanish_ve, soft-deleted)
 CREATE TEMP TABLE tmp_seed_skill_pool (
   idx int PRIMARY KEY,
   string_code text NOT NULL,
@@ -419,24 +481,58 @@ CREATE TEMP TABLE tmp_seed_skill_pool (
 ) ON COMMIT DROP;
 
 INSERT INTO tmp_seed_skill_pool (idx, string_code, category_string_code) VALUES
-  (1,  'sitemetadata.skill.english', 'sitemetadata.category.language'),
-  (2,  'sitemetadata.skill.french', 'sitemetadata.category.language'),
-  (3,  'sitemetadata.skill.italian', 'sitemetadata.category.language'),
-  (4,  'sitemetadata.skill.portuguese_br', 'sitemetadata.category.language'),
-  (5,  'sitemetadata.skill.spanish_neutral', 'sitemetadata.category.accent'),
-  (6,  'sitemetadata.skill.english_us', 'sitemetadata.category.accent'),
-  (7,  'sitemetadata.skill.english_uk', 'sitemetadata.category.accent'),
-  (8,  'sitemetadata.skill.stage_combat', 'sitemetadata.category.physical'),
-  (9,  'sitemetadata.skill.martial_arts', 'sitemetadata.category.physical'),
-  (10, 'sitemetadata.skill.acrobatics', 'sitemetadata.category.physical'),
-  (11, 'sitemetadata.skill.skating', 'sitemetadata.category.physical'),
-  (12, 'sitemetadata.skill.horseback_riding', 'sitemetadata.category.physical'),
-  (13, 'sitemetadata.skill.football', 'sitemetadata.category.sport'),
-  (14, 'sitemetadata.skill.tennis', 'sitemetadata.category.sport'),
-  (15, 'sitemetadata.skill.swimming', 'sitemetadata.category.sport'),
-  (16, 'sitemetadata.skill.volleyball', 'sitemetadata.category.sport'),
-  (17, 'sitemetadata.skill.basketball', 'sitemetadata.category.sport'),
-  (18, 'sitemetadata.skill.padel', 'sitemetadata.category.sport');
+  -- sport (13)
+  (1,  'sitemetadata.skill.athletics', 'sitemetadata.category.sport'),
+  (2,  'sitemetadata.skill.basketball', 'sitemetadata.category.sport'),
+  (3,  'sitemetadata.skill.boxing', 'sitemetadata.category.sport'),
+  (4,  'sitemetadata.skill.cycling', 'sitemetadata.category.sport'),
+  (5,  'sitemetadata.skill.football', 'sitemetadata.category.sport'),
+  (6,  'sitemetadata.skill.gymnastics', 'sitemetadata.category.sport'),
+  (7,  'sitemetadata.skill.handball', 'sitemetadata.category.sport'),
+  (8,  'sitemetadata.skill.hockey', 'sitemetadata.category.sport'),
+  (9,  'sitemetadata.skill.swimming', 'sitemetadata.category.sport'),
+  (10, 'sitemetadata.skill.padel', 'sitemetadata.category.sport'),
+  (11, 'sitemetadata.skill.rugby', 'sitemetadata.category.sport'),
+  (12, 'sitemetadata.skill.tennis', 'sitemetadata.category.sport'),
+  (13, 'sitemetadata.skill.volleyball', 'sitemetadata.category.sport'),
+  -- physical (19)
+  (14, 'sitemetadata.skill.acrobatics', 'sitemetadata.category.physical'),
+  (15, 'sitemetadata.skill.aerial_acrobatics', 'sitemetadata.category.physical'),
+  (16, 'sitemetadata.skill.martial_arts', 'sitemetadata.category.physical'),
+  (17, 'sitemetadata.skill.capoeira', 'sitemetadata.category.physical'),
+  (18, 'sitemetadata.skill.stage_combat', 'sitemetadata.category.physical'),
+  (19, 'sitemetadata.skill.contortion', 'sitemetadata.category.physical'),
+  (20, 'sitemetadata.skill.tightrope_slackline', 'sitemetadata.category.physical'),
+  (21, 'sitemetadata.skill.horseback_riding', 'sitemetadata.category.physical'),
+  (22, 'sitemetadata.skill.climbing', 'sitemetadata.category.physical'),
+  (23, 'sitemetadata.skill.stage_fencing', 'sitemetadata.category.physical'),
+  (24, 'sitemetadata.skill.juggling', 'sitemetadata.category.physical'),
+  (25, 'sitemetadata.skill.pantomime', 'sitemetadata.category.physical'),
+  (26, 'sitemetadata.skill.physical_theater', 'sitemetadata.category.physical'),
+  (27, 'sitemetadata.skill.parkour', 'sitemetadata.category.physical'),
+  (28, 'sitemetadata.skill.skating', 'sitemetadata.category.physical'),
+  (29, 'sitemetadata.skill.stunts', 'sitemetadata.category.physical'),
+  (30, 'sitemetadata.skill.aerial_skills', 'sitemetadata.category.physical'),
+  (31, 'sitemetadata.skill.harness_wirework', 'sitemetadata.category.physical'),
+  (32, 'sitemetadata.skill.stilts', 'sitemetadata.category.physical'),
+  -- language (8)
+  (33, 'sitemetadata.skill.german', 'sitemetadata.category.language'),
+  (34, 'sitemetadata.skill.chinese_mandarin', 'sitemetadata.category.language'),
+  (35, 'sitemetadata.skill.spanish_arg', 'sitemetadata.category.language'),
+  (36, 'sitemetadata.skill.french', 'sitemetadata.category.language'),
+  (37, 'sitemetadata.skill.english', 'sitemetadata.category.language'),
+  (38, 'sitemetadata.skill.italian', 'sitemetadata.category.language'),
+  (39, 'sitemetadata.skill.portuguese_br', 'sitemetadata.category.language'),
+  (40, 'sitemetadata.skill.russian', 'sitemetadata.category.language'),
+  -- accent (9, incluye spanish_arg duplicado con distinta category_string_code)
+  (41, 'sitemetadata.skill.spanish_arg', 'sitemetadata.category.accent'),
+  (42, 'sitemetadata.skill.spanish_es', 'sitemetadata.category.accent'),
+  (43, 'sitemetadata.skill.spanish_neutral', 'sitemetadata.category.accent'),
+  (44, 'sitemetadata.skill.spanish_co', 'sitemetadata.category.accent'),
+  (45, 'sitemetadata.skill.spanish_ch', 'sitemetadata.category.accent'),
+  (46, 'sitemetadata.skill.spanish_mx', 'sitemetadata.category.accent'),
+  (47, 'sitemetadata.skill.english_us', 'sitemetadata.category.accent'),
+  (48, 'sitemetadata.skill.english_uk', 'sitemetadata.category.accent');
 
 INSERT INTO public.talent_media (
   id, created_at, created_by, deleted, modified_at, modified_by,
@@ -479,27 +575,145 @@ JOIN tmp_headshot_pool hp ON hp.idx = m.headshot_idx
 JOIN tmp_headshot_pool fbp ON fbp.idx = m.full_body_idx
 WHERE tm.talent_profile_id = m.talent_profile_id;
 
--- Talent characteristics (placeholder)
+-- Ethnicity / hair_color / eye_color / diet pools
+CREATE TEMP TABLE tmp_ethnicity_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_ethnicity_pool (idx, string_code) VALUES
+  (1, 'sitemetadata.ethnicity.afro_descendant'),
+  (2, 'sitemetadata.ethnicity.asian'),
+  (3, 'sitemetadata.ethnicity.white_caucasian'),
+  (4, 'sitemetadata.ethnicity.indigenous_native'),
+  (5, 'sitemetadata.ethnicity.latino_hispanic'),
+  (6, 'sitemetadata.ethnicity.middle_east_north_africa'),
+  (7, 'sitemetadata.ethnicity.mixed'),
+  (8, 'sitemetadata.ethnicity.prefer_not_to_say');
+
+CREATE TEMP TABLE tmp_hair_color_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL,
+  category_string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_hair_color_pool (idx, string_code, category_string_code) VALUES
+  (1, 'sitemetadata.color.black', 'sitemetadata.category.hair_color'),
+  (2, 'sitemetadata.color.dark_brown', 'sitemetadata.category.hair_color'),
+  (3, 'sitemetadata.color.light_brown', 'sitemetadata.category.hair_color'),
+  (4, 'sitemetadata.color.brown', 'sitemetadata.category.hair_color'),
+  (5, 'sitemetadata.color.blonde', 'sitemetadata.category.hair_color'),
+  (6, 'sitemetadata.color.dark_blonde', 'sitemetadata.category.hair_color'),
+  (7, 'sitemetadata.color.light_blonde', 'sitemetadata.category.hair_color'),
+  (8, 'sitemetadata.color.red', 'sitemetadata.category.hair_color'),
+  (9, 'sitemetadata.color.gray', 'sitemetadata.category.hair_color'),
+  (10, 'sitemetadata.color.white', 'sitemetadata.category.hair_color'),
+  (11, 'sitemetadata.color.no_hair', 'sitemetadata.category.hair_color');
+
+CREATE TEMP TABLE tmp_eye_color_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL,
+  category_string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_eye_color_pool (idx, string_code, category_string_code) VALUES
+  (1, 'sitemetadata.color.amber', 'sitemetadata.category.eye_color'),
+  (2, 'sitemetadata.color.hazel', 'sitemetadata.category.eye_color'),
+  (3, 'sitemetadata.color.blue', 'sitemetadata.category.eye_color'),
+  (4, 'sitemetadata.color.light_blue', 'sitemetadata.category.eye_color'),
+  (5, 'sitemetadata.color.gray', 'sitemetadata.category.eye_color'),
+  (6, 'sitemetadata.color.brown', 'sitemetadata.category.eye_color'),
+  (7, 'sitemetadata.color.black', 'sitemetadata.category.eye_color'),
+  (8, 'sitemetadata.color.green', 'sitemetadata.category.eye_color'),
+  (9, 'sitemetadata.color.heterochromia', 'sitemetadata.category.eye_color');
+
+CREATE TEMP TABLE tmp_diet_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_diet_pool (idx, string_code) VALUES
+  (1, 'sitemetadata.diet.omnivore'),
+  (2, 'sitemetadata.diet.flexitarian'),
+  (3, 'sitemetadata.diet.vegetarian'),
+  (4, 'sitemetadata.diet.lacto_ovo_vegetarian'),
+  (5, 'sitemetadata.diet.vegan'),
+  (6, 'sitemetadata.diet.pescatarian'),
+  (7, 'sitemetadata.diet.ketogenic'),
+  (8, 'sitemetadata.diet.gluten_free'),
+  (9, 'sitemetadata.diet.lactose_free'),
+  (10, 'sitemetadata.diet.kosher'),
+  (11, 'sitemetadata.diet.halal');
+
+-- Talent characteristics: variedad completa (altura, peso, medidas, talles, etnia, color pelo/ojos, dieta, tattoo/passport/dl)
 INSERT INTO public.talent_characteristics (
   id, created_at, created_by, deleted, modified_at, modified_by,
+  height_cm, weight_kg, chest_cm, waist_cm, hip_cm,
+  shirt_size, pant_size, dress_size, shoe_size,
+  ethnicity_id, hair_color_id, eye_color_id, diet_option_id,
   tattoo, passport, driving_license, talent_profile_id
 )
 SELECT
   gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
-  false, false, false, tp.id
+  150 + (abs(hashtext(t.email || ':height')) % 51),
+  48 + (abs(hashtext(t.email || ':weight')) % 63),
+  (80 + (abs(hashtext(t.email || ':chest')) % 41))::text,
+  (60 + (abs(hashtext(t.email || ':waist')) % 41))::text,
+  (80 + (abs(hashtext(t.email || ':hip')) % 41))::text,
+  (ARRAY['XS','S','M','L','XL','XXL'])[(abs(hashtext(t.email || ':shirt')) % 6) + 1],
+  (ARRAY['36','38','40','42','44','46','48'])[(abs(hashtext(t.email || ':pant')) % 7) + 1],
+  (ARRAY['34','36','38','40','42','44'])[(abs(hashtext(t.email || ':dress')) % 6) + 1],
+  (ARRAY['35','36','37','38','39','40','41','42','43','44','45'])[(abs(hashtext(t.email || ':shoe')) % 11) + 1],
+  eth.id,
+  hc.id,
+  ec.id,
+  diet.id,
+  ((abs(hashtext(t.email || ':tattoo')) % 100) < 35),
+  ((abs(hashtext(t.email || ':passport')) % 100) < 55),
+  ((abs(hashtext(t.email || ':driving_license')) % 100) < 60),
+  tp.id
 FROM public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 LEFT JOIN public.talent_characteristics tc ON tc.talent_profile_id = tp.id
+JOIN tmp_ethnicity_pool eth_p ON eth_p.idx = ((abs(hashtext(t.email || ':ethnicity')) % 8) + 1)
+JOIN public.ethnicity_option eth ON eth.string_code = eth_p.string_code
+JOIN tmp_hair_color_pool hc_p ON hc_p.idx = ((abs(hashtext(t.email || ':hair')) % 11) + 1)
+JOIN public.color_option hc ON hc.string_code = hc_p.string_code AND hc.category_string_code = hc_p.category_string_code
+JOIN tmp_eye_color_pool ec_p ON ec_p.idx = ((abs(hashtext(t.email || ':eye')) % 9) + 1)
+JOIN public.color_option ec ON ec.string_code = ec_p.string_code AND ec.category_string_code = ec_p.category_string_code
+JOIN tmp_diet_pool diet_p ON diet_p.idx = ((abs(hashtext(t.email || ':diet')) % 11) + 1)
+JOIN public.diet_option diet ON diet.string_code = diet_p.string_code
 WHERE tc.id IS NULL;
 
 UPDATE public.talent_characteristics tc
-SET tattoo = COALESCE(tc.tattoo, false),
-    passport = COALESCE(tc.passport, false),
-    driving_license = COALESCE(tc.driving_license, false),
+SET height_cm = 150 + (abs(hashtext(t.email || ':height')) % 51),
+    weight_kg = 48 + (abs(hashtext(t.email || ':weight')) % 63),
+    chest_cm = (80 + (abs(hashtext(t.email || ':chest')) % 41))::text,
+    waist_cm = (60 + (abs(hashtext(t.email || ':waist')) % 41))::text,
+    hip_cm = (80 + (abs(hashtext(t.email || ':hip')) % 41))::text,
+    shirt_size = (ARRAY['XS','S','M','L','XL','XXL'])[(abs(hashtext(t.email || ':shirt')) % 6) + 1],
+    pant_size = (ARRAY['36','38','40','42','44','46','48'])[(abs(hashtext(t.email || ':pant')) % 7) + 1],
+    dress_size = (ARRAY['34','36','38','40','42','44'])[(abs(hashtext(t.email || ':dress')) % 6) + 1],
+    shoe_size = (ARRAY['35','36','37','38','39','40','41','42','43','44','45'])[(abs(hashtext(t.email || ':shoe')) % 11) + 1],
+    ethnicity_id = eth.id,
+    hair_color_id = hc.id,
+    eye_color_id = ec.id,
+    diet_option_id = diet.id,
+    tattoo = ((abs(hashtext(t.email || ':tattoo')) % 100) < 35),
+    passport = ((abs(hashtext(t.email || ':passport')) % 100) < 55),
+    driving_license = ((abs(hashtext(t.email || ':driving_license')) % 100) < 60),
     modified_at = NOW(),
     modified_by = 'SEED_DEMO'
 FROM public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+JOIN tmp_ethnicity_pool eth_p ON eth_p.idx = ((abs(hashtext(t.email || ':ethnicity')) % 8) + 1)
+JOIN public.ethnicity_option eth ON eth.string_code = eth_p.string_code
+JOIN tmp_hair_color_pool hc_p ON hc_p.idx = ((abs(hashtext(t.email || ':hair')) % 11) + 1)
+JOIN public.color_option hc ON hc.string_code = hc_p.string_code AND hc.category_string_code = hc_p.category_string_code
+JOIN tmp_eye_color_pool ec_p ON ec_p.idx = ((abs(hashtext(t.email || ':eye')) % 9) + 1)
+JOIN public.color_option ec ON ec.string_code = ec_p.string_code AND ec.category_string_code = ec_p.category_string_code
+JOIN tmp_diet_pool diet_p ON diet_p.idx = ((abs(hashtext(t.email || ':diet')) % 11) + 1)
+JOIN public.diet_option diet ON diet.string_code = diet_p.string_code
 WHERE tc.talent_profile_id = tp.id;
 
 -- Relation profession por talent
@@ -544,14 +758,14 @@ FROM (
 JOIN public.professions p ON p.string_code = talent_professions.profession_code
 ON CONFLICT (talent_basic_info_id, profession_id) DO NOTHING;
 
--- Relation skill por talent
+-- Relation skill por talent (3 garantizadas + 2 con gate, pool ampliado a 48 skills)
 DELETE FROM public.talent_skill ts
 USING public.talent_profile tp
 JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
 WHERE ts.talent_profile_id = tp.id;
 
 INSERT INTO public.talent_skill (talent_profile_id, skill_id)
-SELECT
+SELECT DISTINCT
   talent_skills.talent_profile_id,
   s.id
 FROM (
@@ -565,103 +779,109 @@ FROM (
     FROM (
       SELECT ssp1.string_code AS skill_code
       FROM tmp_seed_skill_pool ssp1
-      WHERE ssp1.idx = ((abs(hashtext(t.email || ':skill:1')) % 18) + 1)
+      WHERE ssp1.idx = ((abs(hashtext(t.email || ':skill:1')) % 48) + 1)
 
       UNION ALL
 
       SELECT ssp2.string_code AS skill_code
       FROM tmp_seed_skill_pool ssp2
-      WHERE ssp2.idx = ((abs(hashtext(t.email || ':skill:2')) % 18) + 1)
+      WHERE ssp2.idx = ((abs(hashtext(t.email || ':skill:2')) % 48) + 1)
 
       UNION ALL
 
       SELECT ssp3.string_code AS skill_code
       FROM tmp_seed_skill_pool ssp3
-      WHERE ssp3.idx = ((abs(hashtext(t.email || ':skill:3')) % 18) + 1)
+      WHERE ssp3.idx = ((abs(hashtext(t.email || ':skill:3')) % 48) + 1)
 
       UNION ALL
 
       SELECT ssp4.string_code AS skill_code
       FROM tmp_seed_skill_pool ssp4
-      WHERE (abs(hashtext(t.email || ':skill:count')) % 100) < 35
-        AND ssp4.idx = ((abs(hashtext(t.email || ':skill:4')) % 18) + 1)
+      WHERE (abs(hashtext(t.email || ':skill:count4')) % 100) < 40
+        AND ssp4.idx = ((abs(hashtext(t.email || ':skill:4')) % 48) + 1)
+
+      UNION ALL
+
+      SELECT ssp5.string_code AS skill_code
+      FROM tmp_seed_skill_pool ssp5
+      WHERE (abs(hashtext(t.email || ':skill:count5')) % 100) < 25
+        AND ssp5.idx = ((abs(hashtext(t.email || ':skill:5')) % 48) + 1)
     ) chosen_skills
   ) talent_skills
 ) talent_skills
 JOIN public.skills s ON s.string_code = talent_skills.skill_code
 ON CONFLICT (talent_profile_id, skill_id) DO NOTHING;
 
--- Employer basic info
+-- Employer basic info: 3 personas con datos reales, resto queda con stub mínimo
 INSERT INTO public.employer_basic_info (
   id, created_at, created_by, deleted, modified_at, modified_by,
   company_name, tax_number, company_type_id, company_email, image_url, address, website_url, about, employer_profile_id
 )
 SELECT
   gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
-  CASE WHEN t.is_base THEN 'ASD Studios' ELSE NULL END,
-  CASE WHEN t.is_base THEN 'ASD-0001' ELSE NULL END,
+  ep_persona.company_name,
+  ep_persona.tax_number,
   cto.id,
   t.email,
   'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/b6adeb92-127e-4fc3-a82b-1bbcdf2d50ec.png',
-  CASE WHEN t.is_base THEN 'Buenos Aires, AR' ELSE NULL END,
-  CASE WHEN t.is_base THEN 'https://autocasting.app' ELSE NULL END,
-  CASE WHEN t.is_base THEN 'Productora demo para QA de castings y aplicaciones.' ELSE NULL END,
+  ep_persona.address,
+  ep_persona.website_url,
+  ep_persona.about,
   ep.id
 FROM public.employer_profile ep
 JOIN tmp_seed_user_ids t ON t.user_id = ep.user_id
 LEFT JOIN public.employer_basic_info ebi ON ebi.employer_profile_id = ep.id
-CROSS JOIN LATERAL (
-  SELECT id FROM public.company_type_option
-  WHERE string_code = 'sitemetadata.company_type.company'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) cto
+LEFT JOIN tmp_employer_personas ep_persona ON ep_persona.email = t.email
+JOIN public.company_type_option cto
+  ON cto.string_code = COALESCE(ep_persona.company_type_code, 'sitemetadata.company_type.company')
 WHERE ebi.id IS NULL;
 
 UPDATE public.employer_basic_info ebi
-SET company_name = CASE WHEN t.is_base THEN 'ASD Studios' ELSE ebi.company_name END,
-    tax_number = CASE WHEN t.is_base THEN 'ASD-0001' ELSE ebi.tax_number END,
+SET company_name = COALESCE(ep_persona.company_name, ebi.company_name),
+    tax_number = COALESCE(ep_persona.tax_number, ebi.tax_number),
+    company_type_id = COALESCE(cto.id, ebi.company_type_id),
     company_email = t.email,
     image_url = COALESCE(ebi.image_url, 'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/b6adeb92-127e-4fc3-a82b-1bbcdf2d50ec.png'),
-    address = CASE WHEN t.is_base THEN 'Buenos Aires, AR' ELSE ebi.address END,
-    website_url = CASE WHEN t.is_base THEN 'https://autocasting.app' ELSE ebi.website_url END,
-    about = CASE WHEN t.is_base THEN 'Productora demo para QA de castings y aplicaciones.' ELSE ebi.about END,
+    address = COALESCE(ep_persona.address, ebi.address),
+    website_url = COALESCE(ep_persona.website_url, ebi.website_url),
+    about = COALESCE(ep_persona.about, ebi.about),
     modified_at = NOW(),
     modified_by = 'SEED_DEMO'
 FROM public.employer_profile ep
 JOIN tmp_seed_user_ids t ON t.user_id = ep.user_id
+LEFT JOIN tmp_employer_personas ep_persona ON ep_persona.email = t.email
+LEFT JOIN public.company_type_option cto ON cto.string_code = ep_persona.company_type_code
 WHERE ebi.employer_profile_id = ep.id;
 
 -- ------------------------------------------------------------
--- 3) Castings demo del employer base (5 castings x 5 roles)
+-- 3) Castings demo de los 3 employers (2 castings x employer, 5 roles c/u)
 -- ------------------------------------------------------------
 
-CREATE TEMP TABLE tmp_base_employer ON COMMIT DROP AS
-SELECT
-  u.id AS user_id,
-  ep.id AS employer_profile_id
-FROM public.users u
-JOIN public.employer_profile ep ON ep.user_id = u.id
-WHERE u.email = 'asd@asd.com'
-LIMIT 1;
+CREATE TEMP TABLE tmp_casting_employers ON COMMIT DROP AS
+SELECT p.email, ep.id AS employer_profile_id
+FROM tmp_employer_personas p
+JOIN public.users u ON u.email = p.email
+JOIN public.employer_profile ep ON ep.user_id = u.id;
 
--- Limpieza de castings previos del base (idempotente)
+-- Limpieza de castings previos de los 3 employers (idempotente)
 DELETE FROM public.casting_application ca
 WHERE ca.casting_role_id IN (
   SELECT cr.id
   FROM public.casting_role cr
   JOIN public.casting c ON c.id = cr.casting_id
-  WHERE c.employer_profile_id = (SELECT employer_profile_id FROM tmp_base_employer)
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
 );
 
 DELETE FROM public.casting
-WHERE employer_profile_id = (SELECT employer_profile_id FROM tmp_base_employer);
+WHERE employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers);
 
 CREATE TEMP TABLE tmp_casting_seed (
   casting_seq int PRIMARY KEY,
+  employer_email text NOT NULL,
   title text NOT NULL,
   project_type_code text NOT NULL,
   modality_code text NOT NULL,
+  status_code text NOT NULL,
   payment_model text NOT NULL,
   location_text text,
   has_wardrobe_fitting boolean NOT NULL,
@@ -670,16 +890,17 @@ CREATE TEMP TABLE tmp_casting_seed (
 ) ON COMMIT DROP;
 
 INSERT INTO tmp_casting_seed (
-  casting_seq, title, project_type_code, modality_code, payment_model,
+  casting_seq, employer_email, title, project_type_code, modality_code, status_code, payment_model,
   location_text, has_wardrobe_fitting, wardrobe_fitting_text, description
 ) VALUES
-(1, 'Campaña Urbana: Voces de Ciudad', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Buenos Aires', true, 'Prueba de vestuario dos días antes del rodaje.', 'Casting completo con datos extendidos para validar dashboard, details y employer card.'),
-(2, 'Microserie Vertical: Medianoche 3AM', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', NULL, false, NULL, NULL),
-(3, 'Videoclip Indie: Luz de Neón', 'sitemetadata.project_type.music_video', 'sitemetadata.casting_modality.on_site', 'paid', 'CABA', true, 'Vestuario coordinado por producción en estudio.', 'Casting completo con locación presencial, texto descriptivo y wardrobe fitting.'),
-(4, 'Contenido de Marca: Tiempo Real', 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'unpaid', NULL, false, NULL, NULL),
-(5, 'Spot Internacional: Puerta 9', 'sitemetadata.project_type.commercial', 'sitemetadata.casting_modality.on_site', 'paid', 'Montevideo', true, 'Prueba rápida de vestuario el mismo día del call.', 'Casting completo para validar deadline, remuneración y datos del employer.');
+(1, 'asd@asd.com',   'Campaña Urbana: Voces de Ciudad',       'sitemetadata.project_type.commercial',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Buenos Aires', true,  'Prueba de vestuario dos días antes del rodaje.',       'Casting completo con datos extendidos para validar dashboard, details y employer card.'),
+(2, 'asd@asd.com',   'Microserie Vertical: Medianoche 3AM',    'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.draft',     'unpaid', NULL,           false, NULL,                                                    NULL),
+(3, 'asd10@asd.com', 'Cortometraje: Piel de Papel',             'sitemetadata.project_type.short_film',      'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.published', 'unpaid', NULL,           false, NULL,                                                    'Casting con convocatoria abierta gestionada por agencia de talentos.'),
+(4, 'asd10@asd.com', 'Convocatoria Abierta: Nuevos Rostros',   'sitemetadata.project_type.commercial',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.draft',     'paid',   'Rosario',      true,  'Vestuario provisto por la agencia el día del casting.', NULL),
+(5, 'asd20@asd.com', 'Documental: Ríos del Sur',                'sitemetadata.project_type.documentary',     'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Córdoba',      true,  'Vestuario coordinado por producción en locación.',      'Casting completo con locación presencial y datos extendidos del employer.'),
+(6, 'asd20@asd.com', 'Serie Web: Estación Sur',                 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.draft',     'unpaid', NULL,           false, NULL,                                                    NULL);
 
--- Castings completos
+-- Castings
 INSERT INTO public.casting (
   id, created_at, created_by, deleted, modified_at, modified_by,
   employer_profile_id, default_code, casting_status_option_id,
@@ -689,8 +910,8 @@ INSERT INTO public.casting (
 )
 SELECT
   gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
-  be.employer_profile_id,
-  format('C-ASD-%s', LPAD(cs.casting_seq::text, 2, '0')),
+  ce.employer_profile_id,
+  format('C-DEMO-%s', LPAD(cs.casting_seq::text, 2, '0')),
   cso.id,
   cs.title,
   pto.id,
@@ -706,27 +927,12 @@ SELECT
   (NOW() + ((25 + cs.casting_seq)::text || ' days')::interval)::date,
   cs.description
 FROM tmp_casting_seed cs
-CROSS JOIN tmp_base_employer be
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_status_option
-  WHERE string_code = 'sitemetadata.casting_status.published'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) cso
-CROSS JOIN LATERAL (
-  SELECT id FROM public.project_type_option
-  WHERE string_code = cs.project_type_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) pto
-CROSS JOIN LATERAL (
-  SELECT id FROM public.casting_modality_option
-  WHERE string_code = cs.modality_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) cmo;
+JOIN tmp_casting_employers ce ON ce.email = cs.employer_email
+JOIN public.casting_status_option cso ON cso.string_code = cs.status_code
+JOIN public.project_type_option pto ON pto.string_code = cs.project_type_code
+JOIN public.casting_modality_option cmo ON cmo.string_code = cs.modality_code;
 
--- Roles seed (25 nombres creativos)
+-- Roles seed (30 nombres: 25 originales + 5 nuevos)
 CREATE TEMP TABLE tmp_role_seed (
   casting_seq int NOT NULL,
   role_pos int NOT NULL,
@@ -746,13 +952,14 @@ CREATE TEMP TABLE tmp_role_seed (
   passport boolean,
   driving_license boolean,
   include_skill boolean NOT NULL,
+  include_ethnicity boolean NOT NULL,
   PRIMARY KEY (casting_seq, role_pos)
 ) ON COMMIT DROP;
 
 INSERT INTO tmp_role_seed (
   casting_seq, role_pos, role_name, role_type_code, age_min, age_max,
   requires_audio, requires_video, pay_rate_code, currency_code, amount, remuneration_notes,
-  role_description, requirement_description, tattoo, passport, driving_license, include_skill
+  role_description, requirement_description, tattoo, passport, driving_license, include_skill, include_ethnicity
 )
 SELECT
   c.casting_seq,
@@ -763,17 +970,25 @@ SELECT
     'sitemetadata.role_type.secondary',
     'sitemetadata.role_type.extra',
     'sitemetadata.role_type.voice',
-    'sitemetadata.role_type.host'
-  ])[r.role_pos],
+    'sitemetadata.role_type.host',
+    'sitemetadata.role_type.creator',
+    'sitemetadata.role_type.guest',
+    'sitemetadata.role_type.other'
+  ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':role_type')) % 8) + 1],
   (18 + r.role_pos + c.casting_seq)::smallint,
   (30 + r.role_pos * 3 + c.casting_seq)::smallint,
   (r.role_pos IN (2, 4)),
   (r.role_pos IN (1, 5)),
   CASE
     WHEN c.payment_model = 'unpaid' THEN 'sitemetadata.pay_rate_type.unpaid'
-    WHEN r.role_pos IN (1, 5) THEN 'sitemetadata.pay_rate_type.fixed'
-    WHEN r.role_pos IN (2, 4) THEN 'sitemetadata.pay_rate_type.per_day'
-    ELSE 'sitemetadata.pay_rate_type.per_hour'
+    ELSE (ARRAY[
+      'sitemetadata.pay_rate_type.fixed',
+      'sitemetadata.pay_rate_type.per_hour',
+      'sitemetadata.pay_rate_type.per_day',
+      'sitemetadata.pay_rate_type.per_week',
+      'sitemetadata.pay_rate_type.to_be_agreed',
+      'sitemetadata.pay_rate_type.collaborative'
+    ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':pay_rate')) % 6) + 1]
   END,
   CASE
     WHEN c.payment_model = 'unpaid' THEN NULL
@@ -786,11 +1001,11 @@ SELECT
   END,
   CASE
     WHEN c.payment_model = 'unpaid'
-      THEN CASE WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL ELSE 'Rol no remunerado con material final para reel.' END
-    ELSE CASE WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL ELSE 'Remuneración variable según rol y disponibilidad.' END
+      THEN CASE WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL ELSE 'Rol no remunerado con material final para reel.' END
+    ELSE CASE WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL ELSE 'Remuneración variable según rol y disponibilidad.' END
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
     ELSE 'Rol generado por seed para pruebas de filtros, cards y applicants.'
   END,
   CASE
@@ -799,18 +1014,19 @@ SELECT
     ELSE NULL
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
     ELSE (r.role_pos % 3 = 0)
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
     ELSE (r.role_pos % 2 = 0)
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
     ELSE (r.role_pos % 4 = 0)
   END,
-  NOT (c.casting_seq IN (2, 4) AND r.role_pos >= 3)
+  NOT (c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3),
+  ((abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':include_ethnicity')) % 100) < 60)
 FROM tmp_casting_seed c
 CROSS JOIN generate_series(1, 5) AS r(role_pos)
 CROSS JOIN LATERAL (
@@ -819,13 +1035,16 @@ CROSS JOIN LATERAL (
     'Ivo Salvat','Ciro Alvear','Aitana Bosch','Nina Caro','Tiziano Valdés',
     'Vera Cifuentes','Dante Roldán','Uma Ferrer','Elio Varela','Nora Ledesma',
     'Thiago Montal','Alma Quiroga','Renzo Soria','Mila Céspedes','Axel Verona',
-    'Iris Calderón','Noam Lucero','Bianca Meza','Tomás Repetto','Ambar Duarte'
+    'Iris Calderón','Noam Lucero','Bianca Meza','Tomás Repetto','Ambar Duarte',
+    'Simón Achával','Delfina Roca','Nahuel Yrigoyen','Catalina Bustos','Lautaro Peralta'
   ] AS role_names
 ) rn;
 
+-- Gender / ethnicity pool para roles (reutiliza tmp_gender_pool / tmp_ethnicity_pool ya creados)
+
 -- Insert roles
 INSERT INTO public.casting_role (
-  id, casting_id, role_name, role_type_option_id, gender_option_id,
+  id, casting_id, role_name, role_type_option_id, gender_option_id, ethnicity_id,
   age_min, age_max, description,
   pay_rate_type_option_id, currency_option_id, amount, remuneration_notes,
   requires_audio, requires_video, requirement_description,
@@ -838,6 +1057,7 @@ SELECT
   rs.role_name,
   rto.id,
   go.id,
+  eth.id,
   rs.age_min,
   rs.age_max,
   rs.role_description,
@@ -853,25 +1073,13 @@ SELECT
   rs.driving_license,
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM tmp_role_seed rs
-JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(rs.casting_seq::text, 2, '0'))
-CROSS JOIN LATERAL (
-  SELECT id FROM public.role_type_option
-  WHERE string_code = rs.role_type_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) rto
-CROSS JOIN LATERAL (
-  SELECT id FROM public.gender_option
-  WHERE string_code = 'sitemetadata.gender.indistinct'
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) go
-CROSS JOIN LATERAL (
-  SELECT id FROM public.pay_rate_type_option
-  WHERE string_code = rs.pay_rate_code
-  ORDER BY created_at NULLS LAST
-  LIMIT 1
-) pr
+JOIN public.casting c ON c.default_code = format('C-DEMO-%s', LPAD(rs.casting_seq::text, 2, '0'))
+JOIN public.role_type_option rto ON rto.string_code = rs.role_type_code
+JOIN tmp_gender_pool gp ON gp.idx = ((abs(hashtext(rs.casting_seq::text || ':' || rs.role_pos::text || ':role_gender')) % 6) + 1)
+JOIN public.gender_option go ON go.string_code = gp.string_code
+LEFT JOIN tmp_ethnicity_pool eth_pool ON eth_pool.idx = ((abs(hashtext(rs.casting_seq::text || ':' || rs.role_pos::text || ':role_ethnicity')) % 8) + 1)
+LEFT JOIN public.ethnicity_option eth ON rs.include_ethnicity AND eth.string_code = eth_pool.string_code
+JOIN public.pay_rate_type_option pr ON pr.string_code = rs.pay_rate_code
 LEFT JOIN LATERAL (
   SELECT id FROM public.currency_option
   WHERE rs.currency_code IS NOT NULL AND string_code = rs.currency_code
@@ -884,6 +1092,7 @@ SELECT
   rs.casting_seq,
   rs.role_pos,
   cr.id AS casting_role_id,
+  cs.status_code,
   rs.requires_audio,
   rs.requires_video,
   rs.pay_rate_code,
@@ -891,8 +1100,9 @@ SELECT
   rs.amount,
   rs.remuneration_notes
 FROM tmp_role_seed rs
-JOIN public.casting c ON c.default_code = format('C-ASD-%s', LPAD(rs.casting_seq::text, 2, '0'))
-JOIN public.casting_role cr ON cr.casting_id = c.id AND cr.role_name = rs.role_name;
+JOIN public.casting c ON c.default_code = format('C-DEMO-%s', LPAD(rs.casting_seq::text, 2, '0'))
+JOIN public.casting_role cr ON cr.casting_id = c.id AND cr.role_name = rs.role_name
+JOIN tmp_casting_seed cs ON cs.casting_seq = rs.casting_seq;
 
 -- Profession + skill para cada role
 DELETE FROM public.casting_role_profession crp
@@ -1028,7 +1238,7 @@ JOIN public.skills s ON s.string_code = role_skills.skill_code
 ON CONFLICT (casting_role_id, skill_id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- 4) Aplicaciones talent -> roles del employer base
+-- 4) Aplicaciones talent -> roles de castings PUBLISHED (draft no recibe applicants)
 --    objetivo: entre 3 y 15 applicants por role
 -- ------------------------------------------------------------
 
@@ -1047,6 +1257,7 @@ SELECT
   row_number() OVER (ORDER BY r.casting_seq, r.role_pos) AS rn,
   r.casting_role_id
 FROM tmp_created_roles r
+WHERE r.status_code = 'sitemetadata.casting_status.published'
 ORDER BY r.casting_seq, r.role_pos;
 
 CREATE TEMP TABLE tmp_role_application_targets ON COMMIT DROP AS
@@ -1065,6 +1276,32 @@ JOIN LATERAL generate_series(1, rt.target_count) gs(slot) ON true
 JOIN tmp_applicant_talents at
   ON at.rn = (((rt.rn * 17 + gs.slot * 11) % (SELECT COUNT(*) FROM tmp_applicant_talents)) + 1);
 
+-- Application message pool
+CREATE TEMP TABLE tmp_application_message_pool (
+  idx int PRIMARY KEY,
+  message text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_application_message_pool (idx, message) VALUES
+  (1, 'Me encantaría formar parte de este proyecto, tengo disponibilidad completa para las fechas indicadas.'),
+  (2, 'Adjunto mi material de referencia. Cuento con experiencia previa en roles similares.'),
+  (3, 'Aplicación demo generada por seed para validar tablero de postulantes.'),
+  (4, 'Disponible para pruebas de cámara cuando lo requieran. Muchas gracias por la oportunidad.'),
+  (5, 'Vi la convocatoria y me pareció una gran oportunidad para sumar a mi portfolio.'),
+  (6, 'Postulación enviada con entusiasmo, quedo atento/a a cualquier consulta adicional.');
+
+CREATE TEMP TABLE tmp_submission_notes_pool (
+  idx int PRIMARY KEY,
+  notes text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_submission_notes_pool (idx, notes) VALUES
+  (1, 'Submission demo para pruebas funcionales.'),
+  (2, 'Material grabado especialmente para esta convocatoria.'),
+  (3, 'Archivo de referencia, disponible material adicional a pedido.'),
+  (4, 'Grabación realizada en casa, calidad de audio/video estándar.'),
+  (5, 'Reel actualizado, incluye trabajos recientes.');
+
 CREATE TEMP TABLE tmp_created_applications (
   id uuid NOT NULL,
   casting_role_id uuid NOT NULL,
@@ -1081,22 +1318,20 @@ WITH inserted_apps AS (
     ra.casting_role_id,
     ra.talent_profile_id,
     sao.id,
-    'Aplicación demo generada por seed para validar tablero de postulantes.',
+    amp.message,
     NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
   FROM tmp_role_applicants ra
-  CROSS JOIN LATERAL (
-    SELECT id FROM public.casting_application_status_option
-    WHERE string_code = 'sitemetadata.application_status.blank'
-    ORDER BY created_at NULLS LAST
-    LIMIT 1
-  ) sao
+  JOIN public.casting_application_status_option sao
+    ON sao.string_code = 'sitemetadata.application_status.blank'
+  JOIN tmp_application_message_pool amp
+    ON amp.idx = ((abs(hashtext(ra.talent_profile_id::text || ':' || ra.casting_role_id::text || ':message')) % 6) + 1)
   RETURNING id, casting_role_id, talent_profile_id
 )
 INSERT INTO tmp_created_applications (id, casting_role_id, talent_profile_id)
 SELECT id, casting_role_id, talent_profile_id
 FROM inserted_apps;
 
--- Requirement submissions para cada aplicación
+-- Requirement submissions para cada aplicación (audio/video URL SIN CAMBIOS; notes con variedad)
 INSERT INTO public.casting_application_requirement_submission (
   id, application_id, casting_role_id, audio_url, video_url, notes,
   created_at, created_by, modified_at, modified_by, deleted
@@ -1107,10 +1342,12 @@ SELECT
   cr.id,
   CASE WHEN cr.requires_audio THEN 'https://www.youtube.com/watch?v=bhagN-pes9Q' ELSE NULL END,
   CASE WHEN cr.requires_video THEN 'https://www.youtube.com/watch?v=bhagN-pes9Q' ELSE NULL END,
-  'Submission demo para pruebas funcionales.',
+  snp.notes,
   NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
 FROM tmp_created_applications a
-JOIN public.casting_role cr ON cr.id = a.casting_role_id;
+JOIN public.casting_role cr ON cr.id = a.casting_role_id
+JOIN tmp_submission_notes_pool snp
+  ON snp.idx = ((abs(hashtext(a.id::text || ':notes')) % 5) + 1);
 
 
 -- ------------------------------------------------------------
@@ -1120,29 +1357,48 @@ IF (SELECT COUNT(*) FROM public.users WHERE email = 'asd@asd.com') <> 1 THEN
   RAISE EXCEPTION 'Seed inválido: asd@asd.com no quedó en estado esperado';
 END IF;
 
-IF (SELECT COUNT(*) FROM public.users WHERE email ~ '^asd[0-9]+@asd\.com$') <> 100 THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad de usuarios incrementales distinta de 100';
+IF (SELECT COUNT(*) FROM public.users WHERE email ~ '^asd[0-9]+@asd\.com$') <> 30 THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de usuarios incrementales distinta de 30';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.employer_basic_info ebi
+  JOIN public.employer_profile ep ON ep.id = ebi.employer_profile_id
+  JOIN public.users u ON u.id = ep.user_id
+  WHERE u.email IN ('asd@asd.com', 'asd10@asd.com', 'asd20@asd.com')
+    AND ebi.company_name IS NOT NULL
+) <> 3 THEN
+  RAISE EXCEPTION 'Seed inválido: no se completaron los 3 employer personas esperados';
 END IF;
 
 IF (
   SELECT COUNT(*)
   FROM public.casting c
-  JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
-  JOIN public.users u ON u.id = ep.user_id
-  WHERE u.email = 'asd@asd.com'
-) <> 5 THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad de castings del employer base distinta de 5';
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
+) <> 6 THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de castings distinta de 6';
+END IF;
+
+IF (SELECT COUNT(DISTINCT c.employer_profile_id) FROM public.casting c WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)) <> 3 THEN
+  RAISE EXCEPTION 'Seed inválido: los 6 castings no están distribuidos entre los 3 employers';
+END IF;
+
+IF (
+  SELECT COUNT(DISTINCT c.casting_status_option_id)
+  FROM public.casting c
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
+) < 2 THEN
+  RAISE EXCEPTION 'Seed inválido: no hay variedad de casting_status (se esperaba draft + published)';
 END IF;
 
 IF (
   SELECT COUNT(*)
   FROM public.casting_role cr
   JOIN public.casting c ON c.id = cr.casting_id
-  JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
-  JOIN public.users u ON u.id = ep.user_id
-  WHERE u.email = 'asd@asd.com'
-) <> 25 THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad de roles del employer base distinta de 25';
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
+) <> 30 THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de roles distinta de 30';
 END IF;
 
 IF EXISTS (
@@ -1154,14 +1410,15 @@ IF EXISTS (
     FROM public.casting_application ca
     JOIN public.casting_role cr ON cr.id = ca.casting_role_id
     JOIN public.casting c ON c.id = cr.casting_id
-    JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
-    JOIN public.users u ON u.id = ep.user_id
-    WHERE u.email = 'asd@asd.com'
+    WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
+      AND c.casting_status_option_id IN (
+        SELECT id FROM public.casting_status_option WHERE string_code = 'sitemetadata.casting_status.published'
+      )
     GROUP BY ca.casting_role_id
   ) per_role
   WHERE per_role.applicant_count < 3 OR per_role.applicant_count > 15
 ) THEN
-  RAISE EXCEPTION 'Seed inválido: existe al menos un role fuera del rango de applicants (3..15)';
+  RAISE EXCEPTION 'Seed inválido: existe al menos un role de casting published fuera del rango de applicants (3..15)';
 END IF;
 
 IF (
@@ -1169,9 +1426,20 @@ IF (
   FROM public.casting_application ca
   JOIN public.casting_role cr ON cr.id = ca.casting_role_id
   JOIN public.casting c ON c.id = cr.casting_id
-  JOIN public.employer_profile ep ON ep.id = c.employer_profile_id
-  JOIN public.users u ON u.id = ep.user_id
-  WHERE u.email = 'asd@asd.com'
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
+    AND c.casting_status_option_id IN (
+      SELECT id FROM public.casting_status_option WHERE string_code = 'sitemetadata.casting_status.draft'
+    )
+) <> 0 THEN
+  RAISE EXCEPTION 'Seed inválido: existen aplicaciones para roles de castings draft (no deberían tener applicants)';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.casting_application ca
+  JOIN public.casting_role cr ON cr.id = ca.casting_role_id
+  JOIN public.casting c ON c.id = cr.casting_id
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
 ) <> (
   SELECT COALESCE(SUM(target_count), 0)
   FROM tmp_role_application_targets
@@ -1186,15 +1454,36 @@ IF (
   JOIN public.users u ON u.id = la.user_id
   WHERE (u.email = 'asd@asd.com' OR u.email ~ '^asd[0-9]+@asd\.com$')
     AND ld.type IN ('TERMS', 'PRIVACY')
-) <> 202 THEN
-  RAISE EXCEPTION 'Seed inválido: aceptaciones legales esperadas para usuarios demo (202) no coinciden';
+) <> 62 THEN
+  RAISE EXCEPTION 'Seed inválido: aceptaciones legales esperadas para usuarios demo (62) no coinciden';
+END IF;
+
+IF (
+  SELECT COUNT(DISTINCT tbi.gender_id)
+  FROM public.talent_basic_info tbi
+  JOIN public.talent_profile tp ON tp.id = tbi.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email ~ '^asd[0-9]+@asd\.com$'
+) < 4 THEN
+  RAISE EXCEPTION 'Seed inválido: variedad de gender insuficiente entre talents seed';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.talent_characteristics tc
+  JOIN public.talent_profile tp ON tp.id = tc.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email ~ '^asd[0-9]+@asd\.com$'
+    AND (tc.ethnicity_id IS NULL OR tc.hair_color_id IS NULL OR tc.eye_color_id IS NULL OR tc.diet_option_id IS NULL)
+) <> 0 THEN
+  RAISE EXCEPTION 'Seed inválido: existen talent_characteristics con ethnicity/hair_color/eye_color/diet sin completar';
 END IF;
 
 END;
 $proc$;
 
 BEGIN;
-CALL public.seed_demo_101_users_5x5();
+CALL public.seed_demo_30_users_3_employers();
 COMMIT;
 
-DROP PROCEDURE public.seed_demo_101_users_5x5();
+DROP PROCEDURE public.seed_demo_30_users_3_employers();

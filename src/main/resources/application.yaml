@@ -63,6 +63,9 @@ app:
         legal-bucket: ${SUPABASE_LEGAL_BUCKET:legal-documents-private}
         legal-prefix: ${SUPABASE_LEGAL_PREFIX:legal/documents}
         legal-pdf-signed-url-ttl-seconds: ${SUPABASE_LEGAL_PDF_TTL_SECONDS:900}
+    google:
+        mobile-ios-client-id: ${GOOGLE_MOBILE_IOS_CLIENT_ID:}
+        mobile-android-client-id: ${GOOGLE_MOBILE_ANDROID_CLIENT_ID:}
     jobs:
         close-expired-castings:
             enabled: true
