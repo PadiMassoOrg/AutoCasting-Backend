@@ -14,6 +14,7 @@ public class AppProperties {
     private String backendUrl;
     private String oauthSuccessUrl;
     private SupabaseProperties supabase = new SupabaseProperties();
+    private GoogleProperties google = new GoogleProperties();
 
     @Getter
     @Setter
@@ -23,5 +24,12 @@ public class AppProperties {
         private String legalBucket = "legal-documents-private";
         private String legalPrefix = "legal/documents";
         private int legalPdfSignedUrlTtlSeconds = 900;
+    }
+
+    @Getter
+    @Setter
+    public static class GoogleProperties {
+        private String mobileIosClientId;
+        private String mobileAndroidClientId;
     }
 }

@@ -34,6 +34,9 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(nullable = false)
     private UserAccountProvider userAccountProvider;
 
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_roles",

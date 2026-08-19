@@ -55,6 +55,15 @@ public class AuthController {
     }
 
     @Operation(
+        summary = "Google Sign-In (mobile)",
+        description = "Authenticates or registers a user using a Google-issued ID token from a native mobile Google Sign-In flow, and returns a JWT."
+    )
+    @PostMapping(GOOGLE_MOBILE_LOGIN_API_URL)
+    public ResponseEntity<AuthResponse> googleMobileLogin(@Valid @RequestBody GoogleMobileLoginRequest request) {
+        return ResponseEntity.ok(authService.loginOrRegisterWithGoogleMobile(request));
+    }
+
+    @Operation(
         summary = "Get authenticated user",
         description = "Returns basic user information and onboarding status.",
         security = @SecurityRequirement(name = "bearerAuth")

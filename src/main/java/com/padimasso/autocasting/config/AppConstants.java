@@ -20,6 +20,7 @@ public class AppConstants {
     public static final String FORGOT_PASS_URL = BASE_API_URL + "/auth/forgot-password";
     public static final String RESET_PASS_URL = BASE_API_URL + "/auth/reset-password";
     public static final String CHANGE_PASS_URL = BASE_API_URL + "/auth/change-password";
+    public static final String GOOGLE_MOBILE_LOGIN_API_URL = BASE_API_URL + "/auth/google/mobile";
     // Site Metadata
     public static final String SITE_METADATA_URL = BASE_API_URL + "/sitemetadata";
     public static final String SITE_METADATA_VERSION_URL = SITE_METADATA_URL + "/version";

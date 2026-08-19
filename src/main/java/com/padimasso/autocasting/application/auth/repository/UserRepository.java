@@ -11,5 +11,7 @@ import java.util.UUID;
 public interface UserRepository extends SoftDeleteRepository<UserEntity, UUID> {
     Optional<UserEntity> findByEmail(String email);
 
+    Optional<UserEntity> findByGoogleId(String googleId);
+
     boolean existsByEmail(String email);
 }

@@ -19,7 +19,7 @@ public class GoogleOauth2UserService implements OAuth2UserService<OAuth2UserRequ
         try {
             OAuth2User oauth = new DefaultOAuth2UserService().loadUser(req);
 
-            provision.ensureUser(oauth.getAttribute("email"), oauth.getName());
+            provision.ensureUser(oauth.getAttribute("email"), oauth.getName(), oauth.getAttribute("sub"));
 
             return oauth;
         } catch (OAuth2AuthenticationException exception) {

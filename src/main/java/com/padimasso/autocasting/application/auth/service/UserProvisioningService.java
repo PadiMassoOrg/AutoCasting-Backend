@@ -16,10 +16,11 @@ import com.padimasso.autocasting.application.talent.repository.TalentProfileRepo
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.padimasso.autocasting.application.auth.model.UserMode.EMPLOYER;
@@ -27,9 +28,9 @@ import static com.padimasso.autocasting.application.auth.model.UserMode.TALENT;
 import static com.padimasso.autocasting.application.auth.service.impl.AuthServiceImpl.normalizeUser;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
-@Component
+@Service
 @RequiredArgsConstructor
-class UserProvisioningService {
+public class UserProvisioningService {
 
     public static final String PLAN_FREE = "FREE";
 
@@ -40,7 +41,7 @@ class UserProvisioningService {
     private final PlanRepository planRepository;
 
     @Transactional
-    void ensureUser(String email, String name) {
+    public void ensureUser(String email, String name, String googleId) {
         if (email == null) {
             throw new OAuth2AuthenticationException(AUTH_USER_NOT_FOUND);
         }
@@ -54,16 +55,33 @@ class UserProvisioningService {
         final PlanEntity freePlan = planRepository.findByCode(PLAN_FREE)
             .orElseThrow(() -> new IllegalStateException(AUTH_INVALID_PLAN));
 
-        // User (nuevo o existente)
-        UserEntity user = userRepository.findByEmail(email).orElseGet(() -> UserEntity.builder()
+        // User (nuevo o existente), buscado primero por googleId (identidad estable),
+        // luego por email como fallback
+        Optional<UserEntity> existing = googleId != null
+            ? userRepository.findByGoogleId(googleId)
+            : Optional.empty();
+        if (existing.isEmpty()) {
+            existing = userRepository.findByEmail(email);
+        }
+
+        UserEntity user = existing.orElseGet(() -> UserEntity.builder()
             .email(email)
             .password(null)
-            .userAccountProvider(UserAccountProvider.OTHER)
+            .userAccountProvider(googleId != null ? UserAccountProvider.GOOGLE : UserAccountProvider.OTHER)
+            .googleId(googleId)
             .activeMode(null)
             .talentOnboardingStatus(OnboardingStatus.NOT_STARTED)
             .employerOnboardingStatus(OnboardingStatus.NOT_STARTED)
             .build()
         );
+
+        // Backfill: un usuario existente sin googleId (proveniente del flujo web previo
+        // a este cambio) y que no sea LOCAL puede vincularse de forma segura.
+        // Nunca se toca automáticamente una cuenta LOCAL (password) sin consentimiento.
+        if (googleId != null && user.getGoogleId() == null && user.getUserAccountProvider() != UserAccountProvider.LOCAL) {
+            user.setGoogleId(googleId);
+            user.setUserAccountProvider(UserAccountProvider.GOOGLE);
+        }
 
         normalizeUser(user, baseRoles);
         user = userRepository.save(user);
