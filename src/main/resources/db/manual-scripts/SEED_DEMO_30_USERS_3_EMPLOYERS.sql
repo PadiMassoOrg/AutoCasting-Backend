@@ -185,7 +185,7 @@ SELECT
   crypt('asdasd', gen_salt('bf', 10)),
   'LOCAL',
   CASE WHEN s.is_base THEN 'EMPLOYER' ELSE 'TALENT' END,
-  CASE WHEN s.is_base THEN 'NOT_STARTED' ELSE 'COMPLETED' END,
+  'COMPLETED',
   CASE WHEN s.is_base THEN 'COMPLETED' ELSE 'NOT_STARTED' END
 FROM tmp_seed_users s
 ON CONFLICT (email) DO UPDATE SET
