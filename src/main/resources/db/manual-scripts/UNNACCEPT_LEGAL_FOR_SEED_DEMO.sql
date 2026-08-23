@@ -1,5 +1,5 @@
 WITH target_user AS (
-    SELECT id AS user_id FROM users WHERE email = 'asd1@asd.com'
+    SELECT id AS user_id FROM users WHERE email = 'asd@asd.com'
 ), current_docs AS (
     SELECT id
     FROM (

@@ -33,6 +33,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -173,6 +175,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         ensureNotSuspended(user);
+
+        // legalService.accept(...) resolves the audit "created_by"/"modified_by" fields from the
+        // Spring Security context (AuditorAwareImpl). At this point in the Google mobile login flow
+        // no JWT has been issued yet and no authentication has been placed in the context, so without
+        // this, the acceptance row would be stamped "SYSTEM" instead of the actual user's email —
+        // unlike email/password login, where the client's follow-up authenticated call to
+        // /legal/accept-current already has a real JWT-derived principal in context.
+        var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         legalService.acceptCurrentRequired(user.getId(), "es", null, null);
 
