@@ -1,13 +1,22 @@
 -- ============================================================
 -- DEMO SEED (DEV/TEST)
 -- - 3 employers: asd@asd.com / asd10@asd.com / asd20@asd.com (password: asdasd)
---   * asd@asd.com   -> ASD Studios (company)
+--   * asd@asd.com   -> ASD Studios (company) -- también funciona como TALENT (dual-mode, ver abajo)
 --   * asd10@asd.com -> Agencia Vértice Talentos (talent_agency)
 --   * asd20@asd.com -> Sur Content Producciones (producer)
 -- - 30 talents: asd1@asd.com ... asd30@asd.com (password: asdasd)
--- - 6 castings (2 por employer: 1 draft + 1 published), cada uno con 5 roles (30 roles totales)
--- - cada role de casting PUBLISHED recibe entre 3 y 15 applicants (distribución determinística);
---   roles de castings DRAFT no reciben applicants (aún no publicados)
+-- - 22 castings totales, 5 roles c/u (110 roles totales):
+--   * asd@asd.com: 18 castings (13 published, 2 draft -- uno completo y uno incompleto --,
+--     1 paused, 1 closed, 1 archived), para cubrir todos los status posibles y dejar drafts
+--     editables listos para pruebas de employer.
+--   * asd10@asd.com / asd20@asd.com: 2 castings c/u sin cambios (1 draft + 1 published).
+-- - cada role de casting PUBLISHED recibe entre 3 y 16 applicants (distribución determinística;
+--   el límite 16 en vez de 15 es por la aplicación adicional garantizada de asd@asd.com, ver
+--   siguiente punto); roles de castings DRAFT no reciben applicants (aún no publicados)
+-- - asd@asd.com (dual-mode: TALENT + EMPLOYER) aplica como talent a exactamente 1 role de cada
+--   uno de los 15 castings PUBLISHED distintos que existen en todo el seed (15 aplicaciones a
+--   15 castings diferentes), para pruebas de talent-side sobre la misma cuenta que administra
+--   sus propios castings como employer.
 -- - talent gender/ethnicity/hair/eye/diet/height/weight/measurements/tattoo/passport/driving_license
 --   y casting_role gender/ethnicity/pay_rate_type varían de forma determinística (hash-based) para
 --   habilitar pruebas reales de los filtros de búsqueda de talent-database y casting-database
@@ -32,8 +41,10 @@ BEGIN
 -- DEMO SEED (DEV/TEST)
 -- - 3 employers: asd@asd.com / asd10@asd.com / asd20@asd.com (password: asdasd)
 -- - 30 talents: asd1@asd.com ... asd30@asd.com (password: asdasd)
--- - 6 castings (2 por employer: 1 draft + 1 published), cada uno con 5 roles
--- - cada role de casting PUBLISHED recibe entre 3 y 15 applicants (distribución determinística)
+-- - 22 castings totales (18 para asd@asd.com con status variado, 2 c/u para los otros 2
+--   employers), 5 roles c/u (110 roles totales)
+-- - cada role de casting PUBLISHED recibe entre 3 y 16 applicants (distribución determinística)
+-- - asd@asd.com (dual-mode) aplica a 15 castings PUBLISHED distintos como talent
 -- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
 --
 -- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
@@ -854,7 +865,7 @@ LEFT JOIN public.company_type_option cto ON cto.string_code = ep_persona.company
 WHERE ebi.employer_profile_id = ep.id;
 
 -- ------------------------------------------------------------
--- 3) Castings demo de los 3 employers (2 castings x employer, 5 roles c/u)
+-- 3) Castings demo de los 3 employers (asd@asd.com: 18 castings; asd10/asd20: 2 c/u), 5 roles c/u
 -- ------------------------------------------------------------
 
 CREATE TEMP TABLE tmp_casting_employers ON COMMIT DROP AS
@@ -898,7 +909,27 @@ INSERT INTO tmp_casting_seed (
 (3, 'asd10@asd.com', 'Cortometraje: Piel de Papel',             'sitemetadata.project_type.short_film',      'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.published', 'unpaid', NULL,           false, NULL,                                                    'Casting con convocatoria abierta gestionada por agencia de talentos.'),
 (4, 'asd10@asd.com', 'Convocatoria Abierta: Nuevos Rostros',   'sitemetadata.project_type.commercial',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.draft',     'paid',   'Rosario',      true,  'Vestuario provisto por la agencia el día del casting.', NULL),
 (5, 'asd20@asd.com', 'Documental: Ríos del Sur',                'sitemetadata.project_type.documentary',     'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Córdoba',      true,  'Vestuario coordinado por producción en locación.',      'Casting completo con locación presencial y datos extendidos del employer.'),
-(6, 'asd20@asd.com', 'Serie Web: Estación Sur',                 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.draft',     'unpaid', NULL,           false, NULL,                                                    NULL);
+(6, 'asd20@asd.com', 'Serie Web: Estación Sur',                 'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.draft',     'unpaid', NULL,           false, NULL,                                                    NULL),
+-- asd@asd.com: 16 castings adicionales (seq 7-22) para llegar a 18 total con status variado
+-- (13 published, 2 draft — uno completo y uno incompleto vía casting_seq IN (2,4,6,8,12) —,
+-- 1 paused, 1 closed, 1 archived), garantizando >=15 castings PUBLISHED distintos en todo
+-- el seed para validar aplicaciones de talent a múltiples castings.
+(7,  'asd@asd.com',  'Cortometraje: Últimas Luces',            'sitemetadata.project_type.short_film',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Buenos Aires', true,  'Vestuario a coordinar la semana previa al rodaje.',    'Casting publicado de ASD Studios, con roles y remuneración completos.'),
+(8,  'asd@asd.com',  'Spot Institucional: Raíces',             'sitemetadata.project_type.commercial',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.draft',     'paid',   NULL,           false, NULL,                                                    NULL),
+(9,  'asd@asd.com',  'Documental Corto: Oficios de Barrio',    'sitemetadata.project_type.documentary',     'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.paused',    'unpaid', 'Buenos Aires', false, NULL,                                                    'Casting pausado temporalmente mientras se reprograma la locación.'),
+(10, 'asd@asd.com',  'Serie Digital: Loop Infinito',           'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.closed',    'paid',   NULL,           false, NULL,                                                    'Casting cerrado, convocatoria completa y roles cubiertos.'),
+(11, 'asd@asd.com',  'Campaña Retro: Verano 2019',             'sitemetadata.project_type.commercial',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.archived',  'paid',   'Mar del Plata', true,  'Vestuario de época provisto por vestuarista.',         'Casting archivado, se mantiene como referencia histórica.'),
+(12, 'asd@asd.com',  'Podcast en Video: Voces Nocturnas',      'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.published', 'unpaid', NULL,           false, NULL,                                                    'Casting publicado, podcast en video con episodios quincenales.'),
+(13, 'asd@asd.com',  'Videoclip Independiente: Marea',         'sitemetadata.project_type.music_video',     'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Buenos Aires', true,  'Vestuario a definir junto a la dirección de arte.',    'Casting publicado, videoclip independiente con rodaje confirmado.'),
+(14, 'asd@asd.com',  'Cápsulas Educativas: Aprender Jugando',  'sitemetadata.project_type.other',           'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.published', 'unpaid', NULL,           false, NULL,                                                    'Casting publicado de ASD Studios, convocatoria abierta sin remuneración.'),
+(15, 'asd@asd.com',  'Sitcom Semanal: Vecinos del 4B',         'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Buenos Aires', true,  'Vestuario provisto por vestuarista de producción.',    'Casting publicado, sitcom semanal para plataforma digital.'),
+(16, 'asd@asd.com',  'Comercial de Lanzamiento: Nueva Era',    'sitemetadata.project_type.commercial',      'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Buenos Aires', true,  'Vestuario a coordinar con dirección de arte.',         'Casting publicado, comercial de lanzamiento de producto.'),
+(17, 'asd@asd.com',  'Largometraje Independiente: Umbral',     'sitemetadata.project_type.feature_film',    'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'unpaid', 'Buenos Aires', true,  'Vestuario de época provisto por vestuarista.',         'Casting publicado, largometraje independiente en preproducción.'),
+(18, 'asd@asd.com',  'Obra de Teatro: El Último Ensayo',       'sitemetadata.project_type.theatre_play',    'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'unpaid', 'Buenos Aires', false, NULL,                                                    'Casting publicado, temporada teatral con funciones los fines de semana.'),
+(19, 'asd@asd.com',  'Musical Independiente: Coro de Otoño',   'sitemetadata.project_type.musical',          'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'unpaid', 'Buenos Aires', true,  'Vestuario provisto por producción.',                   'Casting publicado, musical independiente con ensayos semanales.'),
+(20, 'asd@asd.com',  'Proyecto Estudiantil: Primer Corte',     'sitemetadata.project_type.student_project', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.published', 'unpaid', NULL,           false, NULL,                                                    'Casting publicado, proyecto estudiantil de cortometraje.'),
+(21, 'asd@asd.com',  'Radioteatro Filmado: Frecuencia Muda',   'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.autocasting', 'sitemetadata.casting_status.published', 'unpaid', NULL,           false, NULL,                                                    'Casting publicado, radioteatro filmado para redes sociales.'),
+(22, 'asd@asd.com',  'Reality Digital: Casa Compartida',       'sitemetadata.project_type.digital_content', 'sitemetadata.casting_modality.on_site',     'sitemetadata.casting_status.published', 'paid',   'Buenos Aires', true,  'Vestuario personal, sin requerimientos especiales.',   'Casting publicado, reality digital para plataforma streaming.');
 
 -- Castings
 INSERT INTO public.casting (
@@ -1001,11 +1032,11 @@ SELECT
   END,
   CASE
     WHEN c.payment_model = 'unpaid'
-      THEN CASE WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL ELSE 'Rol no remunerado con material final para reel.' END
-    ELSE CASE WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL ELSE 'Remuneración variable según rol y disponibilidad.' END
+      THEN CASE WHEN c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3 THEN NULL ELSE 'Rol no remunerado con material final para reel.' END
+    ELSE CASE WHEN c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3 THEN NULL ELSE 'Remuneración variable según rol y disponibilidad.' END
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3 THEN NULL
     ELSE 'Rol generado por seed para pruebas de filtros, cards y applicants.'
   END,
   CASE
@@ -1014,18 +1045,18 @@ SELECT
     ELSE NULL
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3 THEN NULL
     ELSE (r.role_pos % 3 = 0)
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3 THEN NULL
     ELSE (r.role_pos % 2 = 0)
   END,
   CASE
-    WHEN c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3 THEN NULL
+    WHEN c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3 THEN NULL
     ELSE (r.role_pos % 4 = 0)
   END,
-  NOT (c.casting_seq IN (2, 4, 6) AND r.role_pos >= 3),
+  NOT (c.casting_seq IN (2, 4, 6, 8) AND r.role_pos >= 3),
   ((abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':include_ethnicity')) % 100) < 60)
 FROM tmp_casting_seed c
 CROSS JOIN generate_series(1, 5) AS r(role_pos)
@@ -1036,7 +1067,24 @@ CROSS JOIN LATERAL (
     'Vera Cifuentes','Dante Roldán','Uma Ferrer','Elio Varela','Nora Ledesma',
     'Thiago Montal','Alma Quiroga','Renzo Soria','Mila Céspedes','Axel Verona',
     'Iris Calderón','Noam Lucero','Bianca Meza','Tomás Repetto','Ambar Duarte',
-    'Simón Achával','Delfina Roca','Nahuel Yrigoyen','Catalina Bustos','Lautaro Peralta'
+    'Simón Achával','Delfina Roca','Nahuel Yrigoyen','Catalina Bustos','Lautaro Peralta',
+    -- casting_seq 7-22 (asd@asd.com, 16 castings adicionales x 5 roles = 80 nombres)
+    'Julieta Fontán','Bautista Escudero','Rocío Amengual','Franco Villagra','Milagros Toledo',
+    'Emiliano Guzmán','Guadalupe Sosa','Agustín Paredes','Valentina Rojas','Ezequiel Bravo',
+    'Antonella Vega','Maximiliano Correa','Abril Zambrano','Joaquín Espinoza','Sofía Bermúdez',
+    'Benicio Cardozo','Martina Chávez','Facundo Olmedo','Josefina Guerrero','Santino Aráoz',
+    'Constanza Miño','Bautista Farías','Malena Ibáñez','Ramiro Suárez','Pilar Escalante',
+    'Ignacio Benítez','Camila Zabala','Genaro Villalba','Micaela Ontiveros','Máximo Cáceres',
+    'Emma Pereyra','Lorenzo Godoy','Zoe Andrade','Bruno Segovia','Alfonsina Portillo',
+    'Valentino Medina','Sara Colque','Federico Núñez','Trinidad Barrios','Baltasar Quiroz',
+    'Delfina Aguirre','Nicanor Bazán','Amanda Riquelme','Gastón Peña','Milena Choque',
+    'Cristóbal Funes','Yamila Orellana','Aarón Villafañe','Brisa Nieva','Wenceslao Toro',
+    'Fátima Robledo','Ulises Marín','Perla Sarmiento','Damián Escobedo','Aylén Quispe',
+    'Rodolfo Cabaña','Ludmila Gaitán','Bautista Reinoso','Yésica Torino','Elías Bordón',
+    'Antonia Yapura','Kevin Zurita','Naiara Del Valle','Ariel Pintos','Amelia Choque',
+    'Gonzalo Manzur','Priscila Núñez','Braian Herrero','Belén Contreras','Fermín Chamorro',
+    'Yasmín Aráuz','Cirilo Ovando','Anabel Rearte','Tobías Guanuco','Selena Balcarce',
+    'Wilson Cari','Milagro Espeche','Custodio Rea','Aldana Frías','Baltasar Ledesma'
   ] AS role_names
 ) rn;
 
@@ -1239,7 +1287,8 @@ ON CONFLICT (casting_role_id, skill_id) DO NOTHING;
 
 -- ------------------------------------------------------------
 -- 4) Aplicaciones talent -> roles de castings PUBLISHED (draft no recibe applicants)
---    objetivo: entre 3 y 15 applicants por role
+--    objetivo: entre 3 y 15 applicants por role (hasta 16 en los roles donde además aplica
+--    asd@asd.com como parte de sus 15 aplicaciones garantizadas, ver más abajo)
 -- ------------------------------------------------------------
 
 CREATE TEMP TABLE tmp_applicant_talents ON COMMIT DROP AS
@@ -1275,6 +1324,21 @@ FROM tmp_role_application_targets rt
 JOIN LATERAL generate_series(1, rt.target_count) gs(slot) ON true
 JOIN tmp_applicant_talents at
   ON at.rn = (((rt.rn * 17 + gs.slot * 11) % (SELECT COUNT(*) FROM tmp_applicant_talents)) + 1);
+
+-- asd@asd.com (dual-mode: talent + employer) aplica a exactamente 1 role por cada casting
+-- PUBLISHED distinto (15+ disponibles tras la expansión de asd@asd.com a 18 castings),
+-- garantizando 15 aplicaciones a 15 castings diferentes para pruebas de talent-side.
+INSERT INTO tmp_role_applicants (casting_role_id, talent_profile_id)
+SELECT r.casting_role_id, tp.id
+FROM (
+  SELECT DISTINCT ON (r.casting_seq) r.casting_seq, r.casting_role_id
+  FROM tmp_created_roles r
+  WHERE r.status_code = 'sitemetadata.casting_status.published'
+  ORDER BY r.casting_seq, r.role_pos
+  LIMIT 15
+) r
+JOIN public.users u ON u.email = 'asd@asd.com'
+JOIN public.talent_profile tp ON tp.user_id = u.id;
 
 -- Application message pool
 CREATE TEMP TABLE tmp_application_message_pool (
@@ -1376,20 +1440,20 @@ IF (
   SELECT COUNT(*)
   FROM public.casting c
   WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
-) <> 6 THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad de castings distinta de 6';
+) <> 22 THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de castings distinta de 22 (18 asd@asd.com + 2 asd10 + 2 asd20)';
 END IF;
 
 IF (SELECT COUNT(DISTINCT c.employer_profile_id) FROM public.casting c WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)) <> 3 THEN
-  RAISE EXCEPTION 'Seed inválido: los 6 castings no están distribuidos entre los 3 employers';
+  RAISE EXCEPTION 'Seed inválido: los 22 castings no están distribuidos entre los 3 employers';
 END IF;
 
 IF (
   SELECT COUNT(DISTINCT c.casting_status_option_id)
   FROM public.casting c
   WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
-) < 2 THEN
-  RAISE EXCEPTION 'Seed inválido: no hay variedad de casting_status (se esperaba draft + published)';
+) < 5 THEN
+  RAISE EXCEPTION 'Seed inválido: no están representados los 5 casting_status (draft/published/paused/closed/archived)';
 END IF;
 
 IF (
@@ -1397,8 +1461,8 @@ IF (
   FROM public.casting_role cr
   JOIN public.casting c ON c.id = cr.casting_id
   WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
-) <> 30 THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad de roles distinta de 30';
+) <> 110 THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de roles distinta de 110 (22 castings x 5 roles)';
 END IF;
 
 IF EXISTS (
@@ -1416,9 +1480,12 @@ IF EXISTS (
       )
     GROUP BY ca.casting_role_id
   ) per_role
-  WHERE per_role.applicant_count < 3 OR per_role.applicant_count > 15
+  -- Límite superior 16 (no 15): el primer role de cada casting published puede recibir 1
+  -- aplicación adicional garantizada de asd@asd.com (talent dual-mode) por encima del target
+  -- pseudo-aleatorio de 3..15 ya asignado.
+  WHERE per_role.applicant_count < 3 OR per_role.applicant_count > 16
 ) THEN
-  RAISE EXCEPTION 'Seed inválido: existe al menos un role de casting published fuera del rango de applicants (3..15)';
+  RAISE EXCEPTION 'Seed inválido: existe al menos un role de casting published fuera del rango de applicants (3..16)';
 END IF;
 
 IF (
@@ -1434,6 +1501,29 @@ IF (
   RAISE EXCEPTION 'Seed inválido: existen aplicaciones para roles de castings draft (no deberían tener applicants)';
 END IF;
 
+-- asd@asd.com (talent dual-mode): exactamente 15 aplicaciones, a 15 castings distintos.
+IF (
+  SELECT COUNT(*)
+  FROM public.casting_application ca
+  JOIN public.talent_profile tp ON tp.id = ca.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email = 'asd@asd.com'
+) <> 15 THEN
+  RAISE EXCEPTION 'Seed inválido: asd@asd.com (talent) no quedó con exactamente 15 aplicaciones';
+END IF;
+
+IF (
+  SELECT COUNT(DISTINCT c.id)
+  FROM public.casting_application ca
+  JOIN public.casting_role cr ON cr.id = ca.casting_role_id
+  JOIN public.casting c ON c.id = cr.casting_id
+  JOIN public.talent_profile tp ON tp.id = ca.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email = 'asd@asd.com'
+) <> 15 THEN
+  RAISE EXCEPTION 'Seed inválido: las 15 aplicaciones de asd@asd.com (talent) no corresponden a 15 castings distintos';
+END IF;
+
 IF (
   SELECT COUNT(*)
   FROM public.casting_application ca
@@ -1441,10 +1531,11 @@ IF (
   JOIN public.casting c ON c.id = cr.casting_id
   WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
 ) <> (
-  SELECT COALESCE(SUM(target_count), 0)
-  FROM tmp_role_application_targets
+  -- +15 por las aplicaciones garantizadas de asd@asd.com (talent dual-mode), que no forman
+  -- parte del target pseudo-aleatorio por role calculado en tmp_role_application_targets.
+  (SELECT COALESCE(SUM(target_count), 0) FROM tmp_role_application_targets) + 15
 ) THEN
-  RAISE EXCEPTION 'Seed inválido: cantidad total de aplicaciones no coincide con el target generado por role';
+  RAISE EXCEPTION 'Seed inválido: cantidad total de aplicaciones no coincide con el target generado por role + 15 de asd@asd.com';
 END IF;
 
 IF (

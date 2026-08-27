@@ -17,6 +17,9 @@ public final class ErrorMessageKeys {
     public static final String AUTH_GOOGLE_TOKEN_INVALID = "auth.google_token_invalid";
     public static final String AUTH_GOOGLE_EMAIL_EXISTS_DIFFERENT_PROVIDER = "auth.google_email_exists_different_provider";
     public static final String AUTH_GOOGLE_MOBILE_NOT_CONFIGURED = "auth.google_mobile_not_configured";
+    public static final String AUTH_REFRESH_TOKEN_INVALID = "auth.refresh_token_invalid";
+    public static final String AUTH_REFRESH_TOKEN_EXPIRED = "auth.refresh_token_expired";
+    public static final String AUTH_REFRESH_TOKEN_REVOKED = "auth.refresh_token_revoked";
 
     public static final String PROFILE_NOT_FOUND = "profile.not_found";
 

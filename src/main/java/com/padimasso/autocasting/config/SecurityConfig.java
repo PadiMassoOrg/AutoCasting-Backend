@@ -55,6 +55,7 @@ public class SecurityConfig {
     private final TalentProfileRepository talentProfileRepository;
     private final EmployerProfileRepository employerProfileRepository;
     private final LegalService legalService;
+    private final RefreshTokenService refreshTokenService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -74,6 +75,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, AppConstants.FORGOT_PASS_URL).permitAll()
                     .requestMatchers(HttpMethod.POST, AppConstants.RESET_PASS_URL).permitAll()
                     .requestMatchers(HttpMethod.POST, AppConstants.GOOGLE_MOBILE_LOGIN_API_URL).permitAll()
+                    .requestMatchers(HttpMethod.POST, AppConstants.REFRESH_API_URL).permitAll()
+                    .requestMatchers(HttpMethod.POST, AppConstants.LOGOUT_API_URL).permitAll()
                     // Public Content Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.SITE_METADATA_URL).permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.SITE_METADATA_VERSION_URL).permitAll()
@@ -169,7 +172,8 @@ public class SecurityConfig {
             talentProfileRepository,
             employerProfileRepository,
             legalService,
-            apiErrorFactory
+            apiErrorFactory,
+            refreshTokenService
         );
     }
 

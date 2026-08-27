@@ -14,6 +14,10 @@ public interface AuthService {
 
     AuthResponse loginOrRegisterWithGoogleMobile(GoogleMobileLoginRequest request);
 
+    AuthResponse refresh(RefreshTokenRequest request);
+
+    void logout(RefreshTokenRequest request);
+
     ForgotPasswordResponse sendResetPasswordEmail(ForgotPasswordRequest request);
 
     void resetPassword(ResetPasswordRequest request);

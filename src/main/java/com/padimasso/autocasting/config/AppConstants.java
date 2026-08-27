@@ -21,6 +21,8 @@ public class AppConstants {
     public static final String RESET_PASS_URL = BASE_API_URL + "/auth/reset-password";
     public static final String CHANGE_PASS_URL = BASE_API_URL + "/auth/change-password";
     public static final String GOOGLE_MOBILE_LOGIN_API_URL = BASE_API_URL + "/auth/google/mobile";
+    public static final String REFRESH_API_URL = BASE_API_URL + "/auth/refresh";
+    public static final String LOGOUT_API_URL = BASE_API_URL + "/auth/logout";
     // Site Metadata
     public static final String SITE_METADATA_URL = BASE_API_URL + "/sitemetadata";
     public static final String SITE_METADATA_VERSION_URL = SITE_METADATA_URL + "/version";
@@ -62,7 +64,8 @@ public class AppConstants {
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
-    public static final long EXPIRATION_TIME = 86400; // 10 days
+    public static final long EXPIRATION_TIME = 30; // TEMP: 30s for testing — revert to 900 (15 min) before committing
+    public static final long REFRESH_TOKEN_EXPIRATION_TIME = 2_592_000; // 30 days, in seconds
     public static final long RESET_PASSWORD_EXPIRATION_TIME = 900; // 15min
     public static final long RESET_PASSWORD_EXPIRATION_TIME_MIN = 15; // 15min
     // Company

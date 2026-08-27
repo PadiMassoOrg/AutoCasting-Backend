@@ -14,7 +14,9 @@ import com.padimasso.autocasting.exception.ApiException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -32,6 +34,7 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     private final EmployerProfileRepository employerProfileRepository;
     private final LegalService legalService;
     private final ApiErrorFactory apiErrorFactory;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth) throws IOException {
@@ -63,6 +66,18 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, talentProfileSlug, employerProfileSlug);
+        String rawRefreshToken = refreshTokenService.issue(user);
+
+        // Refresh token travels as an HttpOnly Secure cookie, scoped to the auth paths — never
+        // exposed to JS, unlike the access token below which is short-lived and safe as a query param.
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", rawRefreshToken)
+            .httpOnly(true)
+            .secure(true)
+            .sameSite("Lax")
+            .path(AppConstants.BASE_API_URL + "/auth")
+            .maxAge(AppConstants.REFRESH_TOKEN_EXPIRATION_TIME)
+            .build();
+        res.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         // Redirigir con el token como query param
         String redirectUrl = appProperties.getOauthSuccessUrl() + "?token=" + jwt;

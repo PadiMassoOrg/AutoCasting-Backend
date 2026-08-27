@@ -1,5 +1,4 @@
 package com.padimasso.autocasting.application.auth.dto.response;
 
-public record AuthResponse(String token) {
+public record AuthResponse(String token, String refreshToken) {
 }
-

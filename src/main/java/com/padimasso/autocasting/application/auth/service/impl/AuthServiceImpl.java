@@ -15,6 +15,7 @@ import com.padimasso.autocasting.application.auth.service.AuthService;
 import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.GoogleIdTokenVerifierService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
+import com.padimasso.autocasting.application.auth.service.RefreshTokenService;
 import com.padimasso.autocasting.application.auth.service.UserProvisioningService;
 import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
@@ -67,6 +68,7 @@ public class AuthServiceImpl implements AuthService {
     private final CharacteristicsRepository characteristicsRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
     private final EmailService emailService;
     private final AppProperties appProperties;
     private final MessageSource messageSource;
@@ -338,7 +340,8 @@ public class AuthServiceImpl implements AuthService {
         String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
 
         String jwt = jwtService.generateTokenWithCustomExpirationTime(user, AppConstants.EXPIRATION_TIME, publicSlug, employerProfileSlug);
-        return new AuthResponse(jwt);
+        String refreshToken = refreshTokenService.issue(user);
+        return new AuthResponse(jwt, refreshToken);
     }
 
     @Transactional
@@ -355,6 +358,34 @@ public class AuthServiceImpl implements AuthService {
         return MeResponse.from(user);
     }
 
+    @Override
+    @Transactional
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        RefreshTokenService.RotationResult rotation = refreshTokenService.rotate(request.refreshToken());
+        UserEntity user = rotation.user();
+        ensureNotSuspended(user);
+
+        var talentProfileOpt = talentProfileRepository.findByUserId(user.getId());
+        String talentProfileSlug = talentProfileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
+
+        var employerProfileOpt = employerProfileRepository.findByUserId(user.getId());
+        String employerProfileSlug = employerProfileOpt.map(EmployerProfileEntity::getPublicSlug).orElse(null);
+
+        String jwt = jwtService.generateTokenWithCustomExpirationTime(
+            user,
+            AppConstants.EXPIRATION_TIME,
+            talentProfileSlug,
+            employerProfileSlug
+        );
+
+        return new AuthResponse(jwt, rotation.newRefreshToken());
+    }
+
+    @Override
+    public void logout(RefreshTokenRequest request) {
+        refreshTokenService.revoke(request.refreshToken());
+    }
+
     private AuthResponse buildAuthResponse(UserEntity user) {
         var talentProfileOpt = talentProfileRepository.findByUserId(user.getId());
         String talentProfileSlug = talentProfileOpt.map(TalentProfileEntity::getPublicSlug).orElse(null);
@@ -369,7 +400,8 @@ public class AuthServiceImpl implements AuthService {
             employerProfileSlug
         );
 
-        return new AuthResponse(jwt);
+        String refreshToken = refreshTokenService.issue(user);
+        return new AuthResponse(jwt, refreshToken);
     }
 
     private static void ensureNotSuspended(UserEntity user) {

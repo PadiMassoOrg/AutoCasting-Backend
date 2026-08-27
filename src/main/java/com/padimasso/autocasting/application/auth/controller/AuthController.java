@@ -7,15 +7,20 @@ import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordRes
 import com.padimasso.autocasting.application.auth.dto.response.MeResponse;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.service.AuthService;
+import com.padimasso.autocasting.exception.ApiException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.AUTH_REFRESH_TOKEN_INVALID;
 
 @RestController
 @RequestMapping
@@ -61,6 +66,65 @@ public class AuthController {
     @PostMapping(GOOGLE_MOBILE_LOGIN_API_URL)
     public ResponseEntity<AuthResponse> googleMobileLogin(@Valid @RequestBody GoogleMobileLoginRequest request) {
         return ResponseEntity.ok(authService.loginOrRegisterWithGoogleMobile(request));
+    }
+
+    @Operation(
+        summary = "Refresh access token",
+        description = "Exchanges a valid, non-expired, non-revoked refresh token for a new access token and a rotated " +
+            "refresh token. The token may be supplied in the request body (mobile/password-login web clients) or via " +
+            "the 'refreshToken' HttpOnly cookie (web Google OAuth2 sessions, where the token is never exposed to JS)."
+    )
+    @PostMapping(REFRESH_API_URL)
+    public ResponseEntity<AuthResponse> refresh(
+        @RequestBody(required = false) RefreshTokenRequest request,
+        @CookieValue(name = "refreshToken", required = false) String refreshTokenCookie,
+        HttpServletResponse response
+    ) {
+        boolean cameFromCookie = request == null || request.refreshToken() == null || request.refreshToken().isBlank();
+        String refreshToken = resolveRefreshToken(request, refreshTokenCookie);
+        AuthResponse authResponse = authService.refresh(new RefreshTokenRequest(refreshToken));
+
+        // If this session's refresh token arrived via the HttpOnly cookie (the web Google
+        // OAuth2 flow), the rotated token must be re-delivered the same way — otherwise the
+        // next refresh would have nothing to fall back to (the old cookie's token was just
+        // revoked by rotation), and returning it only in the JSON body would downgrade this
+        // session to a JS-readable cookie, defeating the point of HttpOnly delivery.
+        if (cameFromCookie) {
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResponse.refreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Lax")
+                .path(BASE_API_URL + "/auth")
+                .maxAge(REFRESH_TOKEN_EXPIRATION_TIME)
+                .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        }
+
+        return ResponseEntity.ok(authResponse);
+    }
+
+    @Operation(
+        summary = "Logout",
+        description = "Revokes the given refresh token (body or cookie, same resolution as refresh). Always succeeds " +
+            "from the caller's perspective."
+    )
+    @PostMapping(LOGOUT_API_URL)
+    public ResponseEntity<Void> logout(
+        @RequestBody(required = false) RefreshTokenRequest request,
+        @CookieValue(name = "refreshToken", required = false) String refreshTokenCookie
+    ) {
+        String refreshToken = resolveRefreshToken(request, refreshTokenCookie);
+        authService.logout(new RefreshTokenRequest(refreshToken));
+        return ResponseEntity.ok().build();
+    }
+
+    private String resolveRefreshToken(RefreshTokenRequest request, String refreshTokenCookie) {
+        String fromBody = request != null ? request.refreshToken() : null;
+        String resolved = (fromBody != null && !fromBody.isBlank()) ? fromBody : refreshTokenCookie;
+        if (resolved == null || resolved.isBlank()) {
+            throw ApiException.unauthorized(AUTH_REFRESH_TOKEN_INVALID);
+        }
+        return resolved;
     }
 
     @Operation(
