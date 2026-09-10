@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-10
+
+- Versión: `1.2.0`
+- Auth: refresh-token support (`RefreshTokenEntity`, `V50__add_refresh_tokens`), rotation, `/auth/refresh` and `/auth/logout` (body or HttpOnly cookie), single access-token renewal path for web + mobile.
+- Auth: native Google Sign-In for mobile (`/auth/google/mobile`, `GoogleIdTokenVerifierService`), `users.google_id` (`V48`), `GOOGLE` account provider.
+- Legal: Terms & Privacy release 3.6.0 published via `V49` — adds explicit mobile-app coverage (secure device storage, app sessions). Terms versioning stores DB entry with email.
+- Infra: Dockerfile + `.dockerignore` for Render deployment.
+- Seeder: reworked demo seed (`SEED_DEMO_30_USERS_3_EMPLOYERS.sql`).
+
 ## 2026-07-02
 
 - Versión: `1.0.4`
