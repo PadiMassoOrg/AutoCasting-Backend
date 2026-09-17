@@ -2,6 +2,12 @@
 
 ## 2026-09-17
 
+- Versión: `1.2.5`
+- UI: el email de reset de contraseña se alinea visualmente con el nuevo email de bienvenida de talento (logo más grande, mismo padding de header, footer con ícono de Instagram + links en vez del bloque de soporte técnico).
+- Cleanup: se elimina la variable de contexto `supportEmail` y las keys `mail.footer.support`/`mail.footer.address`, ya sin uso tras el cambio de footer.
+
+## 2026-09-17
+
 - Versión: `1.2.4`
 - Talent: email de bienvenida automático al confirmar el último paso del onboarding (solo TALENT). El template varía según visibilidad en catálogo: perfil completo -> link al perfil público; perfil incompleto (sin fotos) -> invitación a completar el perfil, sin exponer un link público con imágenes placeholder.
 - Admin: nueva acción masiva "Enviar email de bienvenida" en el listado de usuarios (selección múltiple + endpoint `POST /admin/users/bulk/welcome-email`).
