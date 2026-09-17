@@ -33,6 +33,7 @@ public final class ErrorMessageKeys {
     public static final String GENERAL_RESOURCE_NOT_FOUND = "general.resource_not_found";
     public static final String GENERAL_SLUG_REQUIRED = "general.slug_required";
     public static final String GENERAL_ROLE_ID_REQUIRED = "general.role_id_required";
+    public static final String GENERAL_IDS_REQUIRED = "general.ids_required";
     public static final String GENERAL_UNEXPECTED = "general.unexpected";
     public static final String ADMIN_USER_UPDATE_NO_CHANGES = "users.detail.edit.no_changes";
 

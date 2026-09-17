@@ -1,5 +1,7 @@
 package com.padimasso.autocasting.application.admin.controller;
 
+import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
@@ -17,6 +19,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +30,7 @@ import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_EMPLOYER_
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_SUSPENSION_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_TALENT_PROFILE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL;
 
 @RestController
 @RequiredArgsConstructor
@@ -112,5 +116,17 @@ public class AdminUserController {
         @Parameter(description = "User ID.") @PathVariable UUID userId
     ) {
         return adminUserService.getEmployerProfileForAdmin(userId);
+    }
+
+    @Operation(
+        summary = "Bulk send talent onboarding welcome email",
+        description = "Sends the onboarding welcome email to each selected talent's user account.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL)
+    public AdminBulkTalentWelcomeEmailResultResponse sendBulkTalentWelcomeEmail(
+        @Valid @RequestBody AdminBulkTalentWelcomeEmailRequest request
+    ) {
+        return adminUserService.sendBulkTalentWelcomeEmail(request);
     }
 }
