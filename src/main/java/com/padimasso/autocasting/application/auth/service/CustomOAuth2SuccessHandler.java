@@ -70,10 +70,14 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
         // Refresh token travels as an HttpOnly Secure cookie, scoped to the auth paths — never
         // exposed to JS, unlike the access token below which is short-lived and safe as a query param.
+        // sameSite=None (not Lax): the frontend and API are on different registrable domains, so the
+        // subsequent refresh call is a cross-site XHR — Lax only rides along on top-level navigations
+        // (like this OAuth redirect itself), never on background fetch/XHR, so the cookie would be set
+        // here but silently withheld on every later POST /auth/refresh, making refresh always fail.
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", rawRefreshToken)
             .httpOnly(true)
             .secure(true)
-            .sameSite("Lax")
+            .sameSite("None")
             .path(AppConstants.BASE_API_URL + "/auth")
             .maxAge(AppConstants.REFRESH_TOKEN_EXPIRATION_TIME)
             .build();

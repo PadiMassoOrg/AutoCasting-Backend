@@ -64,7 +64,7 @@ public class AppConstants {
     // Security
     public static final String ISSUER = "Auto-Casting";
     public static final String SECRET = "jxgEQeXHuPq8VdbyYFNkANdudQ53YUn4";
-    public static final long EXPIRATION_TIME = 30; // TEMP: 30s for testing — revert to 900 (15 min) before committing
+    public static final long EXPIRATION_TIME = 900; // 900 = 15min
     public static final long REFRESH_TOKEN_EXPIRATION_TIME = 2_592_000; // 30 days, in seconds
     public static final long RESET_PASSWORD_EXPIRATION_TIME = 900; // 15min
     public static final long RESET_PASSWORD_EXPIRATION_TIME_MIN = 15; // 15min
