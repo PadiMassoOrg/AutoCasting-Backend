@@ -76,7 +76,7 @@ public interface TalentProfileRepository extends SoftDeleteRepository<TalentProf
         """)
     Optional<TalentProfileEntity> findTalentProfileForAdminByUserId(@Param("userId") UUID userId);
 
-    @EntityGraph(attributePaths = {"user", "basicInfo"})
+    @EntityGraph(attributePaths = {"user", "basicInfo", "media", "plan"})
     @Query("""
         select distinct t
         from TalentProfileEntity t
