@@ -18,6 +18,7 @@ import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
+import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final HistoryService historyService;
 
     @Override
-    public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q) {
+    public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
@@ -55,7 +56,13 @@ public class AdminUserServiceImpl implements AdminUserService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        var result = userRepository.findAllIncludingDeleted(AdminUserSpecs.fromSearchText(q), pageable);
+        var spec = AdminUserSpecs.fromSearchText(q);
+        if (notVisibleInCatalog) {
+            var notVisibleSpec = AdminUserSpecs.notVisibleInTalentCatalog();
+            spec = spec == null ? notVisibleSpec : spec.and(notVisibleSpec);
+        }
+
+        var result = userRepository.findAllIncludingDeleted(spec, pageable);
 
         List<UserEntity> users = result.getContent();
         List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
@@ -71,11 +78,20 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         Map<UUID, String> talentStageNames = new HashMap<>();
+        // A talent profile always has a slug (generated on creation) regardless of catalog
+        // visibility. Only entered into this map — and thus only returned to the admin row —
+        // when isVisibleInTalentCatalog is true, so the response's null/non-null here reflects
+        // catalog visibility, not slug existence.
+        Map<UUID, String> talentPublicSlugs = new HashMap<>();
         if (!userIds.isEmpty()) {
             talentProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
+                var userId = profile.getUser().getId();
                 var basicInfo = profile.getBasicInfo();
                 if (basicInfo != null && basicInfo.getStageName() != null) {
-                    talentStageNames.put(profile.getUser().getId(), basicInfo.getStageName());
+                    talentStageNames.put(userId, basicInfo.getStageName());
+                }
+                if (isVisibleInTalentCatalog(profile)) {
+                    talentPublicSlugs.put(userId, profile.getPublicSlug());
                 }
             });
         }
@@ -84,11 +100,33 @@ public class AdminUserServiceImpl implements AdminUserService {
             .map(user -> adminUserMapper.toRowResponse(
                 user,
                 employerCompanyNames.get(user.getId()),
-                talentStageNames.get(user.getId())
+                talentStageNames.get(user.getId()),
+                talentPublicSlugs.get(user.getId())
             ))
             .toList();
 
         return adminUserMapper.toPageResponse(items, result);
+    }
+
+    // Mirrors TalentProfileSpecs.fromFilter / hasRequiredMedia — the actual predicate the
+    // public talent catalog query applies — so admins see the same visibility the catalog uses.
+    // Kept in sync with AdminUserSpecs.notVisibleInTalentCatalog(), its SQL-level equivalent used
+    // to filter the users list — update both together.
+    private boolean isVisibleInTalentCatalog(TalentProfileEntity profile) {
+        if (profile.isDeleted() || profile.getUser().isSuspended()) {
+            return false;
+        }
+
+        var media = profile.getMedia();
+        if (media == null) {
+            return false;
+        }
+
+        return isNotBlank(media.getHeadshotImageUrl()) && isNotBlank(media.getFullBodyImageUrl());
+    }
+
+    private boolean isNotBlank(String value) {
+        return value != null && !value.isBlank();
     }
 
     @Override

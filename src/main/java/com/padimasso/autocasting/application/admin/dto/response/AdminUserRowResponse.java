@@ -18,6 +18,7 @@ public record AdminUserRowResponse(
     UserMode activeMode,
     OnboardingStatus talentOnboardingStatus,
     OnboardingStatus employerOnboardingStatus,
+    String talentPublicSlug,
     boolean suspended,
     boolean deleted,
     LocalDateTime createdAt,

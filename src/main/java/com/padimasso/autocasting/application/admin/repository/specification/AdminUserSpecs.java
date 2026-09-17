@@ -62,6 +62,35 @@ public final class AdminUserSpecs {
         };
     }
 
+    // Mirrors AdminUserServiceImpl.isVisibleInTalentCatalog / TalentProfileSpecs.hasRequiredMedia —
+    // the same predicate the public talent catalog query applies. Only matches users who actually
+    // have a talent profile; a profile is "not visible" if it's deleted, the user is suspended, or
+    // it's missing the headshot/full-body photos required for catalog visibility (the common case).
+    public static Specification<UserEntity> notVisibleInTalentCatalog() {
+        return (root, query, cb) -> {
+            var talentExists = query.subquery(Integer.class);
+            var talent = talentExists.from(TalentProfileEntity.class);
+            talentExists.select(cb.literal(1));
+            talentExists.where(cb.equal(talent.get("user"), root));
+
+            var visible = query.subquery(Integer.class);
+            var visibleTalent = visible.from(TalentProfileEntity.class);
+            var media = visibleTalent.join("media", JoinType.LEFT);
+            visible.select(cb.literal(1));
+            visible.where(
+                cb.equal(visibleTalent.get("user"), root),
+                cb.isFalse(visibleTalent.get("deleted")),
+                cb.isFalse(root.get("suspended")),
+                cb.isNotNull(media.get("headshotImageUrl")),
+                cb.notEqual(cb.trim(media.get("headshotImageUrl")), ""),
+                cb.isNotNull(media.get("fullBodyImageUrl")),
+                cb.notEqual(cb.trim(media.get("fullBodyImageUrl")), "")
+            );
+
+            return cb.and(cb.exists(talentExists), cb.not(cb.exists(visible)));
+        };
+    }
+
     private static Specification<UserEntity> or(Specification<UserEntity> base, Specification<UserEntity> next) {
         if (next == null) return base;
         return base == null ? next : base.or(next);

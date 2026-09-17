@@ -17,7 +17,8 @@ public class AdminUserMapper {
     public AdminUserRowResponse toRowResponse(
         UserEntity user,
         String employerCompanyName,
-        String talentStageName
+        String talentStageName,
+        String talentPublicSlug
     ) {
         return new AdminUserRowResponse(
             user.getId(),
@@ -29,6 +30,7 @@ public class AdminUserMapper {
             user.getActiveMode(),
             user.getTalentOnboardingStatus(),
             user.getEmployerOnboardingStatus(),
+            talentPublicSlug,
             user.isSuspended(),
             user.isDeleted(),
             user.getCreatedAt(),
