@@ -228,7 +228,6 @@ public class AuthServiceImpl implements AuthService {
         ctx.setVariable("linkedinPngUrl", assetsBase + "/linkedin_icon.png");
         ctx.setVariable("resetUrl", resetUrl);
         ctx.setVariable("minutes", AppConstants.RESET_PASSWORD_EXPIRATION_TIME_MIN);
-        ctx.setVariable("supportEmail", AppConstants.SUPPORT_EMAIL);
 
         String htmlBody = templateEngine.process("email/reset_password_email", ctx);
         String subject = messageSource.getMessage("mail.reset.subject", null, locale);

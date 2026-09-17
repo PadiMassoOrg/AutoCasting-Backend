@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import static com.padimasso.autocasting.config.AppConstants.SUPPORT_EMAIL;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,7 +51,6 @@ public class TalentWelcomeEmailServiceImpl implements TalentWelcomeEmailService 
             ctx.setVariable("instagramPngUrl", assetsBase + "/insta_icon.png");
             ctx.setVariable("linkedinPngUrl", assetsBase + "/linkedin_icon.png");
             ctx.setVariable("talentName", talentName);
-            ctx.setVariable("supportEmail", SUPPORT_EMAIL);
 
             String subject;
             String templateName;
