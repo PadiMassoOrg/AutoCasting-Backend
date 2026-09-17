@@ -90,10 +90,14 @@ public class AuthController {
         // revoked by rotation), and returning it only in the JSON body would downgrade this
         // session to a JS-readable cookie, defeating the point of HttpOnly delivery.
         if (cameFromCookie) {
+            // sameSite=None: frontend and API are on different registrable domains, so this
+            // cookie is only ever sent back on a cross-site XHR/fetch (this same refresh call) —
+            // Lax withholds cookies on cross-site background requests, only allowing them on
+            // top-level navigation, which would make every refresh after the first one fail.
             ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResponse.refreshToken())
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path(BASE_API_URL + "/auth")
                 .maxAge(REFRESH_TOKEN_EXPIRATION_TIME)
                 .build();
