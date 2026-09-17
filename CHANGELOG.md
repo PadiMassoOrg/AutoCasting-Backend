@@ -2,6 +2,12 @@
 
 ## 2026-09-17
 
+- Versión: `1.2.3`
+- Admin: nuevo filtro "no visible en catálogo" en el listado de usuarios (`GET /admin/users?notVisibleInCatalog=true`) — detecta talentos ocultos del catálogo público por falta de fotos, suspensión o borrado.
+- Tests: `CastingStatusTransitionPolicyTest` cubriendo las transiciones de estado de castings.
+
+## 2026-09-17
+
 - Versión: `1.2.2`
 - Hotfix: `Procfile` apuntaba a `autocasting-1.2.0.jar` hardcodeado; tras el bump de versión a `1.2.1` el jar generado no coincidía y el dyno crasheaba en boot (H10) en cada deploy. Cambiado a `build/libs/*.jar` para no depender de la versión.
 
