@@ -26,6 +26,7 @@ import com.padimasso.autocasting.application.plan.model.PlanEntity;
 import com.padimasso.autocasting.application.plan.repository.PlanRepository;
 import com.padimasso.autocasting.application.talent.model.*;
 import com.padimasso.autocasting.application.talent.repository.*;
+import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.config.AppConstants;
 import com.padimasso.autocasting.config.AppProperties;
 import com.padimasso.autocasting.exception.ApiException;
@@ -76,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
     private final GoogleIdTokenVerifierService googleIdTokenVerifierService;
     private final UserProvisioningService userProvisioningService;
     private final LegalService legalService;
+    private final TalentWelcomeEmailService talentWelcomeEmailService;
 
     /**
      * Normaliza un usuario "legacy" o recién creado:
@@ -349,11 +351,21 @@ public class AuthServiceImpl implements AuthService {
     public MeResponse updateOnboarding(UserOnboardingRequest request) {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
+        OnboardingStatus previousTalentOnboardingStatus = user.getTalentOnboardingStatus();
+
         user.setActiveMode(request.activeMode());
         user.setTalentOnboardingStatus(request.talentOnboardingStatus());
         user.setEmployerOnboardingStatus(request.employerOnboardingStatus());
 
         userRepository.save(user);
+
+        boolean talentOnboardingJustCompleted = previousTalentOnboardingStatus != OnboardingStatus.COMPLETED
+            && user.getTalentOnboardingStatus() == OnboardingStatus.COMPLETED;
+
+        if (talentOnboardingJustCompleted) {
+            talentProfileRepository.findByUserId(user.getId())
+                .ifPresent(talentWelcomeEmailService::sendWelcomeEmail);
+        }
 
         return MeResponse.from(user);
     }

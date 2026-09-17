@@ -1,7 +1,9 @@
 package com.padimasso.autocasting.application.admin.service.impl;
 
+import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
+import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
@@ -20,6 +22,8 @@ import com.padimasso.autocasting.application.talent.dto.response.PublicProfileRe
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
+import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
+import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility;
 import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +35,8 @@ import java.util.*;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.ADMIN_USER_UPDATE_NO_CHANGES;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_IDS_REQUIRED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_UNEXPECTED;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
@@ -44,6 +50,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final EmployerProfileMapper employerProfileMapper;
     private final AdminUserMapper adminUserMapper;
     private final HistoryService historyService;
+    private final TalentWelcomeEmailService talentWelcomeEmailService;
 
     @Override
     public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog) {
@@ -90,7 +97,7 @@ public class AdminUserServiceImpl implements AdminUserService {
                 if (basicInfo != null && basicInfo.getStageName() != null) {
                     talentStageNames.put(userId, basicInfo.getStageName());
                 }
-                if (isVisibleInTalentCatalog(profile)) {
+                if (TalentCatalogVisibility.isVisibleInCatalog(profile)) {
                     talentPublicSlugs.put(userId, profile.getPublicSlug());
                 }
             });
@@ -106,27 +113,6 @@ public class AdminUserServiceImpl implements AdminUserService {
             .toList();
 
         return adminUserMapper.toPageResponse(items, result);
-    }
-
-    // Mirrors TalentProfileSpecs.fromFilter / hasRequiredMedia — the actual predicate the
-    // public talent catalog query applies — so admins see the same visibility the catalog uses.
-    // Kept in sync with AdminUserSpecs.notVisibleInTalentCatalog(), its SQL-level equivalent used
-    // to filter the users list — update both together.
-    private boolean isVisibleInTalentCatalog(TalentProfileEntity profile) {
-        if (profile.isDeleted() || profile.getUser().isSuspended()) {
-            return false;
-        }
-
-        var media = profile.getMedia();
-        if (media == null) {
-            return false;
-        }
-
-        return isNotBlank(media.getHeadshotImageUrl()) && isNotBlank(media.getFullBodyImageUrl());
-    }
-
-    private boolean isNotBlank(String value) {
-        return value != null && !value.isBlank();
     }
 
     @Override
@@ -211,5 +197,41 @@ public class AdminUserServiceImpl implements AdminUserService {
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
         return employerProfileMapper.toProfileResponse(profile, profile.getUser());
+    }
+
+    @Override
+    public AdminBulkTalentWelcomeEmailResultResponse sendBulkTalentWelcomeEmail(AdminBulkTalentWelcomeEmailRequest request) {
+        List<UUID> uniqueUserIds = request.userIds().stream()
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (uniqueUserIds.isEmpty()) {
+            throw ApiException.badRequest(GENERAL_IDS_REQUIRED);
+        }
+
+        List<TalentProfileEntity> profiles = talentProfileRepository.findAllByUserIdInForAdmin(uniqueUserIds);
+        Map<UUID, TalentProfileEntity> profilesByUserId = new HashMap<>();
+        profiles.forEach(profile -> profilesByUserId.put(profile.getUser().getId(), profile));
+
+        int sentCount = 0;
+        List<AdminBulkTalentWelcomeEmailResultResponse.Failure> failures = new ArrayList<>();
+
+        for (UUID userId : uniqueUserIds) {
+            TalentProfileEntity profile = profilesByUserId.get(userId);
+            if (profile == null) {
+                failures.add(new AdminBulkTalentWelcomeEmailResultResponse.Failure(userId, PROFILE_NOT_FOUND));
+                continue;
+            }
+
+            boolean sent = talentWelcomeEmailService.sendWelcomeEmail(profile);
+            if (sent) {
+                sentCount++;
+            } else {
+                failures.add(new AdminBulkTalentWelcomeEmailResultResponse.Failure(userId, GENERAL_UNEXPECTED));
+            }
+        }
+
+        return new AdminBulkTalentWelcomeEmailResultResponse(sentCount, failures.size(), failures);
     }
 }

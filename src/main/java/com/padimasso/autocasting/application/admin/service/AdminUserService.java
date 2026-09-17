@@ -3,6 +3,8 @@ package com.padimasso.autocasting.application.admin.service;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
@@ -22,4 +24,6 @@ public interface AdminUserService {
     PublicProfileResponse getTalentProfileForAdmin(UUID userId);
 
     EmployerProfileResponse getEmployerProfileForAdmin(UUID userId);
+
+    AdminBulkTalentWelcomeEmailResultResponse sendBulkTalentWelcomeEmail(AdminBulkTalentWelcomeEmailRequest request);
 }
