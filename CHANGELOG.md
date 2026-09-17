@@ -2,6 +2,14 @@
 
 ## 2026-09-17
 
+- Versión: `1.2.4`
+- Talent: email de bienvenida automático al confirmar el último paso del onboarding (solo TALENT). El template varía según visibilidad en catálogo: perfil completo -> link al perfil público; perfil incompleto (sin fotos) -> invitación a completar el perfil, sin exponer un link público con imágenes placeholder.
+- Admin: nueva acción masiva "Enviar email de bienvenida" en el listado de usuarios (selección múltiple + endpoint `POST /admin/users/bulk/welcome-email`).
+- Fix: el remitente de los emails mostraba "info" en vez de "autocasting" como nombre visible.
+- Scripts: nuevo `manual-scripts/HARD_DELETE_USER_BY_EMAIL.sql` (dev-only) para borrar un usuario y todo lo asociado por email, para testeo manual repetido.
+
+## 2026-09-17
+
 - Versión: `1.2.3`
 - Admin: nuevo filtro "no visible en catálogo" en el listado de usuarios (`GET /admin/users?notVisibleInCatalog=true`) — detecta talentos ocultos del catálogo público por falta de fotos, suspensión o borrado.
 - Tests: `CastingStatusTransitionPolicyTest` cubriendo las transiciones de estado de castings.
