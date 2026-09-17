@@ -11,7 +11,7 @@ import com.padimasso.autocasting.application.talent.dto.response.PublicProfileRe
 import java.util.UUID;
 
 public interface AdminUserService {
-    PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q);
+    PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog);
 
     AdminUserDetailResponse getUserDetail(UUID userId);
 

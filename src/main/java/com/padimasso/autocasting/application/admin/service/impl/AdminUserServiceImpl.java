@@ -46,7 +46,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final HistoryService historyService;
 
     @Override
-    public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q) {
+    public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
@@ -56,7 +56,13 @@ public class AdminUserServiceImpl implements AdminUserService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        var result = userRepository.findAllIncludingDeleted(AdminUserSpecs.fromSearchText(q), pageable);
+        var spec = AdminUserSpecs.fromSearchText(q);
+        if (notVisibleInCatalog) {
+            var notVisibleSpec = AdminUserSpecs.notVisibleInTalentCatalog();
+            spec = spec == null ? notVisibleSpec : spec.and(notVisibleSpec);
+        }
+
+        var result = userRepository.findAllIncludingDeleted(spec, pageable);
 
         List<UserEntity> users = result.getContent();
         List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
@@ -103,8 +109,9 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     // Mirrors TalentProfileSpecs.fromFilter / hasRequiredMedia — the actual predicate the
-    // public talent catalog query applies — so admins see the same visibility the catalog uses,
-    // not a proxy like onboarding status (which the catalog query doesn't check at all).
+    // public talent catalog query applies — so admins see the same visibility the catalog uses.
+    // Kept in sync with AdminUserSpecs.notVisibleInTalentCatalog(), its SQL-level equivalent used
+    // to filter the users list — update both together.
     private boolean isVisibleInTalentCatalog(TalentProfileEntity profile) {
         if (profile.isDeleted() || profile.getUser().isSuspended()) {
             return false;
