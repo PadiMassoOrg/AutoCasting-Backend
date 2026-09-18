@@ -45,6 +45,7 @@ public class MediaEntity  extends AuditableEntity {
     )
     @OrderColumn(name = "idx")
     @Column(name = "url")
+    @Builder.Default
     private List<String> otherPicturesUrl = new ArrayList<>();
 }
 

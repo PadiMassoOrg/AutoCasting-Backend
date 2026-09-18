@@ -48,6 +48,7 @@ public class TalentProfileEntity extends AuditableEntity {
         cascade = CascadeType.ALL,
         orphanRemoval = true
     )
+    @Builder.Default
     private java.util.Set<ProfileSocialMediaLinkEntity> socialMediaLinks = new java.util.HashSet<>();
 
     @OneToOne(mappedBy = "talentProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -64,6 +65,7 @@ public class TalentProfileEntity extends AuditableEntity {
         uniqueConstraints = @UniqueConstraint(columnNames = {"talent_profile_id", "skill_id"})
     )
     @SQLRestriction("deleted = false")
+    @Builder.Default
     private Set<SkillEntity> skills = new HashSet<>();
 
     @OneToMany(
@@ -73,6 +75,7 @@ public class TalentProfileEntity extends AuditableEntity {
         fetch = FetchType.LAZY
     )
     @SQLRestriction("deleted = false")
+    @Builder.Default
     private Set<CreditEntity> credits = new HashSet<>();
 
     @OneToMany(
@@ -82,6 +85,7 @@ public class TalentProfileEntity extends AuditableEntity {
         fetch = FetchType.LAZY
     )
     @SQLRestriction("deleted = false")
+    @Builder.Default
     private Set<EducationEntity> education = new HashSet<>();
 
     @ManyToOne
