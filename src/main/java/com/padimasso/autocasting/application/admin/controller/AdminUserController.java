@@ -1,6 +1,8 @@
 package com.padimasso.autocasting.application.admin.controller;
 
 import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,6 +31,7 @@ import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_EMPLOYER_PROFILE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_SUSPENSION_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_TALENT_MEDIA_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_TALENT_PROFILE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL;
@@ -104,6 +108,22 @@ public class AdminUserController {
         @Parameter(description = "User ID.") @PathVariable UUID userId
     ) {
         return adminUserService.getTalentProfileForAdmin(userId);
+    }
+
+    @Operation(
+        summary = "Remove a talent's media item",
+        description = "Clears a single media slot (headshot, full body, or an other-picture index) from a talent's profile for administrative moderation, without suspending the account.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @DeleteMapping(ADMIN_USER_TALENT_MEDIA_API_URL)
+    public void removeTalentMedia(
+        @Parameter(description = "User ID.") @PathVariable UUID userId,
+        @Parameter(description = "Media slot to clear.") @PathVariable AdminTalentMediaSlot slot,
+        @Parameter(description = "Index into the other-pictures list. Required only when slot is OTHER_PICTURE.")
+        @RequestParam(required = false) Integer index,
+        @Valid @RequestBody AdminRemoveTalentMediaRequest request
+    ) {
+        adminUserService.removeTalentMedia(userId, slot, index, request);
     }
 
     @Operation(
