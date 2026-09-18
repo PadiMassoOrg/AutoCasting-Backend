@@ -17,7 +17,7 @@ public final class AdminUserSpecs {
         String q = safeTrim(raw);
         if (q == null) return null;
 
-        Specification<UserEntity> spec = Specification.where(emailContains(q));
+        Specification<UserEntity> spec = emailContains(q);
         spec = or(spec, employerCompanyNameContains(q));
         spec = or(spec, talentStageNameContains(q));
         return spec;
