@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-18
+
+- Versión: `1.3.0`
+- CI: nuevo workflow de GitHub Actions (build + test contra Postgres) en push/PR a `main`, `develop` y `release/**`.
+- Tests: nuevas suites de tests unitarios (JUnit 5 + Mockito) cubriendo validación de Casting/Casting Role, el resumen de checkout de castings del employer, el onboarding y creación de perfil de employer, y las transiciones de estado no restringidas de postulantes en el flujo de revisión del employer.
+- Scripts: `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` ahora siembra 6 registros de educación y 6 de créditos por talento demo, para poder testear manualmente el scroll de esos paneles en el perfil público.
+
 ## 2026-09-17
 
 - Versión: `1.2.5`
