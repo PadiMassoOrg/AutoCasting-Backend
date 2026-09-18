@@ -45,6 +45,7 @@ public class BasicInfoEntity extends AuditableEntity {
         uniqueConstraints = @UniqueConstraint(columnNames = {"talent_basic_info_id", "profession_id"})
     )
     @SQLRestriction("deleted = false")
+    @Builder.Default
     Set<ProfessionEntity> professions = new HashSet<>();
 
     @OneToOne

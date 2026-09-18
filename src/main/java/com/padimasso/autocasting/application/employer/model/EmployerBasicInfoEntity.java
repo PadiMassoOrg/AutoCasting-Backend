@@ -55,6 +55,7 @@ public class EmployerBasicInfoEntity extends AuditableEntity {
         cascade = CascadeType.ALL,
         orphanRemoval = true
     )
+    @Builder.Default
     private Set<ProfileSocialMediaLinkEntity> socialMediaLinks = new HashSet<>();
 
     @OneToOne

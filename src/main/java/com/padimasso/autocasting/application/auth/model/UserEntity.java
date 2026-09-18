@@ -52,13 +52,16 @@ public class UserEntity extends AuditableEntity implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "talent_onboarding_status", nullable = false)
+    @Builder.Default
     private OnboardingStatus talentOnboardingStatus = OnboardingStatus.NOT_STARTED;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "employer_onboarding_status", nullable = false)
+    @Builder.Default
     private OnboardingStatus employerOnboardingStatus = OnboardingStatus.NOT_STARTED;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean suspended = false;
 
     @Override
