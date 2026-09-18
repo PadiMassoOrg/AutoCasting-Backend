@@ -24,6 +24,7 @@ public class AppProperties {
         private String legalBucket = "legal-documents-private";
         private String legalPrefix = "legal/documents";
         private int legalPdfSignedUrlTtlSeconds = 900;
+        private String mediaBucket;
     }
 
     @Getter

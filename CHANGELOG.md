@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-19
+
+- Versión: `1.3.1`
+- Admin: nuevo endpoint `DELETE /admin/users/{userId}/profiles/talent/media/{slot}` para quitar una foto puntual (headshot, foto de cuerpo completo, u otra foto por índice) del perfil de un talento sin suspender la cuenta. Motivo obligatorio, auditado en el historial (`TALENT_PROFILE`).
+- Storage: el borrado también elimina el archivo en Supabase Storage usando el service-role key server-side (nunca expuesto a un cliente). Requiere la variable de entorno `SUPABASE_MEDIA_BUCKET` además de `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`, ya configuradas.
+
 ## 2026-09-18
 
 - Versión: `1.3.0`

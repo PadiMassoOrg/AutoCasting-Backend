@@ -4,6 +4,8 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailR
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
@@ -22,6 +24,8 @@ public interface AdminUserService {
     void updateSuspension(UUID userId, AdminUserSuspensionRequest request);
 
     PublicProfileResponse getTalentProfileForAdmin(UUID userId);
+
+    void removeTalentMedia(UUID userId, AdminTalentMediaSlot slot, Integer index, AdminRemoveTalentMediaRequest request);
 
     EmployerProfileResponse getEmployerProfileForAdmin(UUID userId);
 

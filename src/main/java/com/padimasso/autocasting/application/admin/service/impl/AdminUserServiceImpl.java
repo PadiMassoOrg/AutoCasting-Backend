@@ -1,6 +1,8 @@
 package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
@@ -21,7 +23,9 @@ import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
+import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility;
 import com.padimasso.autocasting.exception.ApiException;
@@ -36,6 +40,7 @@ import java.util.*;
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.ADMIN_USER_UPDATE_NO_CHANGES;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_IDS_REQUIRED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_INVALID_PARAMETER;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_UNEXPECTED;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
@@ -46,6 +51,8 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
     private final TalentProfileMapper talentProfileMapper;
+    private final MediaRepository mediaRepository;
+    private final MediaStorageService mediaStorageService;
     private final EmployerProfileRepository employerProfileRepository;
     private final EmployerProfileMapper employerProfileMapper;
     private final AdminUserMapper adminUserMapper;
@@ -189,6 +196,58 @@ public class AdminUserServiceImpl implements AdminUserService {
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
         return talentProfileMapper.toPublicProfileResponse(profile);
+    }
+
+    @Override
+    @Transactional
+    public void removeTalentMedia(UUID userId, AdminTalentMediaSlot slot, Integer index, AdminRemoveTalentMediaRequest request) {
+        var profile = talentProfileRepository.findTalentProfileForAdminByUserId(userId)
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+
+        var media = profile.getMedia();
+        if (media == null) {
+            throw ApiException.notFound(PROFILE_NOT_FOUND);
+        }
+
+        String fieldKey;
+        String previousUrl;
+        String slotDescription;
+
+        switch (slot) {
+            case HEADSHOT -> {
+                fieldKey = "headshotImageUrl";
+                slotDescription = "headshot";
+                previousUrl = media.getHeadshotImageUrl();
+                media.setHeadshotImageUrl(null);
+            }
+            case FULL_BODY -> {
+                fieldKey = "fullBodyImageUrl";
+                slotDescription = "full body photo";
+                previousUrl = media.getFullBodyImageUrl();
+                media.setFullBodyImageUrl(null);
+            }
+            case OTHER_PICTURE -> {
+                var otherPictures = media.getOtherPicturesUrl();
+                if (index == null || index < 0 || otherPictures == null || index >= otherPictures.size()) {
+                    throw ApiException.badRequest(GENERAL_INVALID_PARAMETER);
+                }
+                fieldKey = "otherPicturesUrl[" + index + "]";
+                slotDescription = "other picture #" + (index + 1);
+                previousUrl = otherPictures.get(index);
+                otherPictures.set(index, null);
+            }
+            default -> throw ApiException.badRequest(GENERAL_INVALID_PARAMETER);
+        }
+
+        mediaRepository.save(media);
+        mediaStorageService.deleteByPublicUrl(previousUrl);
+        var note = slotDescription + ": " + request.reason();
+        historyService.createHistoryEntry(
+            EntityType.TALENT_PROFILE,
+            profile.getId(),
+            note,
+            fieldKey + ": removed"
+        );
     }
 
     @Override

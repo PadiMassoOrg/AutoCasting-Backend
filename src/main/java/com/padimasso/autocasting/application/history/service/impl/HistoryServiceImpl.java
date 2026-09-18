@@ -45,6 +45,10 @@ public class HistoryServiceImpl implements HistoryService {
             return null;
         }
 
+        if (changes instanceof String plainText) {
+            return plainText;
+        }
+
         try {
             return objectMapper.writeValueAsString(changes);
         } catch (JsonProcessingException exception) {
