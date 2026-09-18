@@ -20,6 +20,8 @@
 -- - talent gender/ethnicity/hair/eye/diet/height/weight/measurements/tattoo/passport/driving_license
 --   y casting_role gender/ethnicity/pay_rate_type varían de forma determinística (hash-based) para
 --   habilitar pruebas reales de los filtros de búsqueda de talent-database y casting-database
+-- - cada talent recibe 6 registros de education y 6 de credits (hash-based, idempotente) para
+--   habilitar pruebas de scroll en el InfoCarousel de public-profile
 -- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
 --
 -- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
@@ -823,6 +825,151 @@ FROM (
 JOIN public.skills s ON s.string_code = talent_skills.skill_code
 ON CONFLICT (talent_profile_id, skill_id) DO NOTHING;
 
+-- Education pool (institutions + course names, 6 registros por talent para validar scroll del InfoCarousel)
+CREATE TEMP TABLE tmp_education_institution_pool (
+  idx int PRIMARY KEY,
+  institution text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_education_institution_pool (idx, institution) VALUES
+  (1, 'Escuela Municipal de Arte Dramático'),
+  (2, 'Conservatorio Nacional de Música'),
+  (3, 'Universidad del Cine'),
+  (4, 'Estudio Corporal Buenos Aires'),
+  (5, 'Taller de Actuación Timbre 4'),
+  (6, 'Escuela de Danza Contemporánea del Sur'),
+  (7, 'Instituto Superior de Artes Escénicas'),
+  (8, 'Academia Vocal Río de la Plata'),
+  (9, 'Estudio de Cine y Televisión Lumière'),
+  (10, 'Taller Integral de Comedia Musical');
+
+CREATE TEMP TABLE tmp_education_course_pool (
+  idx int PRIMARY KEY,
+  course_name text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_education_course_pool (idx, course_name) VALUES
+  (1, 'Actuación para Cámara'),
+  (2, 'Canto Lírico'),
+  (3, 'Danza Contemporánea'),
+  (4, 'Dirección de Actores'),
+  (5, 'Improvisación Teatral'),
+  (6, 'Doblaje y Locución'),
+  (7, 'Técnica Vocal Aplicada'),
+  (8, 'Comedia Musical'),
+  (9, 'Expresión Corporal'),
+  (10, 'Interpretación Clásica');
+
+-- Relation education por talent (6 garantizadas, idempotente)
+DELETE FROM public.talent_education te
+USING public.talent_profile tp
+JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+WHERE te.talent_profile_id = tp.id;
+
+INSERT INTO public.talent_education (
+  id, created_at, created_by, deleted, modified_at, modified_by,
+  institution, course_name, graduation_year, talent_profile_id
+)
+SELECT
+  gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
+  ip.institution,
+  cp.course_name,
+  (2010 + ((abs(hashtext(t.email || ':education:' || gs.i || ':year')) % 15)))::text,
+  tp.id
+FROM public.talent_profile tp
+JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+CROSS JOIN generate_series(1, 6) AS gs(i)
+JOIN tmp_education_institution_pool ip
+  ON ip.idx = ((abs(hashtext(t.email || ':education:' || gs.i || ':institution')) % 10) + 1)
+JOIN tmp_education_course_pool cp
+  ON cp.idx = ((abs(hashtext(t.email || ':education:' || gs.i || ':course')) % 10) + 1);
+
+-- Credits pool (nombres de proyecto/productora, 6 registros por talent para validar scroll del InfoCarousel)
+CREATE TEMP TABLE tmp_credit_production_type_pool (
+  idx int PRIMARY KEY,
+  string_code text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_credit_production_type_pool (idx, string_code) VALUES
+  (1, 'sitemetadata.production_type.theatre'),
+  (2, 'sitemetadata.production_type.television_streaming'),
+  (3, 'sitemetadata.production_type.film'),
+  (4, 'sitemetadata.production_type.commercial');
+
+CREATE TEMP TABLE tmp_credit_project_pool (
+  idx int PRIMARY KEY,
+  project_name text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_credit_project_pool (idx, project_name) VALUES
+  (1, 'Campaña Urbana: Voces de Ciudad'),
+  (2, 'Microserie Vertical: Medianoche 3AM'),
+  (3, 'Cortometraje: Piel de Papel'),
+  (4, 'Documental: Ríos del Sur'),
+  (5, 'Serie Web: Estación Sur'),
+  (6, 'Obra: El Jardín de los Ausentes'),
+  (7, 'Spot Institucional: Raíces'),
+  (8, 'Largometraje: Horizonte Lejano'),
+  (9, 'Miniserie: Puerto Nuevo'),
+  (10, 'Cortometraje: Últimas Luces');
+
+CREATE TEMP TABLE tmp_credit_producer_pool (
+  idx int PRIMARY KEY,
+  producer_name text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_credit_producer_pool (idx, producer_name) VALUES
+  (1, 'ASD Studios'),
+  (2, 'Agencia Vértice Talentos'),
+  (3, 'Sur Content Producciones'),
+  (4, 'Estudio Manantial'),
+  (5, 'Producciones Cauce'),
+  (6, 'Cine del Litoral');
+
+CREATE TEMP TABLE tmp_credit_role_pool (
+  idx int PRIMARY KEY,
+  role_name text NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_credit_role_pool (idx, role_name) VALUES
+  (1, 'Protagonista'),
+  (2, 'Co-protagonista'),
+  (3, 'Rol de reparto'),
+  (4, 'Rol secundario'),
+  (5, 'Extra destacado'),
+  (6, 'Voz en off');
+
+-- Relation credit por talent (6 garantizadas, idempotente)
+DELETE FROM public.talent_credit tc
+USING public.talent_profile tp
+JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+WHERE tc.talent_profile_id = tp.id;
+
+INSERT INTO public.talent_credit (
+  id, created_at, created_by, deleted, modified_at, modified_by,
+  production_type_id, project_name, producer_name, role, year, talent_profile_id
+)
+SELECT
+  gen_random_uuid(), NOW(), 'SEED_DEMO', false, NOW(), 'SEED_DEMO',
+  pt.id,
+  pp.project_name,
+  prp.producer_name,
+  rp.role_name,
+  (2010 + ((abs(hashtext(t.email || ':credit:' || gs.i || ':year')) % 15)))::text,
+  tp.id
+FROM public.talent_profile tp
+JOIN tmp_seed_user_ids t ON t.user_id = tp.user_id
+CROSS JOIN generate_series(1, 6) AS gs(i)
+JOIN tmp_credit_production_type_pool ptp
+  ON ptp.idx = ((abs(hashtext(t.email || ':credit:' || gs.i || ':production_type')) % 4) + 1)
+JOIN public.production_type pt ON pt.string_code = ptp.string_code
+JOIN tmp_credit_project_pool pp
+  ON pp.idx = ((abs(hashtext(t.email || ':credit:' || gs.i || ':project')) % 10) + 1)
+JOIN tmp_credit_producer_pool prp
+  ON prp.idx = ((abs(hashtext(t.email || ':credit:' || gs.i || ':producer')) % 6) + 1)
+JOIN tmp_credit_role_pool rp
+  ON rp.idx = ((abs(hashtext(t.email || ':credit:' || gs.i || ':role')) % 6) + 1);
+
 -- Employer basic info: 3 personas con datos reales, resto queda con stub mínimo
 INSERT INTO public.employer_basic_info (
   id, created_at, created_by, deleted, modified_at, modified_by,
@@ -1568,6 +1715,26 @@ IF (
     AND (tc.ethnicity_id IS NULL OR tc.hair_color_id IS NULL OR tc.eye_color_id IS NULL OR tc.diet_option_id IS NULL)
 ) <> 0 THEN
   RAISE EXCEPTION 'Seed inválido: existen talent_characteristics con ethnicity/hair_color/eye_color/diet sin completar';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.talent_education te
+  JOIN public.talent_profile tp ON tp.id = te.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email ~ '^asd[0-9]+@asd\.com$'
+) <> (30 * 6) THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de talent_education distinta de 180 (30 talents x 6 c/u)';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.talent_credit tc
+  JOIN public.talent_profile tp ON tp.id = tc.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email ~ '^asd[0-9]+@asd\.com$'
+) <> (30 * 6) THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de talent_credit distinta de 180 (30 talents x 6 c/u)';
 END IF;
 
 END;
