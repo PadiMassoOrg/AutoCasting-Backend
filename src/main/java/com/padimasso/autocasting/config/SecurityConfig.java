@@ -188,6 +188,7 @@ public class SecurityConfig {
             "http://localhost:8080",
             "http://localhost:8081",
             "https://autocasting.app",
+            "https://www.autocasting.app",
             "https://app-autocasting.vercel.app",
             "https://autocasting-admin.vercel.app")
         );
