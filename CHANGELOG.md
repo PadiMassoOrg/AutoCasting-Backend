@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-19 (2)
+
+- Versión: `1.3.2`
+- Scheduler: `CastingDeadlineScheduler.closeExpiredCastings()` ahora captura cualquier excepción del auto-cierre de castings y la loguea explícitamente en nivel ERROR, en vez de dejar que el `LoggingErrorHandler` genérico de Spring la trague en silencio.
+- CORS: se agrega `https://www.autocasting.app` a los orígenes permitidos (ya estaba `https://autocasting.app` sin `www`).
+- Ops: se fija `MALLOC_ARENA_MAX=2` en el dyno de Heroku para acotar el overhead nativo de malloc de glibc, como paso inicial (Fase 0) de la propuesta de migración de infraestructura, antes de considerar un upgrade de plan pago.
+
 ## 2026-09-19
 
 - Versión: `1.3.1`

@@ -32,8 +32,12 @@ public class CastingDeadlineScheduler {
     )
     public void closeExpiredCastings() {
         LocalDate todayInJobZone = LocalDate.now(ZoneId.of(schedulerZone));
-        int closedCount = castingAutoCloseService.closeExpiredCastings(todayInJobZone);
 
-        log.info("Auto-close job executed. date={}, closedCastings={}", todayInJobZone, closedCount);
+        try {
+            int closedCount = castingAutoCloseService.closeExpiredCastings(todayInJobZone);
+            log.info("Auto-close job executed. date={}, closedCastings={}", todayInJobZone, closedCount);
+        } catch (Exception exception) {
+            log.error("Auto-close job failed. date={}", todayInJobZone, exception);
+        }
     }
 }

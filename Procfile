@@ -1,1 +1,1 @@
-web: java -Dfile.encoding=UTF-8 -XX:+UseSerialGC -Xmx192m -Xss256k -XX:MaxMetaspaceSize=128m -XX:MaxDirectMemorySize=32m -XX:ReservedCodeCacheSize=64m -Dserver.port=$PORT -jar build/libs/*.jar
+web: MALLOC_ARENA_MAX=2 java -Dfile.encoding=UTF-8 -XX:+UseSerialGC -Xmx192m -Xss256k -XX:MaxMetaspaceSize=128m -XX:MaxDirectMemorySize=32m -XX:ReservedCodeCacheSize=64m -Dserver.port=$PORT -jar build/libs/*.jar
