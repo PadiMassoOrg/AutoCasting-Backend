@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.talent.repository.specification;
 import com.padimasso.autocasting.application.common.dto.MatchMode;
 import com.padimasso.autocasting.application.talent.dto.TalentFilter;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -19,19 +20,65 @@ public final class TalentProfileSpecs {
     private TalentProfileSpecs() {
     }
 
+    /**
+     * SQL-level source of truth for "has the photos required to be visible in the public talent
+     * catalog" (headshot + full body, both non-blank). Takes any {@code From} rooted at or joined
+     * to {@link TalentProfileEntity} — a query's own root, or a join from a different root entity
+     * (e.g. {@code CastingApplicationEntity.talentProfile}, {@code UserEntity}'s talent subquery) —
+     * so every Specification needing this check builds it the same way instead of re-typing the
+     * headshot/full-body null/blank conditions by hand.
+     * <p>
+     * Kept in sync with the plain-Java mirror {@code TalentMediaRequirements.hasRequiredPhotos}
+     * (for call sites that already have a loaded entity and don't want to run a query) and
+     * {@code TalentCatalogVisibility.isVisibleInCatalog} (which composes this same rule with the
+     * deleted/suspended checks below).
+     */
+    public static Predicate hasRequiredMediaPredicate(From<?, TalentProfileEntity> talentProfile, CriteriaBuilder cb) {
+        var m = talentProfile.join("media", JoinType.LEFT);
+        var hasHeadshot = cb.and(
+            cb.isNotNull(m.get("headshotImageUrl")),
+            cb.notEqual(cb.trim(m.get("headshotImageUrl")), "")
+        );
+        var hasFullBody = cb.and(
+            cb.isNotNull(m.get("fullBodyImageUrl")),
+            cb.notEqual(cb.trim(m.get("fullBodyImageUrl")), "")
+        );
+        return cb.and(hasHeadshot, hasFullBody);
+    }
+
+    /**
+     * SQL-level source of truth for "is this talent profile (and its user) active" — not deleted,
+     * user not suspended. Does not check media; combine with {@link #hasRequiredMediaPredicate}
+     * for full catalog visibility (see {@link #visibleInCatalogPredicate}).
+     */
+    public static Predicate activeProfilePredicate(From<?, TalentProfileEntity> talentProfile, CriteriaBuilder cb) {
+        var user = talentProfile.join("user", JoinType.INNER);
+        return cb.and(
+            cb.isFalse(talentProfile.get("deleted")),
+            cb.isFalse(user.get("suspended"))
+        );
+    }
+
+    /**
+     * SQL-level source of truth for "is this talent profile visible in the public catalog":
+     * {@link #activeProfilePredicate} + {@link #hasRequiredMediaPredicate}. Same {@code From}
+     * flexibility as above — use this instead of hand-rolling the deleted/suspended/media
+     * conditions at a new call site.
+     */
+    public static Predicate visibleInCatalogPredicate(From<?, TalentProfileEntity> talentProfile, CriteriaBuilder cb) {
+        return cb.and(
+            activeProfilePredicate(talentProfile, cb),
+            hasRequiredMediaPredicate(talentProfile, cb)
+        );
+    }
+
     public static Specification<TalentProfileEntity> hasRequiredMedia() {
-        return (root, q, cb) -> {
-            var m = root.join("media", JoinType.LEFT);
-            var hasHeadshot = cb.and(
-                cb.isNotNull(m.get("headshotImageUrl")),
-                cb.notEqual(cb.trim(m.get("headshotImageUrl")), "")
-            );
-            var hasFullBody = cb.and(
-                cb.isNotNull(m.get("fullBodyImageUrl")),
-                cb.notEqual(cb.trim(m.get("fullBodyImageUrl")), "")
-            );
-            return cb.and(hasHeadshot, hasFullBody);
-        };
+        return (root, q, cb) -> hasRequiredMediaPredicate(root, cb);
+    }
+
+    /** Root-level Specification form of {@link #visibleInCatalogPredicate}. */
+    public static Specification<TalentProfileEntity> visibleInCatalog() {
+        return (root, q, cb) -> visibleInCatalogPredicate(root, cb);
     }
 
     public static Specification<TalentProfileEntity> stageNameContains(String text) {
@@ -182,13 +229,7 @@ public final class TalentProfileSpecs {
     }
 
     public static Specification<TalentProfileEntity> fromFilter(TalentFilter f) {
-        Specification<TalentProfileEntity> spec = (root, query, cb) -> {
-            var user = root.join("user", JoinType.INNER);
-            return cb.and(
-                cb.isFalse(root.get("deleted")),
-                cb.isFalse(user.get("suspended"))
-            );
-        };
+        Specification<TalentProfileEntity> spec = (root, query, cb) -> activeProfilePredicate(root, cb);
 
         spec = spec.and(f.includeNoHeadshot() != Boolean.TRUE ? hasRequiredMedia() : null);
         spec = spec.and(stageNameContains(f.stageName()));
