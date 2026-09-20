@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-20
+
+- Versión: `1.3.3`
+- Fix: los endpoints de applicants del employer (`GET /employer/castings/{slug}/applicants` y su variante `/grouped`) ya no devuelven postulantes cuyo perfil de talento no es visible en el catálogo público (perfil/cuenta borrado o suspendido, o sin foto de cara y de cuerpo completo) — mismo criterio que `TalentProfileSpecs`/`TalentCatalogVisibility`.
+- Refactor: se consolida la regla de "visible en catálogo" (borrado/suspendido/fotos requeridas), antes reimplementada por separado en `TalentProfileSpecs`, `AdminUserSpecs` y `CastingApplicationSpecs`, en dos únicas fuentes de verdad: `TalentProfileSpecs.visibleInCatalogPredicate` (nivel SQL, reutilizable desde cualquier `From` unido a `TalentProfileEntity`) y `TalentCatalogVisibility.isVisibleInCatalog` (nivel Java, ahora también delegando el check de fotos a `TalentMediaRequirements`). Sin cambio de comportamiento en los call sites existentes.
+
 ## 2026-09-19 (2)
 
 - Versión: `1.3.2`

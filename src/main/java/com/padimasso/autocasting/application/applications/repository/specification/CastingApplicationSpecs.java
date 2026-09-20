@@ -11,6 +11,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOpt
 import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptionEntity;
 import com.padimasso.autocasting.application.talent.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import com.padimasso.autocasting.application.talent.repository.specification.TalentProfileSpecs;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -42,7 +43,21 @@ public final class CastingApplicationSpecs {
         spec = and(spec, employerSearchText(f.search()));
         spec = and(spec, applicationStatusInTokens(f.applicationStatusIdTokens()));
         spec = and(spec, professionIdIn(f.professionIds()));
+        spec = and(spec, applicantVisibleInCatalog());
         return spec;
+    }
+
+    // Delegates to TalentProfileSpecs.visibleInCatalogPredicate — the single source of truth for
+    // catalog-visibility (deleted/suspended/required-media), applied here through the joined
+    // talentProfile. An applicant whose talent profile no longer qualifies for the public catalog
+    // (e.g. they removed their headshot or full-body photo, or the profile/account was
+    // deleted/suspended) is excluded from the employer-facing applicants list, same as they'd be
+    // excluded from the talent catalog itself.
+    public static Specification<CastingApplicationEntity> applicantVisibleInCatalog() {
+        return (root, query, cb) -> {
+            Join<CastingApplicationEntity, TalentProfileEntity> tp = joinOnce(root, "talentProfile", JoinType.INNER);
+            return TalentProfileSpecs.visibleInCatalogPredicate(tp, cb);
+        };
     }
 
     public static Specification<CastingApplicationEntity> deletedFalse() {
