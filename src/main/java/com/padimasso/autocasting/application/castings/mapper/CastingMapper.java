@@ -9,6 +9,7 @@ import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
+import com.padimasso.autocasting.application.shared.util.PayRateTypeSupport;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.ProfileSocialMediaLinkEntity;
@@ -219,12 +220,7 @@ public class CastingMapper {
         boolean complete = role.getPayRateType() != null
             && (
                 role.getAmount() != null
-                    || (role.getPayRateType().getStringCode() != null
-                    && (
-                        role.getPayRateType().getStringCode().endsWith(".unpaid")
-                            || role.getPayRateType().getStringCode().endsWith(".cooperative")
-                            || role.getPayRateType().getStringCode().endsWith(".collaborative")
-                    ))
+                    || PayRateTypeSupport.isUnpaidLike(role.getPayRateType().getStringCode())
             );
 
         return new PublicCastingRoleRemunerationResponse(
@@ -313,12 +309,7 @@ public class CastingMapper {
         boolean complete = role.getPayRateType() != null
             && (
                 role.getAmount() != null
-                    || (role.getPayRateType().getStringCode() != null
-                    && (
-                        role.getPayRateType().getStringCode().endsWith(".unpaid")
-                            || role.getPayRateType().getStringCode().endsWith(".cooperative")
-                            || role.getPayRateType().getStringCode().endsWith(".collaborative")
-                    ))
+                    || PayRateTypeSupport.isUnpaidLike(role.getPayRateType().getStringCode())
             );
 
         return new CastingRoleRemunerationResponse(

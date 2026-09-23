@@ -83,6 +83,7 @@ public class AppConstants {
     public static final String CASTING_MODALITY_ON_SITE = "sitemetadata.casting_modality.on_site";
     public static final String CASTING_MODALITY_AUTOCASTING = "sitemetadata.casting_modality.autocasting";
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
+    public static final String PAY_RATE_TYPE_TO_BE_AGREED = "sitemetadata.pay_rate_type.to_be_agreed";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";

@@ -205,6 +205,24 @@ class CastingRoleServiceImplTest {
     }
 
     @Test
+    void createCastingRole_toBeAgreed_forcesAmountAndCurrencyNull() {
+        PayRateTypeOptionEntity toBeAgreed = new PayRateTypeOptionEntity();
+        toBeAgreed.setStringCode(PAY_RATE_TYPE_TO_BE_AGREED);
+        stubCommonResolutions(toBeAgreed);
+
+        ArgumentCaptor<CastingRoleEntity> captor = ArgumentCaptor.forClass(CastingRoleEntity.class);
+        when(castingRoleRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(castingMapper.toRoleResponse(any())).thenReturn(null);
+
+        CastingRoleRequest request = baseRequestBuilder(UUID.randomUUID(), new BigDecimal("500.00"), UUID.randomUUID());
+
+        service.createCastingRole(request);
+
+        assertNull(captor.getValue().getAmount());
+        assertNull(captor.getValue().getCurrency());
+    }
+
+    @Test
     void createCastingRole_collaborative_defaultsCurrencyToArsWhenUnset() {
         PayRateTypeOptionEntity collaborative = new PayRateTypeOptionEntity();
         collaborative.setStringCode("sitemetadata.pay_rate_type.collaborative");

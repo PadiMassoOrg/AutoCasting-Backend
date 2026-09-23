@@ -18,6 +18,7 @@ import com.padimasso.autocasting.application.employer.repository.EmployerProfile
 import com.padimasso.autocasting.application.castings.service.CastingMediaCleanupService;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
+import com.padimasso.autocasting.application.shared.util.PayRateTypeSupport;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
@@ -433,12 +434,7 @@ public class CastingServiceImpl implements CastingService {
         if (role.getAgeMin() == null || role.getAgeMax() == null || role.getAgeMin() > role.getAgeMax()) return false;
         if (role.getPayRateType() == null) return false;
 
-        String payRateCode = role.getPayRateType().getStringCode();
-        boolean isUnpaidLike = payRateCode != null && (
-            payRateCode.endsWith(".unpaid")
-                || payRateCode.endsWith(".cooperative")
-                || payRateCode.endsWith(".collaborative")
-        );
+        boolean isUnpaidLike = PayRateTypeSupport.isUnpaidLike(role.getPayRateType().getStringCode());
 
         if (isUnpaidLike) {
             return true;

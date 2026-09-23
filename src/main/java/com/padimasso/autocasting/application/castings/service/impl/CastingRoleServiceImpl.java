@@ -12,6 +12,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
+import com.padimasso.autocasting.application.shared.util.PayRateTypeSupport;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
@@ -206,13 +207,14 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         }
 
         String payRateCode = role.getPayRateType() != null ? role.getPayRateType().getStringCode() : null;
-        boolean isUnpaidLike = PAY_RATE_TYPE_UNPAID.equals(payRateCode)
-            || endsWith(payRateCode, ".collaborative")
-            || endsWith(payRateCode, ".cooperative");
+        boolean isToBeAgreed = PAY_RATE_TYPE_TO_BE_AGREED.equals(payRateCode);
+        boolean isUnpaidLike = PayRateTypeSupport.isUnpaidLike(payRateCode);
 
         if (isUnpaidLike) {
             role.setAmount(null);
-            if ((endsWith(payRateCode, ".collaborative") || endsWith(payRateCode, ".cooperative")) && role.getCurrency() == null) {
+            if (isToBeAgreed || PAY_RATE_TYPE_UNPAID.equals(payRateCode)) {
+                role.setCurrency(null);
+            } else if (role.getCurrency() == null) {
                 role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
             }
             return;
@@ -225,10 +227,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         if (role.getCurrency() == null) {
             role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
         }
-    }
-
-    private boolean endsWith(String value, String suffix) {
-        return value != null && value.endsWith(suffix);
     }
 
     private void assertDraftEditable(CastingEntity casting) {

@@ -306,6 +306,17 @@ class CastingServiceImplTest {
     }
 
     @Test
+    void hasCompleteRole_toBeAgreed_completeWithoutAmountOrCurrency() {
+        CastingEntity casting = completeCastingBase();
+        PayRateTypeOptionEntity toBeAgreed = new PayRateTypeOptionEntity();
+        toBeAgreed.setStringCode("sitemetadata.pay_rate_type.to_be_agreed");
+        CastingRoleEntity role = completeRole(toBeAgreed, null, null);
+        casting.setRoles(Set.of(role));
+
+        assertTrue(invokeIsPublishableViaEditor(casting));
+    }
+
+    @Test
     void hasCompleteRole_paidWithoutCurrency_notPublishable() {
         CastingEntity casting = completeCastingBase();
         PayRateTypeOptionEntity paid = new PayRateTypeOptionEntity();

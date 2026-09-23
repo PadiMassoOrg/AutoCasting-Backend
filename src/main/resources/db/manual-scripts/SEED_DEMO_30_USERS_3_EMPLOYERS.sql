@@ -1170,11 +1170,27 @@ SELECT
   END,
   CASE
     WHEN c.payment_model = 'unpaid' THEN NULL
+    WHEN (ARRAY[
+      'sitemetadata.pay_rate_type.fixed',
+      'sitemetadata.pay_rate_type.per_hour',
+      'sitemetadata.pay_rate_type.per_day',
+      'sitemetadata.pay_rate_type.per_week',
+      'sitemetadata.pay_rate_type.to_be_agreed',
+      'sitemetadata.pay_rate_type.collaborative'
+    ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':pay_rate')) % 6) + 1] = 'sitemetadata.pay_rate_type.to_be_agreed' THEN NULL
     WHEN c.casting_seq % 2 = 0 THEN 'sitemetadata.currency.usd'
     ELSE 'sitemetadata.currency.ars'
   END,
   CASE
     WHEN c.payment_model = 'unpaid' THEN NULL
+    WHEN (ARRAY[
+      'sitemetadata.pay_rate_type.fixed',
+      'sitemetadata.pay_rate_type.per_hour',
+      'sitemetadata.pay_rate_type.per_day',
+      'sitemetadata.pay_rate_type.per_week',
+      'sitemetadata.pay_rate_type.to_be_agreed',
+      'sitemetadata.pay_rate_type.collaborative'
+    ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':pay_rate')) % 6) + 1] = 'sitemetadata.pay_rate_type.to_be_agreed' THEN NULL
     ELSE (35000 + (c.casting_seq * 5000) + (r.role_pos * 3500))::numeric
   END,
   CASE
