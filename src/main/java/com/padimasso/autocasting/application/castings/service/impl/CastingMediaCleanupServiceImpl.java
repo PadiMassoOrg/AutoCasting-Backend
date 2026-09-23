@@ -62,6 +62,14 @@ public class CastingMediaCleanupServiceImpl implements CastingMediaCleanupServic
         }
     }
 
+    /**
+     * Supabase Storage's list endpoint only returns the immediate children of a prefix — a
+     * nested subfolder comes back as a single pseudo-entry (identifiable by a null/absent
+     * {@code metadata}, since Storage has no real directory objects) rather than being expanded
+     * automatically. Our layout nests role photos one level deeper
+     * ({@code .../castings/{castingId}/role-reference-photos/{file}}), so listing must recurse
+     * into any such subfolder entry to reach the actual files.
+     */
     private List<String> listObjectKeysUnderPrefix(RestClient client, String apiBase, String bucket, String prefix)
         throws JsonProcessingException {
         List<String> keys = new ArrayList<>();
@@ -83,7 +91,13 @@ public class CastingMediaCleanupServiceImpl implements CastingMediaCleanupServic
 
             for (JsonNode item : items) {
                 String name = item.path("name").asText(null);
-                if (!isBlank(name)) keys.add(prefix + name);
+                if (isBlank(name)) continue;
+
+                if (isFolderEntry(item)) {
+                    keys.addAll(listObjectKeysUnderPrefix(client, apiBase, bucket, prefix + name + "/"));
+                } else {
+                    keys.add(prefix + name);
+                }
             }
 
             if (items.size() < LIST_PAGE_SIZE) break;
@@ -102,6 +116,20 @@ public class CastingMediaCleanupServiceImpl implements CastingMediaCleanupServic
             .body(Map.of("prefixes", keys))
             .retrieve()
             .toBodilessEntity();
+    }
+
+    /**
+     * Package-visible so it can be unit-tested directly, without mocking the RestClient/HTTP
+     * chain (this codebase is unit-only, no Testcontainers) — see CastingMediaCleanupServiceImplTest.
+     * A Supabase Storage list item is a subfolder pseudo-entry (not a real file) when it has
+     * neither an {@code id} nor {@code metadata}, since Storage has no real directory objects.
+     * Uses isMissingNode() || isNull() rather than isNull() alone: Jackson's .path() returns a
+     * MissingNode (isNull() == false) for an absent field, distinct from an explicit JSON null.
+     */
+    static boolean isFolderEntry(JsonNode item) {
+        JsonNode id = item.path("id");
+        JsonNode metadata = item.path("metadata");
+        return (id.isMissingNode() || id.isNull()) && (metadata.isMissingNode() || metadata.isNull());
     }
 
     private static String trimTrailingSlash(String value) {
