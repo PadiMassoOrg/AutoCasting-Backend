@@ -92,6 +92,12 @@ public final class CastingRoleSpecs {
             String pattern = "%" + filter.locationText().trim().toLowerCase(Locale.ROOT) + "%";
             spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("casting").get("locationText")), pattern));
         }
+        if (filter.shootingDateFrom() != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("casting").get("shootingEndDate"), filter.shootingDateFrom()));
+        }
+        if (filter.shootingDateTo() != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("casting").get("shootingStartDate"), filter.shootingDateTo()));
+        }
 
         return spec;
     }
