@@ -390,7 +390,10 @@ class CastingRoleServiceImplTest {
     }
 
     @Test
-    void duplicateCastingRole_copiesReferencePhotoUrl() {
+    void duplicateCastingRole_doesNotCopyReferencePhotoUrl() {
+        // referencePhotoUrl must never be copied to a duplicate: it points at a single Supabase
+        // object, and deleting/replacing it from either role would delete it out from under the
+        // other (two roles silently sharing one file). The duplicate starts with no photo.
         PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
         unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
 
@@ -410,7 +413,7 @@ class CastingRoleServiceImplTest {
 
         service.duplicateCastingRole(roleId, "Copy");
 
-        assertEquals("https://example.com/photo.jpg", captor.getValue().getReferencePhotoUrl());
+        assertNull(captor.getValue().getReferencePhotoUrl());
     }
 
     @Test

@@ -139,7 +139,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .tattoo(sourceRole.getTattoo())
             .passport(sourceRole.getPassport())
             .drivingLicense(sourceRole.getDrivingLicense())
-            .referencePhotoUrl(sourceRole.getReferencePhotoUrl())
+            // Deliberately NOT copied: two roles must never share the same Supabase object.
+            // referencePhotoUrl points at a single file, and deleting/replacing it from either
+            // role would delete it out from under the other. The duplicated role starts with
+            // no photo — the employer re-uploads (even the same image) to get its own URL.
+            .referencePhotoUrl(null)
             .professions(new HashSet<>(sourceRole.getProfessions() == null ? Set.of() : sourceRole.getProfessions()))
             .skills(new HashSet<>(sourceRole.getSkills() == null ? Set.of() : sourceRole.getSkills()))
             .build();
