@@ -42,7 +42,8 @@ public record CastingRoleRequest(
     UUID ethnicityId,
     Boolean tattoo,
     Boolean passport,
-    Boolean drivingLicense
+    Boolean drivingLicense,
+    String referencePhotoUrl
 ) {
     @AssertTrue(message = "casting.age_range_invalid")
     public boolean isAgeRangeValid() {

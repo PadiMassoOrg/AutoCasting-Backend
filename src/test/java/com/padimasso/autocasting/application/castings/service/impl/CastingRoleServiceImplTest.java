@@ -97,6 +97,7 @@ class CastingRoleServiceImplTest {
             null,
             null,
             null,
+            null,
             null
         );
     }
@@ -124,7 +125,7 @@ class CastingRoleServiceImplTest {
         CastingRoleRequest invalidRequest = new CastingRoleRequest(
             castingId, "Lead role", UUID.randomUUID(), null, (short) 40, (short) 20,
             null, Set.of(), Set.of(), UUID.randomUUID(), null, null, null, false, false,
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -143,7 +144,7 @@ class CastingRoleServiceImplTest {
         CastingRoleRequest request = new CastingRoleRequest(
             castingId, "Lead role", UUID.randomUUID(), null, (short) 25, (short) 25,
             null, Set.of(), Set.of(), UUID.randomUUID(), null, null, null, false, false,
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
 
         service.createCastingRole(request);
@@ -277,6 +278,136 @@ class CastingRoleServiceImplTest {
         assertEquals(usd, captor.getValue().getCurrency());
     }
 
+    // ---- reference photo url ----
+
+    @Test
+    void createCastingRole_setsTrimmedReferencePhotoUrl() {
+        PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
+        unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
+        stubCommonResolutions(unpaid);
+
+        ArgumentCaptor<CastingRoleEntity> captor = ArgumentCaptor.forClass(CastingRoleEntity.class);
+        when(castingRoleRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(castingMapper.toRoleResponse(any())).thenReturn(null);
+
+        CastingRoleRequest request = new CastingRoleRequest(
+            castingId, "Lead role", UUID.randomUUID(), null, (short) 18, (short) 30,
+            null, Set.of(), Set.of(), UUID.randomUUID(), null, null, null, false, false,
+            null, null, null, null, null, "  https://example.com/photo.jpg  "
+        );
+
+        service.createCastingRole(request);
+
+        assertEquals("https://example.com/photo.jpg", captor.getValue().getReferencePhotoUrl());
+    }
+
+    @Test
+    void createCastingRole_blankReferencePhotoUrl_normalizedToNull() {
+        PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
+        unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
+        stubCommonResolutions(unpaid);
+
+        ArgumentCaptor<CastingRoleEntity> captor = ArgumentCaptor.forClass(CastingRoleEntity.class);
+        when(castingRoleRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(castingMapper.toRoleResponse(any())).thenReturn(null);
+
+        CastingRoleRequest request = new CastingRoleRequest(
+            castingId, "Lead role", UUID.randomUUID(), null, (short) 18, (short) 30,
+            null, Set.of(), Set.of(), UUID.randomUUID(), null, null, null, false, false,
+            null, null, null, null, null, "   "
+        );
+
+        service.createCastingRole(request);
+
+        assertNull(captor.getValue().getReferencePhotoUrl());
+    }
+
+    @Test
+    void updateCastingRole_updatesReferencePhotoUrl() {
+        PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
+        unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
+
+        UUID roleId = UUID.randomUUID();
+        CastingRoleEntity existingRole = CastingRoleEntity.builder()
+            .id(roleId)
+            .casting(draftCasting)
+            .referencePhotoUrl("https://example.com/old.jpg")
+            .build();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(existingRole));
+        when(siteMetadataResolver.resolveRoleTypeOrThrow(any())).thenReturn(roleType);
+        when(siteMetadataResolver.resolveGenderByCodeOrThrow(GENDER_OPTION_INDISTINCT)).thenReturn(indistinctGender);
+        when(siteMetadataResolver.resolveProfessionsOrThrow(any())).thenReturn(Set.of());
+        when(siteMetadataResolver.resolveSkillsOrThrow(any())).thenReturn(Set.of());
+        when(siteMetadataResolver.resolvePayRateTypeOrThrow(any())).thenReturn(unpaid);
+        when(castingRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(castingMapper.toRoleResponse(any())).thenReturn(null);
+
+        CastingRoleRequest request = new CastingRoleRequest(
+            castingId, "Lead role", UUID.randomUUID(), null, (short) 18, (short) 30,
+            null, Set.of(), Set.of(), UUID.randomUUID(), null, null, null, false, false,
+            null, null, null, null, null, "https://example.com/new.jpg"
+        );
+
+        service.updateCastingRole(roleId, request);
+
+        assertEquals("https://example.com/new.jpg", existingRole.getReferencePhotoUrl());
+    }
+
+    @Test
+    void updateCastingRole_clearsReferencePhotoUrl() {
+        PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
+        unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
+
+        UUID roleId = UUID.randomUUID();
+        CastingRoleEntity existingRole = CastingRoleEntity.builder()
+            .id(roleId)
+            .casting(draftCasting)
+            .referencePhotoUrl("https://example.com/old.jpg")
+            .build();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(existingRole));
+        when(siteMetadataResolver.resolveRoleTypeOrThrow(any())).thenReturn(roleType);
+        when(siteMetadataResolver.resolveGenderByCodeOrThrow(GENDER_OPTION_INDISTINCT)).thenReturn(indistinctGender);
+        when(siteMetadataResolver.resolveProfessionsOrThrow(any())).thenReturn(Set.of());
+        when(siteMetadataResolver.resolveSkillsOrThrow(any())).thenReturn(Set.of());
+        when(siteMetadataResolver.resolvePayRateTypeOrThrow(any())).thenReturn(unpaid);
+        when(castingRoleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(castingMapper.toRoleResponse(any())).thenReturn(null);
+
+        CastingRoleRequest request = new CastingRoleRequest(
+            castingId, "Lead role", UUID.randomUUID(), null, (short) 18, (short) 30,
+            null, Set.of(), Set.of(), UUID.randomUUID(), null, null, null, false, false,
+            null, null, null, null, null, null
+        );
+
+        service.updateCastingRole(roleId, request);
+
+        assertNull(existingRole.getReferencePhotoUrl());
+    }
+
+    @Test
+    void duplicateCastingRole_copiesReferencePhotoUrl() {
+        PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
+        unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
+
+        UUID roleId = UUID.randomUUID();
+        CastingRoleEntity sourceRole = CastingRoleEntity.builder()
+            .id(roleId)
+            .casting(draftCasting)
+            .roleName("Lead role")
+            .payRateType(unpaid)
+            .referencePhotoUrl("https://example.com/photo.jpg")
+            .build();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(sourceRole));
+
+        ArgumentCaptor<CastingRoleEntity> captor = ArgumentCaptor.forClass(CastingRoleEntity.class);
+        when(castingRoleRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(castingMapper.toRoleResponse(any())).thenReturn(null);
+
+        service.duplicateCastingRole(roleId, "Copy");
+
+        assertEquals("https://example.com/photo.jpg", captor.getValue().getReferencePhotoUrl());
+    }
+
     // ---- assertDraftEditable guard ----
 
     @Test
@@ -354,7 +485,7 @@ class CastingRoleServiceImplTest {
         CastingRoleRequest request = new CastingRoleRequest(
             UUID.randomUUID(), "Lead role", UUID.randomUUID(), null, (short) 18, (short) 30,
             null, Set.of(), Set.of(), null, null, null, null, false, false,
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,

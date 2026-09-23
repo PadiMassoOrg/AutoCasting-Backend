@@ -136,6 +136,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .tattoo(sourceRole.getTattoo())
             .passport(sourceRole.getPassport())
             .drivingLicense(sourceRole.getDrivingLicense())
+            .referencePhotoUrl(sourceRole.getReferencePhotoUrl())
             .professions(new HashSet<>(sourceRole.getProfessions() == null ? Set.of() : sourceRole.getProfessions()))
             .skills(new HashSet<>(sourceRole.getSkills() == null ? Set.of() : sourceRole.getSkills()))
             .build();
@@ -171,6 +172,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         role.setTattoo(request.tattoo());
         role.setPassport(request.passport());
         role.setDrivingLicense(request.drivingLicense());
+        role.setReferencePhotoUrl(TextNormalizer.normalizeNullable(request.referencePhotoUrl()));
 
         validateRole(role);
     }

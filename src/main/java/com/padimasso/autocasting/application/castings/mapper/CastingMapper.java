@@ -179,7 +179,8 @@ public class CastingMapper {
             role.getDrivingLicense(),
             role.isRequiresAudio(),
             role.isRequiresVideo(),
-            role.getRequirementDescription()
+            role.getRequirementDescription(),
+            role.getReferencePhotoUrl()
         );
     }
 
@@ -301,6 +302,7 @@ public class CastingMapper {
             role.isRequiresAudio(),
             role.isRequiresVideo(),
             role.getRequirementDescription(),
+            role.getReferencePhotoUrl(),
             role.getModifiedAt()
         );
     }
@@ -375,6 +377,7 @@ public class CastingMapper {
 
         return new EmployerCastingEditorResponse(
             casting.getId(),
+            casting.getEmployerProfile() != null ? casting.getEmployerProfile().getId() : null,
             casting.getDefaultCode(),
             mapToSiteMetadataObject(casting.getStatus()),
             casting.getTitle(),
