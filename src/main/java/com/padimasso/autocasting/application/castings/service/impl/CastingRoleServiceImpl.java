@@ -16,6 +16,7 @@ import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +39,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingMapper castingMapper;
+    private final MediaStorageService mediaStorageService;
 
     @Override
     @Transactional
@@ -94,6 +96,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         UUID castingId = role.getCasting() != null ? role.getCasting().getId() : null;
         castingRoleRepository.softDelete(role);
+        mediaStorageService.deleteByPublicUrl(role.getReferencePhotoUrl());
 
         return new LastModifiedResponse(
             castingId == null

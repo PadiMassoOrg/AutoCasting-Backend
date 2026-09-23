@@ -9,6 +9,7 @@ import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
+import com.padimasso.autocasting.application.castings.service.CastingMediaCleanupService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
@@ -58,6 +59,8 @@ class CastingServiceImplCheckoutSummaryTest {
     private CastingStatusTransitionPolicy castingStatusTransitionPolicy;
     @Mock
     private CastingApplicationRepository castingApplicationRepository;
+    @Mock
+    private CastingMediaCleanupService castingMediaCleanupService;
 
     private CastingServiceImpl service;
 
@@ -78,7 +81,8 @@ class CastingServiceImplCheckoutSummaryTest {
             siteMetadataResolver,
             castingStatusTransitionPolicy,
             castingApplicationRepository,
-            new CastingMapper()
+            new CastingMapper(),
+            castingMediaCleanupService
         );
 
         employerProfileId = UUID.randomUUID();

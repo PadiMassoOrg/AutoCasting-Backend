@@ -15,6 +15,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingReposito
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
+import com.padimasso.autocasting.application.castings.service.CastingMediaCleanupService;
 import com.padimasso.autocasting.application.castings.service.CastingService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
@@ -48,6 +49,7 @@ public class CastingServiceImpl implements CastingService {
     private final CastingStatusTransitionPolicy castingStatusTransitionPolicy;
     private final CastingApplicationRepository castingApplicationRepository;
     private final CastingMapper castingMapper;
+    private final CastingMediaCleanupService castingMediaCleanupService;
 
     @Override
     @Transactional
@@ -210,6 +212,10 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findByIdAndDeletedFalse(castingId)
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
         castingRepository.softDelete(casting);
+
+        if (casting.getEmployerProfile() != null) {
+            castingMediaCleanupService.deleteCastingFolder(casting.getEmployerProfile().getId(), casting.getId());
+        }
     }
 
     @Override
@@ -357,6 +363,10 @@ public class CastingServiceImpl implements CastingService {
 
         casting.setStatus(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(targetStatusCode));
         castingRepository.save(casting);
+
+        if (CASTING_STATUS_CLOSED.equals(targetStatusCode) && casting.getEmployerProfile() != null) {
+            castingMediaCleanupService.deleteCastingFolder(casting.getEmployerProfile().getId(), casting.getId());
+        }
 
         return castingMapper.toEmployerCastingEditorResponse(casting, publishable);
     }

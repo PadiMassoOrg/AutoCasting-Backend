@@ -12,6 +12,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEnti
 import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.RoleTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,8 @@ class CastingRoleServiceImplTest {
     private SiteMetadataResolver siteMetadataResolver;
     @Mock
     private CastingMapper castingMapper;
+    @Mock
+    private MediaStorageService mediaStorageService;
 
     private CastingRoleServiceImpl service;
 
@@ -54,7 +57,9 @@ class CastingRoleServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new CastingRoleServiceImpl(castingRoleRepository, castingRepository, siteMetadataResolver, castingMapper);
+        service = new CastingRoleServiceImpl(
+            castingRoleRepository, castingRepository, siteMetadataResolver, castingMapper, mediaStorageService
+        );
 
         castingId = UUID.randomUUID();
 
@@ -406,6 +411,34 @@ class CastingRoleServiceImplTest {
         service.duplicateCastingRole(roleId, "Copy");
 
         assertEquals("https://example.com/photo.jpg", captor.getValue().getReferencePhotoUrl());
+    }
+
+    @Test
+    void deleteCastingRole_deletesReferencePhotoFromStorage() {
+        UUID roleId = UUID.randomUUID();
+        CastingRoleEntity role = CastingRoleEntity.builder()
+            .id(roleId)
+            .casting(draftCasting)
+            .referencePhotoUrl("https://example.com/photo.jpg")
+            .build();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(role));
+
+        service.deleteCastingRole(roleId);
+
+        org.mockito.Mockito.verify(mediaStorageService).deleteByPublicUrl("https://example.com/photo.jpg");
+    }
+
+    @Test
+    void deleteCastingRole_noReferencePhoto_stillCallsDeleteByPublicUrl() {
+        // deleteByPublicUrl is documented as a no-op for null/blank input, so the service calls
+        // it unconditionally rather than special-casing "no photo" here.
+        UUID roleId = UUID.randomUUID();
+        CastingRoleEntity role = CastingRoleEntity.builder().id(roleId).casting(draftCasting).build();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(role));
+
+        service.deleteCastingRole(roleId);
+
+        org.mockito.Mockito.verify(mediaStorageService).deleteByPublicUrl(null);
     }
 
     // ---- assertDraftEditable guard ----
