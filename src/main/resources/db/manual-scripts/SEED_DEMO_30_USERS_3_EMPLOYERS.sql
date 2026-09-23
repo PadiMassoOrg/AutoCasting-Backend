@@ -1169,7 +1169,7 @@ SELECT
     ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':pay_rate')) % 6) + 1]
   END,
   CASE
-    WHEN c.payment_model = 'unpaid' THEN NULL
+    WHEN c.payment_model = 'unpaid' THEN 'sitemetadata.currency.ars'
     WHEN (ARRAY[
       'sitemetadata.pay_rate_type.fixed',
       'sitemetadata.pay_rate_type.per_hour',
@@ -1177,7 +1177,7 @@ SELECT
       'sitemetadata.pay_rate_type.per_week',
       'sitemetadata.pay_rate_type.to_be_agreed',
       'sitemetadata.pay_rate_type.collaborative'
-    ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':pay_rate')) % 6) + 1] = 'sitemetadata.pay_rate_type.to_be_agreed' THEN NULL
+    ])[(abs(hashtext(c.casting_seq::text || ':' || r.role_pos::text || ':pay_rate')) % 6) + 1] = 'sitemetadata.pay_rate_type.to_be_agreed' THEN 'sitemetadata.currency.ars'
     WHEN c.casting_seq % 2 = 0 THEN 'sitemetadata.currency.usd'
     ELSE 'sitemetadata.currency.ars'
   END,

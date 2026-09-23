@@ -188,10 +188,11 @@ class CastingRoleServiceImplTest {
     // ---- pay-rate branching ----
 
     @Test
-    void createCastingRole_unpaid_forcesAmountNull() {
+    void createCastingRole_unpaid_forcesAmountNullAndDefaultsCurrencyToArsWhenUnset() {
         PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
         unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
         stubCommonResolutions(unpaid);
+        when(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS)).thenReturn(arsCurrency);
 
         ArgumentCaptor<CastingRoleEntity> captor = ArgumentCaptor.forClass(CastingRoleEntity.class);
         when(castingRoleRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -202,24 +203,26 @@ class CastingRoleServiceImplTest {
         service.createCastingRole(request);
 
         assertNull(captor.getValue().getAmount());
+        assertEquals(arsCurrency, captor.getValue().getCurrency());
     }
 
     @Test
-    void createCastingRole_toBeAgreed_forcesAmountAndCurrencyNull() {
+    void createCastingRole_toBeAgreed_forcesAmountNullAndDefaultsCurrencyToArsWhenUnset() {
         PayRateTypeOptionEntity toBeAgreed = new PayRateTypeOptionEntity();
         toBeAgreed.setStringCode(PAY_RATE_TYPE_TO_BE_AGREED);
         stubCommonResolutions(toBeAgreed);
+        when(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS)).thenReturn(arsCurrency);
 
         ArgumentCaptor<CastingRoleEntity> captor = ArgumentCaptor.forClass(CastingRoleEntity.class);
         when(castingRoleRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
         when(castingMapper.toRoleResponse(any())).thenReturn(null);
 
-        CastingRoleRequest request = baseRequestBuilder(UUID.randomUUID(), new BigDecimal("500.00"), UUID.randomUUID());
+        CastingRoleRequest request = baseRequestBuilder(UUID.randomUUID(), new BigDecimal("500.00"), null);
 
         service.createCastingRole(request);
 
         assertNull(captor.getValue().getAmount());
-        assertNull(captor.getValue().getCurrency());
+        assertEquals(arsCurrency, captor.getValue().getCurrency());
     }
 
     @Test

@@ -207,14 +207,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         }
 
         String payRateCode = role.getPayRateType() != null ? role.getPayRateType().getStringCode() : null;
-        boolean isToBeAgreed = PAY_RATE_TYPE_TO_BE_AGREED.equals(payRateCode);
         boolean isUnpaidLike = PayRateTypeSupport.isUnpaidLike(payRateCode);
 
         if (isUnpaidLike) {
             role.setAmount(null);
-            if (isToBeAgreed || PAY_RATE_TYPE_UNPAID.equals(payRateCode)) {
-                role.setCurrency(null);
-            } else if (role.getCurrency() == null) {
+            if (role.getCurrency() == null) {
                 role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
             }
             return;
