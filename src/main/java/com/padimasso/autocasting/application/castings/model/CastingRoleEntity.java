@@ -91,6 +91,9 @@ public class CastingRoleEntity extends AuditableEntity {
     @Column
     private Boolean drivingLicense;
 
+    @Column(name = "reference_photo_url", columnDefinition = "text")
+    private String referencePhotoUrl;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

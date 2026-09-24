@@ -38,13 +38,13 @@ public class EmployerBasicInfoEntity extends AuditableEntity {
     @Column
     String companyEmail;
 
-    @Column
+    @Column(columnDefinition = "text")
     String imageUrl;
 
     @Column
     String address;
 
-    @Column
+    @Column(columnDefinition = "text")
     String websiteUrl;
 
     @Column

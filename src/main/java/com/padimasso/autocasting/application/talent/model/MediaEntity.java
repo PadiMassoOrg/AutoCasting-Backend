@@ -23,20 +23,20 @@ public class MediaEntity  extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column
+    @Column(columnDefinition = "text")
     String headshotImageUrl;
 
-    @Column
+    @Column(columnDefinition = "text")
     String fullBodyImageUrl;
 
     @OneToOne
     @JoinColumn(name = "talent_profile_id", nullable = false, unique = true)
     TalentProfileEntity talentProfile;
 
-    @Column
+    @Column(columnDefinition = "text")
     String introductionVideoUrl;
 
-    @Column
+    @Column(columnDefinition = "text")
     String showReelVideoUrl;
     @ElementCollection
     @CollectionTable(
@@ -44,7 +44,7 @@ public class MediaEntity  extends AuditableEntity {
         joinColumns = @JoinColumn(name = "talent_media_id")
     )
     @OrderColumn(name = "idx")
-    @Column(name = "url")
+    @Column(name = "url", columnDefinition = "text")
     @Builder.Default
     private List<String> otherPicturesUrl = new ArrayList<>();
 }

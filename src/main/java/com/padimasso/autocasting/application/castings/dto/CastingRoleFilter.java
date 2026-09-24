@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.castings.dto;
 
 import com.padimasso.autocasting.application.common.dto.MatchMode;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,8 @@ public record CastingRoleFilter(
     MatchMode skillsMode,
     List<UUID> projectTypeIds,
     List<UUID> castingModalityIds,
-    String locationText
+    String locationText,
+    LocalDate shootingDateFrom,
+    LocalDate shootingDateTo
 ) {
 }

@@ -20,12 +20,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTINGS_EMPTY_URL;
-import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTINGS_URL;
-import static com.padimasso.autocasting.config.AppConstants.EMPLOYER_CASTING_URL;
+import static com.padimasso.autocasting.config.AppConstants.*;
 
 @RestController
 @RequestMapping
@@ -113,8 +112,8 @@ public class CastingController {
     }
 
     @GetMapping(AppConstants.CASTING_DATABASE_API_URL)
-    public SliceResponse<CastingRolePublicCardResponse> searchPublicCastings(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size, @RequestParam(required = false) String roleName, @RequestParam(required = false) Integer ageMin, @RequestParam(required = false) Integer ageMax, @RequestParam(required = false, name = "genderId") List<String> genderIdTokens, @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens, @RequestParam(required = false, name = "professionId") List<UUID> professionIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode, @RequestParam(required = false) Integer heightMinCm, @RequestParam(required = false) Integer heightMaxCm, @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode, @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode, @RequestParam(required = false) Boolean tattoo, @RequestParam(required = false) Boolean passport, @RequestParam(required = false) Boolean drivingLicense, @RequestParam(required = false, name = "skillId") List<UUID> skillIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode, @RequestParam(required = false, name = "projectTypeId") List<UUID> projectTypeIds, @RequestParam(required = false, name = "castingModalityId") List<UUID> castingModalityIds, @RequestParam(required = false) String locationText) {
-        return castingRoleSearchService.search(new CastingRoleFilter(roleName, ageMin, ageMax, genderIdTokens, ethnicityIdTokens, professionIds, professionsMode, heightMinCm, heightMaxCm, hairColorIds, hairColorIdsMode, eyeColorIds, eyeColorIdsMode, tattoo, passport, drivingLicense, skillIds, skillsMode, projectTypeIds, castingModalityIds, locationText), page, size);
+    public SliceResponse<CastingRolePublicCardResponse> searchPublicCastings(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "8") int size, @RequestParam(required = false) String roleName, @RequestParam(required = false) Integer ageMin, @RequestParam(required = false) Integer ageMax, @RequestParam(required = false, name = "genderId") List<String> genderIdTokens, @RequestParam(required = false, name = "ethnicityId") List<String> ethnicityIdTokens, @RequestParam(required = false, name = "professionId") List<UUID> professionIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode professionsMode, @RequestParam(required = false) Integer heightMinCm, @RequestParam(required = false) Integer heightMaxCm, @RequestParam(required = false, name = "hairColorId") List<UUID> hairColorIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode hairColorIdsMode, @RequestParam(required = false, name = "eyeColorId") List<UUID> eyeColorIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode eyeColorIdsMode, @RequestParam(required = false) Boolean tattoo, @RequestParam(required = false) Boolean passport, @RequestParam(required = false) Boolean drivingLicense, @RequestParam(required = false, name = "skillId") List<UUID> skillIds, @RequestParam(required = false, defaultValue = "ANY") MatchMode skillsMode, @RequestParam(required = false, name = "projectTypeId") List<UUID> projectTypeIds, @RequestParam(required = false, name = "castingModalityId") List<UUID> castingModalityIds, @RequestParam(required = false) String locationText, @RequestParam(required = false) LocalDate shootingDateFrom, @RequestParam(required = false) LocalDate shootingDateTo) {
+        return castingRoleSearchService.search(new CastingRoleFilter(roleName, ageMin, ageMax, genderIdTokens, ethnicityIdTokens, professionIds, professionsMode, heightMinCm, heightMaxCm, hairColorIds, hairColorIdsMode, eyeColorIds, eyeColorIdsMode, tattoo, passport, drivingLicense, skillIds, skillsMode, projectTypeIds, castingModalityIds, locationText, shootingDateFrom, shootingDateTo), page, size);
     }
 
     @GetMapping(AppConstants.CASTING_DETAILS_URL + "/{slug}/roles/{roleId}")

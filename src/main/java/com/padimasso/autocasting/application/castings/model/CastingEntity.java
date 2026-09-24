@@ -71,8 +71,11 @@ public class CastingEntity extends AuditableEntity {
     @Column(columnDefinition = "text")
     private String description;
 
+    // Ordered by createdAt (not modifiedAt) so a role never moves in the list just because
+    // it was edited — matches how it's presented in the casting editor.
     @Builder.Default
     @OneToMany(mappedBy = "casting", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt ASC")
     private Set<CastingRoleEntity> roles = new HashSet<>();
 
     @Builder.Default

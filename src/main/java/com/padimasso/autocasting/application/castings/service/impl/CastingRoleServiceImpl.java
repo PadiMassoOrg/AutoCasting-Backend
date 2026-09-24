@@ -12,10 +12,12 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
+import com.padimasso.autocasting.application.shared.util.PayRateTypeSupport;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +40,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final CastingRepository castingRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingMapper castingMapper;
+    private final MediaStorageService mediaStorageService;
 
     @Override
     @Transactional
@@ -94,6 +97,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         UUID castingId = role.getCasting() != null ? role.getCasting().getId() : null;
         castingRoleRepository.softDelete(role);
+        mediaStorageService.deleteByPublicUrl(role.getReferencePhotoUrl());
 
         return new LastModifiedResponse(
             castingId == null
@@ -136,6 +140,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             .tattoo(sourceRole.getTattoo())
             .passport(sourceRole.getPassport())
             .drivingLicense(sourceRole.getDrivingLicense())
+            // Deliberately NOT copied: two roles must never share the same Supabase object.
+            // referencePhotoUrl points at a single file, and deleting/replacing it from either
+            // role would delete it out from under the other. The duplicated role starts with
+            // no photo — the employer re-uploads (even the same image) to get its own URL.
+            .referencePhotoUrl(null)
             .professions(new HashSet<>(sourceRole.getProfessions() == null ? Set.of() : sourceRole.getProfessions()))
             .skills(new HashSet<>(sourceRole.getSkills() == null ? Set.of() : sourceRole.getSkills()))
             .build();
@@ -171,6 +180,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         role.setTattoo(request.tattoo());
         role.setPassport(request.passport());
         role.setDrivingLicense(request.drivingLicense());
+        role.setReferencePhotoUrl(TextNormalizer.normalizeNullable(request.referencePhotoUrl()));
 
         validateRole(role);
     }
@@ -197,13 +207,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         }
 
         String payRateCode = role.getPayRateType() != null ? role.getPayRateType().getStringCode() : null;
-        boolean isUnpaidLike = PAY_RATE_TYPE_UNPAID.equals(payRateCode)
-            || endsWith(payRateCode, ".collaborative")
-            || endsWith(payRateCode, ".cooperative");
+        boolean isUnpaidLike = PayRateTypeSupport.isUnpaidLike(payRateCode);
 
         if (isUnpaidLike) {
             role.setAmount(null);
-            if ((endsWith(payRateCode, ".collaborative") || endsWith(payRateCode, ".cooperative")) && role.getCurrency() == null) {
+            if (role.getCurrency() == null) {
                 role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
             }
             return;
@@ -216,10 +224,6 @@ public class CastingRoleServiceImpl implements CastingRoleService {
         if (role.getCurrency() == null) {
             role.setCurrency(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS));
         }
-    }
-
-    private boolean endsWith(String value, String suffix) {
-        return value != null && value.endsWith(suffix);
     }
 
     private void assertDraftEditable(CastingEntity casting) {

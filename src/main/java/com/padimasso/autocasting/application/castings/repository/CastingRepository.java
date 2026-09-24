@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.castings.repository;
 
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
+import com.padimasso.autocasting.application.castings.repository.projection.CastingCloseTargetProjection;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 import jakarta.annotation.Nullable;
@@ -149,6 +150,19 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         @Param("employerProfileId") UUID employerProfileId,
         @Param("status") CastingStatusOptionEntity status,
         @Param("allowedCurrentCodes") List<String> allowedCurrentCodes
+    );
+
+    @Query(value = """
+        select id as castingId, employer_profile_id as employerProfileId
+          from casting
+         where deleted = false
+           and application_deadline is not null
+           and application_deadline <= :today
+           and casting_status_option_id in (:allowedStatusIds)
+        """, nativeQuery = true)
+    List<CastingCloseTargetProjection> findExpiredCastingCloseTargets(
+        @Param("today") LocalDate today,
+        @Param("allowedStatusIds") List<UUID> allowedStatusIds
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

@@ -25,6 +25,7 @@ public record CastingRoleResponse(
     boolean requiresAudio,
     boolean requiresVideo,
     String requirementDescription,
+    String referencePhotoUrl,
     LocalDateTime modifiedAt
 ) {
 }

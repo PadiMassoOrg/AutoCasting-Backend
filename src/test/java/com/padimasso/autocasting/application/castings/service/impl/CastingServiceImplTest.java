@@ -8,6 +8,7 @@ import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
+import com.padimasso.autocasting.application.castings.service.CastingMediaCleanupService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
@@ -62,6 +63,8 @@ class CastingServiceImplTest {
     private CastingApplicationRepository castingApplicationRepository;
     @Mock
     private CastingMapper castingMapper;
+    @Mock
+    private CastingMediaCleanupService castingMediaCleanupService;
 
     private CastingServiceImpl service;
 
@@ -79,13 +82,14 @@ class CastingServiceImplTest {
             siteMetadataResolver,
             castingStatusTransitionPolicy,
             castingApplicationRepository,
-            castingMapper
+            castingMapper,
+            castingMediaCleanupService
         );
 
         employerProfileId = UUID.randomUUID();
         EmployerProfileEntity employerProfile = EmployerProfileEntity.builder().id(employerProfileId).build();
         EmployerPrincipal principal = new EmployerPrincipal(null, employerProfile);
-        when(employerContext.getCurrentEmployerOrThrow()).thenReturn(principal);
+        org.mockito.Mockito.lenient().when(employerContext.getCurrentEmployerOrThrow()).thenReturn(principal);
     }
 
     private CastingModalityOptionEntity modality(String code) {
@@ -302,6 +306,17 @@ class CastingServiceImplTest {
     }
 
     @Test
+    void hasCompleteRole_toBeAgreed_completeWithoutAmountOrCurrency() {
+        CastingEntity casting = completeCastingBase();
+        PayRateTypeOptionEntity toBeAgreed = new PayRateTypeOptionEntity();
+        toBeAgreed.setStringCode("sitemetadata.pay_rate_type.to_be_agreed");
+        CastingRoleEntity role = completeRole(toBeAgreed, null, null);
+        casting.setRoles(Set.of(role));
+
+        assertTrue(invokeIsPublishableViaEditor(casting));
+    }
+
+    @Test
     void hasCompleteRole_paidWithoutCurrency_notPublishable() {
         CastingEntity casting = completeCastingBase();
         PayRateTypeOptionEntity paid = new PayRateTypeOptionEntity();
@@ -340,5 +355,44 @@ class CastingServiceImplTest {
         PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
         unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);
         return unpaid;
+    }
+
+    // ---- deleteCasting ----
+
+    @Test
+    void deleteCasting_softDeletesAndCleansUpSupabaseFolder() {
+        UUID castingId = UUID.randomUUID();
+        EmployerProfileEntity employerProfile = EmployerProfileEntity.builder().id(employerProfileId).build();
+        CastingEntity casting = CastingEntity.builder().id(castingId).employerProfile(employerProfile).build();
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(java.util.Optional.of(casting));
+
+        service.deleteCasting(castingId);
+
+        org.mockito.Mockito.verify(castingRepository).softDelete(casting);
+        org.mockito.Mockito.verify(castingMediaCleanupService).deleteCastingFolder(employerProfileId, castingId);
+    }
+
+    @Test
+    void deleteCasting_missingEmployerProfile_softDeletesWithoutCleanupCall() {
+        UUID castingId = UUID.randomUUID();
+        CastingEntity casting = CastingEntity.builder().id(castingId).employerProfile(null).build();
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(java.util.Optional.of(casting));
+
+        service.deleteCasting(castingId);
+
+        org.mockito.Mockito.verify(castingRepository).softDelete(casting);
+        org.mockito.Mockito.verify(castingMediaCleanupService, org.mockito.Mockito.never())
+            .deleteCastingFolder(any(), any());
+    }
+
+    @Test
+    void deleteCasting_notFound_throws() {
+        UUID castingId = UUID.randomUUID();
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(java.util.Optional.empty());
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.deleteCasting(castingId));
+
+        org.mockito.Mockito.verify(castingMediaCleanupService, org.mockito.Mockito.never())
+            .deleteCastingFolder(any(), any());
     }
 }

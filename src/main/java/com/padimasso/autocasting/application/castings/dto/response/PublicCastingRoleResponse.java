@@ -22,6 +22,7 @@ public record PublicCastingRoleResponse(
     Boolean drivingLicense,
     boolean requiresAudio,
     boolean requiresVideo,
-    String requirementDescription
+    String requirementDescription,
+    String referencePhotoUrl
 ) {
 }

@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public record EmployerCastingEditorResponse(
     UUID id,
+    UUID employerProfileId,
     String defaultCode,
     SiteMetadataObject castingStatus,
     String title,

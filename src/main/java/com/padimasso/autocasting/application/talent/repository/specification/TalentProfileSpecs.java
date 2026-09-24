@@ -81,11 +81,21 @@ public final class TalentProfileSpecs {
         return (root, q, cb) -> visibleInCatalogPredicate(root, cb);
     }
 
+    /**
+     * Matches on stage name ignoring case and diacritics (accents), via Postgres' {@code unaccent}
+     * extension (see {@code V52__enable_unaccent_extension.sql}) — so a search for "Maria" also
+     * finds "María" and vice versa, instead of requiring an exact-accent match.
+     */
     public static Specification<TalentProfileEntity> stageNameContains(String text) {
         if (text == null || text.isBlank()) return null;
         return (root, q, cb) -> {
             var bi = root.join("basicInfo");
-            return cb.like(cb.lower(bi.get("stageName")), "%" + text.toLowerCase(Locale.ROOT) + "%");
+            var unaccentedStageName = cb.function("unaccent", String.class, cb.lower(bi.get("stageName")));
+            var unaccentedPattern = cb.concat(
+                cb.concat("%", cb.function("unaccent", String.class, cb.literal(text.toLowerCase(Locale.ROOT)))),
+                "%"
+            );
+            return cb.like(unaccentedStageName, unaccentedPattern);
         };
     }
 

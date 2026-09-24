@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-23
+
+- Versión: `1.3.4`
+- Fix: el tipo de tarifa "A convenir" (`to_be_agreed`) ya no exige un monto al guardar un rol de casting ni bloquea la publicación del casting — se trata como "sin tarifa fija" igual que "No remunerado"/"Colaborativo"/"Cooperativo" (`PayRateTypeSupport.isUnpaidLike`, ahora compartido entre `CastingRoleServiceImpl`, `CastingServiceImpl.isPublishable` y `CastingMapper`).
+- Fix: los roles con tarifa "sin monto fijo" (No remunerado, A convenir, Colaborativo, Cooperativo) ahora completan la moneda con ARS por defecto si no se especifica una, en vez de dejarla en `null` para algunos casos — evita que el selector de moneda del formulario quede vacío al abrir un rol existente.
+- Fix: el orden de los roles dentro de un casting (`CastingEntity.roles`) ahora es estable (`@OrderBy("createdAt ASC")`) — antes era un `Set` sin orden garantizado, por lo que la lista de roles podía reordenarse al editar un rol.
+- Scripts: `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` actualizado para reflejar el nuevo comportamiento de moneda por defecto en roles "A convenir"/"No remunerado".
+
 ## 2026-09-20
 
 - Versión: `1.3.3`
