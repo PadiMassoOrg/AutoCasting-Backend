@@ -13,7 +13,6 @@ public final class AdminProposalSpecs {
     private AdminProposalSpecs() {
     }
 
-    // The admin list only shows proposals still waiting to be claimed; CLAIMED/REVOKED are history.
     public static Specification<ProposalEntity> pendingOfTypes(List<UUID> typeIds) {
         Specification<ProposalEntity> spec = (root, query, cb) -> cb.and(
             cb.isFalse(root.get("deleted")),
@@ -25,7 +24,6 @@ public final class AdminProposalSpecs {
         return spec.and((root, query, cb) -> root.get("type").get("id").in(typeIds));
     }
 
-    // Free text over the internal reference: contact name, email, WhatsApp and company hint.
     public static Specification<ProposalEntity> fromSearchText(String q) {
         if (q == null || q.isBlank()) return null;
 

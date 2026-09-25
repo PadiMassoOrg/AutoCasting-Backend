@@ -8,9 +8,6 @@ import java.util.List;
 
 import static com.padimasso.autocasting.config.AppConstants.CASTING_MODALITY_ON_SITE;
 
-// Single source of truth for "is this casting complete enough to publish": basic info filled in and
-// at least one role, every role complete. Used by the employer editor (`publishable` flag) and by
-// Casting Proposals, which only accept complete castings.
 public final class CastingPublishability {
 
     private CastingPublishability() {

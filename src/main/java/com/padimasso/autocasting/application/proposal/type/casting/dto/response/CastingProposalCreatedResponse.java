@@ -4,7 +4,6 @@ import java.util.UUID;
 
 public record CastingProposalCreatedResponse(
     UUID proposalId,
-    String token,
-    String castingSlug
+    String token
 ) {
 }

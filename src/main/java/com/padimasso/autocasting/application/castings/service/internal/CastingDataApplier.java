@@ -19,8 +19,6 @@ import java.util.UUID;
 import static com.padimasso.autocasting.config.AppConstants.*;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
 
-// Maps casting / role request payloads onto entities. Owner-agnostic, so it's shared by the employer
-// editor services and by flows that write castings on someone else's behalf (Casting Proposals).
 @Component
 @RequiredArgsConstructor
 public class CastingDataApplier {

@@ -1,7 +1,9 @@
 package com.padimasso.autocasting.application.proposal.type.casting.service.impl;
 
+import com.padimasso.autocasting.application.admin.mapper.AdminCastingMapper;
 import com.padimasso.autocasting.application.castings.dto.request.CastingUpsertRequest;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
+import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
@@ -32,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,6 +47,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -65,6 +70,8 @@ class CastingProposalServiceImplTest {
     private SiteMetadataResolver siteMetadataResolver;
     @Mock
     private ProposalTokenGenerator proposalTokenGenerator;
+    @Mock
+    private AdminCastingMapper adminCastingMapper;
 
     private CastingProposalServiceImpl service;
     private EmployerProfileEntity systemOwner;
@@ -83,7 +90,8 @@ class CastingProposalServiceImplTest {
             proposalTypeOptionRepository,
             siteMetadataResolver,
             new CastingDataApplier(siteMetadataResolver),
-            proposalTokenGenerator
+            proposalTokenGenerator,
+            adminCastingMapper
         );
 
         systemOwner = EmployerProfileEntity.builder().id(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID).build();
@@ -129,8 +137,12 @@ class CastingProposalServiceImplTest {
     }
 
     private CastingProposalRoleRequest role() {
+        return role(null, "Protagonista");
+    }
+
+    private CastingProposalRoleRequest role(UUID id, String roleName) {
         return new CastingProposalRoleRequest(
-            "Protagonista", roleTypeId, null, (short) 20, (short) 30, null, null, null,
+            id, roleName, roleTypeId, null, (short) 20, (short) 30, null, null, null,
             null, null, null, null, null, null, null, null, null, null, null
         );
     }
@@ -165,7 +177,6 @@ class CastingProposalServiceImplTest {
         assertEquals("Ana Pérez", savedProposal.getContactName());
 
         assertEquals("generated-token", response.token());
-        assertEquals("C-TEST0001", response.castingSlug());
     }
 
     @Test
@@ -212,5 +223,84 @@ class CastingProposalServiceImplTest {
         ArgumentCaptor<ProposalEntity> proposalCaptor = ArgumentCaptor.forClass(ProposalEntity.class);
         verify(proposalRepository).save(proposalCaptor.capture());
         assertNull(proposalCaptor.getValue().getContactName());
+    }
+
+    private ProposalEntity pendingProposalWithRoles(ProposalStatus status, CastingRoleEntity... roles) {
+        CastingEntity casting = CastingEntity.builder()
+            .id(UUID.randomUUID())
+            .employerProfile(systemOwner)
+            .roles(new HashSet<>())
+            .build();
+        for (CastingRoleEntity role : roles) {
+            role.setCasting(casting);
+            casting.getRoles().add(role);
+        }
+        ProposalEntity proposal = ProposalEntity.builder()
+            .id(UUID.randomUUID())
+            .type(castingType)
+            .token("token")
+            .status(status)
+            .casting(casting)
+            .build();
+        lenient().when(proposalRepository.findByIdForUpdate(proposal.getId())).thenReturn(Optional.of(proposal));
+        return proposal;
+    }
+
+    private CastingRoleEntity existingRole(String roleName) {
+        return CastingRoleEntity.builder().id(UUID.randomUUID()).roleName(roleName).build();
+    }
+
+    @Test
+    void update_upsertsRolesAndSoftDeletesOmittedOnes() {
+        CastingRoleEntity kept = existingRole("Protagonista");
+        CastingRoleEntity removed = existingRole("Extra");
+        ProposalEntity proposal = pendingProposalWithRoles(ProposalStatus.PENDING, kept, removed);
+
+        service.update(proposal.getId(), request(
+            casting("Casting editado", LocalDate.now().plusDays(10)),
+            List.of(role(kept.getId(), "Protagonista editado"), role(null, "Nuevo rol"))
+        ));
+
+        CastingEntity casting = proposal.getCasting();
+        assertEquals("Casting editado", casting.getTitle());
+        assertEquals("Protagonista editado", kept.getRoleName());
+        assertFalse(kept.isDeleted());
+        assertTrue(removed.isDeleted());
+        assertTrue(casting.getRoles().stream().anyMatch(r -> "Nuevo rol".equals(r.getRoleName()) && !r.isDeleted()));
+        assertEquals("Ana Pérez", proposal.getContactName());
+        verify(castingRepository).save(casting);
+    }
+
+    @Test
+    void update_notPending_throwsConflict() {
+        ProposalEntity proposal = pendingProposalWithRoles(ProposalStatus.CLAIMED, existingRole("Protagonista"));
+
+        assertThrows(IllegalStateException.class, () -> service.update(proposal.getId(), request(
+            casting("Casting", LocalDate.now().plusDays(10)), List.of(role())
+        )));
+        verify(castingRepository, never()).save(any());
+    }
+
+    @Test
+    void update_roleIdFromAnotherCasting_throwsMismatch() {
+        ProposalEntity proposal = pendingProposalWithRoles(ProposalStatus.PENDING, existingRole("Protagonista"));
+
+        assertThrows(IllegalArgumentException.class, () -> service.update(proposal.getId(), request(
+            casting("Casting", LocalDate.now().plusDays(10)), List.of(role(UUID.randomUUID(), "Ajeno"))
+        )));
+        verify(castingRepository, never()).save(any());
+    }
+
+    @Test
+    void update_leavingCastingIncomplete_throwsAndSavesNothing() {
+        ProposalEntity proposal = pendingProposalWithRoles(ProposalStatus.PENDING, existingRole("Protagonista"));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.update(
+            proposal.getId(), request(casting("Casting", null), List.of(role()))
+        ));
+
+        assertEquals(PROPOSALS_CASTING_INCOMPLETE, ex.getMessage());
+        verify(castingRepository, never()).save(any());
+        verify(proposalRepository, never()).save(any());
     }
 }

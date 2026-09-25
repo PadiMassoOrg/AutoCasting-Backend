@@ -7,29 +7,33 @@ import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
 
-// Same fields and rules as CastingRoleRequest, minus castingId: the casting doesn't exist yet,
-// it's created in the same request. No referencePhotoUrl either (photos aren't supported in v1).
 public record CastingProposalRoleRequest(
+    UUID id,
     @NotBlank(message = "casting.role_name_required")
     @Size(max = 255, message = "casting.role_name_max_length")
     String roleName,
     @NotNull(message = "casting.role_type_required")
     UUID roleTypeId,
+    @NotNull(message = "casting.gender_required")
     UUID genderId,
     @NotNull(message = "casting.age_min_required")
     @Min(value = 0, message = "casting.age_min")
-    @Max(value = 150, message = "casting.age_max")
+    @Max(value = 99, message = "casting.age_max")
     Short ageMin,
     @NotNull(message = "casting.age_max_required")
     @Min(value = 0, message = "casting.age_min")
-    @Max(value = 150, message = "casting.age_max")
+    @Max(value = 99, message = "casting.age_max")
     Short ageMax,
+    @Size(max = 2000, message = "casting.description_max_length")
     String description,
+    @NotEmpty(message = "talent.professions_required")
     Set<@NotNull(message = "talent.professions_required") UUID> professionIds,
     Set<@NotNull(message = "talent.skills_required") UUID> skillIds,
+    @NotNull(message = "casting.pay_rate_type_required")
     UUID payRateTypeId,
     UUID currencyId,
     BigDecimal amount,
+    @Size(max = 2000, message = "casting.remuneration_notes_max_length")
     String remunerationNotes,
     Boolean requiresAudio,
     Boolean requiresVideo,

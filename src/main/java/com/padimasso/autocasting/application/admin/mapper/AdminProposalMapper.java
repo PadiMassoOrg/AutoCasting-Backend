@@ -22,12 +22,7 @@ public class AdminProposalMapper {
             proposal.getContactName(),
             proposal.getContactEmail(),
             proposal.getContactWhatsapp(),
-            proposal.getCompanyNameHint(),
-            proposal.getFirstOpenedAt(),
-            proposal.getCreatedAt(),
-            proposal.getCreatedBy(),
-            proposal.getModifiedAt(),
-            proposal.getModifiedBy()
+            proposal.getModifiedAt()
         );
     }
 

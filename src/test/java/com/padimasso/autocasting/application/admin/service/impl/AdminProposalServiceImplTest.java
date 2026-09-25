@@ -5,7 +5,11 @@ import com.padimasso.autocasting.application.admin.mapper.AdminProposalMapper;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalProgress;
+import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import com.padimasso.autocasting.application.proposal.repository.ProposalRepository;
+import com.padimasso.autocasting.application.proposal.service.internal.ProposalTokenGenerator;
+import com.padimasso.autocasting.application.proposal.type.ProposalTypeHandler;
+import com.padimasso.autocasting.application.proposal.type.ProposalTypeHandlerRegistry;
 import com.padimasso.autocasting.application.sitemetadata.model.ProposalTypeOptionEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +24,17 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,12 +44,22 @@ class AdminProposalServiceImplTest {
 
     @Mock
     private ProposalRepository proposalRepository;
+    @Mock
+    private ProposalTokenGenerator proposalTokenGenerator;
+    @Mock
+    private ProposalTypeHandler castingHandler;
 
     private AdminProposalServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new AdminProposalServiceImpl(proposalRepository, new AdminProposalMapper());
+        lenient().when(castingHandler.typeCode()).thenReturn("sitemetadata.proposal_type.casting");
+        service = new AdminProposalServiceImpl(
+            proposalRepository,
+            new AdminProposalMapper(),
+            proposalTokenGenerator,
+            new ProposalTypeHandlerRegistry(List.of(castingHandler))
+        );
     }
 
     private final ProposalTypeOptionEntity castingType = castingType();
@@ -108,5 +126,59 @@ class AdminProposalServiceImplTest {
         assertEquals(0, pageable.getValue().getPageNumber());
         assertEquals(MAX_PAGE_SIZE, pageable.getValue().getPageSize());
         assertEquals(Sort.by(Sort.Direction.DESC, "createdAt", "id"), pageable.getValue().getSort());
+    }
+
+    private ProposalEntity lockedProposal(ProposalStatus status) {
+        ProposalEntity proposal = proposal(LocalDateTime.now());
+        proposal.setStatus(status);
+        when(proposalRepository.findByIdForUpdate(proposal.getId())).thenReturn(Optional.of(proposal));
+        return proposal;
+    }
+
+    @Test
+    void regenerateLink_pendingProposal_replacesTokenAndResetsFirstOpened() {
+        ProposalEntity proposal = lockedProposal(ProposalStatus.PENDING);
+        when(proposalTokenGenerator.generate()).thenReturn("new-token");
+        when(proposalRepository.save(proposal)).thenReturn(proposal);
+
+        var response = service.regenerateLink(proposal.getId());
+
+        assertEquals("new-token", response.token());
+        assertEquals("new-token", proposal.getToken());
+        assertNull(proposal.getFirstOpenedAt());
+    }
+
+    @Test
+    void regenerateLink_notPending_throwsConflict() {
+        ProposalEntity proposal = lockedProposal(ProposalStatus.CLAIMED);
+
+        assertThrows(IllegalStateException.class, () -> service.regenerateLink(proposal.getId()));
+        verify(proposalTokenGenerator, never()).generate();
+    }
+
+    @Test
+    void regenerateLink_unknownProposal_throwsNotFound() {
+        UUID id = UUID.randomUUID();
+        when(proposalRepository.findByIdForUpdate(id)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.regenerateLink(id));
+    }
+
+    @Test
+    void revoke_pendingProposal_marksRevokedAndDiscardsContent() {
+        ProposalEntity proposal = lockedProposal(ProposalStatus.PENDING);
+
+        service.revoke(proposal.getId());
+
+        assertEquals(ProposalStatus.REVOKED, proposal.getStatus());
+        verify(castingHandler).discard(proposal);
+    }
+
+    @Test
+    void revoke_notPending_throwsConflictAndDiscardsNothing() {
+        ProposalEntity proposal = lockedProposal(ProposalStatus.REVOKED);
+
+        assertThrows(IllegalStateException.class, () -> service.revoke(proposal.getId()));
+        verify(castingHandler, never()).discard(any());
     }
 }

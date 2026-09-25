@@ -14,11 +14,6 @@ public record AdminProposalRowResponse(
     String contactName,
     String contactEmail,
     String contactWhatsapp,
-    String companyNameHint,
-    LocalDateTime firstOpenedAt,
-    LocalDateTime createdAt,
-    String createdBy,
-    LocalDateTime modifiedAt,
-    String modifiedBy
+    LocalDateTime modifiedAt
 ) {
 }
