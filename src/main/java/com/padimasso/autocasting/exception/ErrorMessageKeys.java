@@ -64,6 +64,8 @@ public final class ErrorMessageKeys {
     public static final String PROPOSALS_TYPE_NOT_FOUND = "proposals.type.not_found";
     public static final String PROPOSALS_NOT_FOUND = "proposals.not_found";
     public static final String PROPOSALS_NOT_PENDING = "proposals.not_pending";
+    public static final String PROPOSALS_LINK_INVALID = "proposals.link_invalid";
+    public static final String PROPOSALS_REQUIREMENT_NOT_MET = "proposals.requirement_not_met";
     public static final String PROPOSALS_SYSTEM_OWNER_MISSING = "proposals.system_owner.missing";
     public static final String CASTINGS_INVALID_STATUS_TRANSITION = "castings.invalid_status_transition";
     public static final String CASTINGS_SECTION_NOT_FOUND = "castings.section.not_found";

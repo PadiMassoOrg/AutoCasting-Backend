@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminProposalRow
 import com.padimasso.autocasting.application.admin.service.AdminProposalService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.proposal.dto.response.ProposalLinkResponse;
+import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.request.CastingProposalCreateRequest;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.response.CastingProposalCreatedResponse;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.response.CastingProposalDetailsResponse;
@@ -35,8 +36,9 @@ public class AdminProposalController {
     private final CastingProposalService castingProposalService;
 
     @Operation(
-        summary = "List pending proposals (paginated)",
-        description = "Returns proposals still waiting to be claimed, with their derived progress (link generated, link opened, account attached).",
+        summary = "List proposals (paginated)",
+        description = "Returns pending and claimed proposals (revoked ones are excluded) with their derived progress "
+            + "(link generated, link opened, account attached, claimed). Claimed rows include who claimed them and the entities they became.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ADMIN_PROPOSALS_API_URL)
@@ -45,10 +47,12 @@ public class AdminProposalController {
         @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size,
         @Parameter(description = "Free text search over contact name, contact email, contact WhatsApp and company name hint.")
         @RequestParam(required = false) String q,
-        @Parameter(description = "Proposal type option IDs (sitemetadata proposalTypeOptions). When omitted, pending proposals of every type are returned.")
-        @RequestParam(required = false, name = "typeId") List<UUID> typeIds
+        @Parameter(description = "Proposal type option IDs (sitemetadata proposalTypeOptions). When omitted, proposals of every type are returned.")
+        @RequestParam(required = false, name = "typeId") List<UUID> typeIds,
+        @Parameter(description = "Statuses to include (PENDING, CLAIMED). When omitted, both are returned. REVOKED is never listed.")
+        @RequestParam(required = false, name = "status") List<ProposalStatus> statuses
     ) {
-        return adminProposalService.listPendingProposals(page, size, q, typeIds);
+        return adminProposalService.listProposals(page, size, q, typeIds, statuses);
     }
 
     @Operation(

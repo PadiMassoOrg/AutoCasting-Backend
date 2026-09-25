@@ -171,7 +171,7 @@ public class CastingProposalServiceImpl implements CastingProposalService {
             proposal.getId(),
             proposal.getToken(),
             proposal.getStatus(),
-            ProposalProgress.of(proposal.getFirstOpenedAt(), hasAttachments),
+            ProposalProgress.of(proposal.getStatus(), proposal.getFirstOpenedAt(), hasAttachments),
             proposal.getContactName(),
             proposal.getContactEmail(),
             proposal.getContactWhatsapp(),

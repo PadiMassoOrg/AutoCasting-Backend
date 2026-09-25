@@ -37,6 +37,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -103,6 +104,8 @@ class AuthServiceImplRegisterTest {
     private LegalService legalService;
     @Mock
     private TalentWelcomeEmailService talentWelcomeEmailService;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private AuthServiceImpl service;
 
@@ -133,7 +136,8 @@ class AuthServiceImplRegisterTest {
             googleIdTokenVerifierService,
             userProvisioningService,
             legalService,
-            talentWelcomeEmailService
+            talentWelcomeEmailService,
+            eventPublisher
         );
     }
 

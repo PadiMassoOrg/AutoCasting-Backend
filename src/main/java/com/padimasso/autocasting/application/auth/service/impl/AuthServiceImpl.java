@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.auth.dto.request.*;
 import com.padimasso.autocasting.application.auth.dto.response.AuthResponse;
 import com.padimasso.autocasting.application.auth.dto.response.ForgotPasswordResponse;
 import com.padimasso.autocasting.application.auth.dto.response.MeResponse;
+import com.padimasso.autocasting.application.auth.event.EmployerOnboardingCompletedEvent;
 import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
@@ -33,6 +34,7 @@ import com.padimasso.autocasting.exception.ApiException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -78,6 +80,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserProvisioningService userProvisioningService;
     private final LegalService legalService;
     private final TalentWelcomeEmailService talentWelcomeEmailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Normaliza un usuario "legacy" o recién creado:
@@ -351,6 +354,7 @@ public class AuthServiceImpl implements AuthService {
         UserEntity user = authContext.getCurrentUserOrThrow();
 
         OnboardingStatus previousTalentOnboardingStatus = user.getTalentOnboardingStatus();
+        OnboardingStatus previousEmployerOnboardingStatus = user.getEmployerOnboardingStatus();
 
         user.setActiveMode(request.activeMode());
         user.setTalentOnboardingStatus(request.talentOnboardingStatus());
@@ -364,6 +368,13 @@ public class AuthServiceImpl implements AuthService {
         if (talentOnboardingJustCompleted) {
             talentProfileRepository.findByUserId(user.getId())
                 .ifPresent(talentWelcomeEmailService::sendWelcomeEmail);
+        }
+
+        boolean employerOnboardingJustCompleted = previousEmployerOnboardingStatus != OnboardingStatus.COMPLETED
+            && user.getEmployerOnboardingStatus() == OnboardingStatus.COMPLETED;
+
+        if (employerOnboardingJustCompleted) {
+            eventPublisher.publishEvent(new EmployerOnboardingCompletedEvent(user));
         }
 
         return MeResponse.from(user);

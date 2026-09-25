@@ -5,6 +5,7 @@ import com.padimasso.autocasting.application.admin.mapper.AdminProposalMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminProposalSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminProposalService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
+import com.padimasso.autocasting.application.proposal.dto.response.ProposalAssociatedEntity;
 import com.padimasso.autocasting.application.proposal.dto.response.ProposalLinkResponse;
 import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
@@ -36,23 +37,33 @@ public class AdminProposalServiceImpl implements AdminProposalService {
     private final ProposalTypeHandlerRegistry proposalTypeHandlerRegistry;
 
     @Override
-    public PageResponse<AdminProposalRowResponse> listPendingProposals(int page, int size, String q, List<UUID> typeIds) {
+    public PageResponse<AdminProposalRowResponse> listProposals(
+        int page,
+        int size,
+        String q,
+        List<UUID> typeIds,
+        List<ProposalStatus> statuses
+    ) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
         var pageable = PageRequest.of(
             normalizedPage,
             normalizedSize,
-            Sort.by(Sort.Direction.DESC, "createdAt", "id")
+            Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
         );
 
-        var spec = AdminProposalSpecs.pendingOfTypes(typeIds).and(AdminProposalSpecs.fromSearchText(q));
+        var spec = AdminProposalSpecs.listable(typeIds, statuses).and(AdminProposalSpecs.fromSearchText(q));
         var result = proposalRepository.findAll(spec, pageable);
 
         Set<UUID> attachedIds = findAttachedIds(result.getContent().stream().map(ProposalEntity::getId).toList());
 
         var items = result.getContent().stream()
-            .map(proposal -> adminProposalMapper.toRowResponse(proposal, attachedIds.contains(proposal.getId())))
+            .map(proposal -> adminProposalMapper.toRowResponse(
+                proposal,
+                attachedIds.contains(proposal.getId()),
+                associatedEntities(proposal)
+            ))
             .toList();
 
         return adminProposalMapper.toPageResponse(items, result);
@@ -83,6 +94,11 @@ public class AdminProposalServiceImpl implements AdminProposalService {
             throw new IllegalStateException(PROPOSALS_NOT_PENDING);
         }
         return proposal;
+    }
+
+    private List<ProposalAssociatedEntity> associatedEntities(ProposalEntity proposal) {
+        if (proposal.getStatus() != ProposalStatus.CLAIMED) return List.of();
+        return proposalTypeHandlerRegistry.forProposal(proposal).associatedEntities(proposal);
     }
 
     private Set<UUID> findAttachedIds(List<UUID> proposalIds) {

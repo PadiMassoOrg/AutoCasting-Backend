@@ -159,10 +159,12 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
            and application_deadline is not null
            and application_deadline <= :today
            and casting_status_option_id in (:allowedStatusIds)
+           and employer_profile_id <> :excludedEmployerProfileId
         """, nativeQuery = true)
     List<CastingCloseTargetProjection> findExpiredCastingCloseTargets(
         @Param("today") LocalDate today,
-        @Param("allowedStatusIds") List<UUID> allowedStatusIds
+        @Param("allowedStatusIds") List<UUID> allowedStatusIds,
+        @Param("excludedEmployerProfileId") UUID excludedEmployerProfileId
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -174,11 +176,13 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
            and application_deadline is not null
            and application_deadline <= :today
            and casting_status_option_id in (:allowedStatusIds)
+           and employer_profile_id <> :excludedEmployerProfileId
         """, nativeQuery = true)
     int closeExpiredCastings(
         @Param("today") LocalDate today,
         @Param("closedStatusId") UUID closedStatusId,
-        @Param("allowedStatusIds") List<UUID> allowedStatusIds
+        @Param("allowedStatusIds") List<UUID> allowedStatusIds,
+        @Param("excludedEmployerProfileId") UUID excludedEmployerProfileId
     );
 
     long countByEmployerProfile_IdAndDeletedFalse(UUID employerProfileId);

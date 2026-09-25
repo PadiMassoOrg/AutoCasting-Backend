@@ -4,8 +4,10 @@ import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 public final class AdminProposalSpecs {
@@ -13,11 +15,21 @@ public final class AdminProposalSpecs {
     private AdminProposalSpecs() {
     }
 
-    public static Specification<ProposalEntity> pendingOfTypes(List<UUID> typeIds) {
-        Specification<ProposalEntity> spec = (root, query, cb) -> cb.and(
-            cb.isFalse(root.get("deleted")),
-            cb.equal(root.get("status"), ProposalStatus.PENDING)
-        );
+    private static final Set<ProposalStatus> LISTABLE_STATUSES = EnumSet.of(ProposalStatus.PENDING, ProposalStatus.CLAIMED);
+
+    public static Set<ProposalStatus> listableStatuses(List<ProposalStatus> requested) {
+        if (requested == null || requested.isEmpty()) return LISTABLE_STATUSES;
+
+        Set<ProposalStatus> statuses = EnumSet.noneOf(ProposalStatus.class);
+        requested.stream().filter(LISTABLE_STATUSES::contains).forEach(statuses::add);
+        return statuses;
+    }
+
+    public static Specification<ProposalEntity> listable(List<UUID> typeIds, List<ProposalStatus> statuses) {
+        Set<ProposalStatus> allowedStatuses = listableStatuses(statuses);
+        Specification<ProposalEntity> spec = (root, query, cb) -> allowedStatuses.isEmpty()
+            ? cb.disjunction()
+            : cb.and(cb.isFalse(root.get("deleted")), root.get("status").in(allowedStatuses));
 
         if (typeIds == null || typeIds.isEmpty()) return spec;
 

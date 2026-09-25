@@ -65,6 +65,12 @@ public class AppConstants {
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
     public static final String CASTING_ROLE_ROLES_URL = CASTING_ROLE_URL + "/roles";
+    // Proposals - Public
+    public static final String PROPOSALS_API_URL = BASE_API_URL + "/proposals";
+    public static final String PROPOSAL_API_URL = PROPOSALS_API_URL + "/{token}";
+    public static final String PROPOSAL_ATTACH_API_URL = PROPOSAL_API_URL + "/attach";
+    public static final String PROPOSAL_CLAIM_API_URL = PROPOSAL_API_URL + "/claim";
+    public static final String PROPOSAL_CLAIM_RESULT_API_URL = PROPOSAL_API_URL + "/claim-result";
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
     public static final String LEGAL_REQUIREMENTS_API_URL = BASE_API_URL + "/legal/requirements";

@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.mapper;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminProposalRowResponse;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
+import com.padimasso.autocasting.application.proposal.dto.response.ProposalAssociatedEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalProgress;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
@@ -13,16 +14,23 @@ import java.util.List;
 @Component
 public class AdminProposalMapper {
 
-    public AdminProposalRowResponse toRowResponse(ProposalEntity proposal, boolean hasAttachments) {
+    public AdminProposalRowResponse toRowResponse(
+        ProposalEntity proposal,
+        boolean hasAttachments,
+        List<ProposalAssociatedEntity> associated
+    ) {
         return new AdminProposalRowResponse(
             proposal.getId(),
             TalentProfileMapper.mapToSiteMetadataObject(proposal.getType()),
             proposal.getToken(),
-            ProposalProgress.of(proposal.getFirstOpenedAt(), hasAttachments),
+            ProposalProgress.of(proposal.getStatus(), proposal.getFirstOpenedAt(), hasAttachments),
             proposal.getContactName(),
             proposal.getContactEmail(),
             proposal.getContactWhatsapp(),
-            proposal.getModifiedAt()
+            proposal.getModifiedAt(),
+            proposal.getClaimedAt(),
+            proposal.getClaimedByUser() != null ? proposal.getClaimedByUser().getEmail() : null,
+            associated
         );
     }
 

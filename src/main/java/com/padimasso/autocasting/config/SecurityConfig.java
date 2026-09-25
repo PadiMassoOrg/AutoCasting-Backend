@@ -86,6 +86,10 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_DATABASE_API_URL).permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.CASTING_DETAILS_URL + "/*/roles/*").permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.CASTING_DETAILS_URL + "/*").permitAll()
+                    .requestMatchers(HttpMethod.POST, AppConstants.PROPOSALS_API_URL + "/*/attach").authenticated()
+                    .requestMatchers(HttpMethod.POST, AppConstants.PROPOSALS_API_URL + "/*/claim").authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.PROPOSALS_API_URL + "/*/claim-result").authenticated()
+                    .requestMatchers(HttpMethod.GET, AppConstants.PROPOSALS_API_URL + "/*").permitAll()
                     // Authenticated Shared Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.ME_API_URL).authenticated()
                     .requestMatchers(HttpMethod.PATCH, AppConstants.ONBOARDING_API_URL).authenticated()
