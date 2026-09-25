@@ -54,6 +54,7 @@ public class AppConstants {
     public static final String ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL = ADMIN_USERS_API_URL + "/bulk/welcome-email";
     public static final String ADMIN_HISTORY_API_URL = ADMIN_API_URL + "/history";
     public static final String ADMIN_HISTORY_ENTITY_API_URL = ADMIN_HISTORY_API_URL + "/{entityType}/{entityId}";
+    public static final String ADMIN_PROPOSALS_API_URL = ADMIN_API_URL + "/proposals";
     // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
