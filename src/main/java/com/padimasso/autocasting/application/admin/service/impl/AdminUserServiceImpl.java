@@ -70,10 +70,11 @@ public class AdminUserServiceImpl implements AdminUserService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        var spec = AdminUserSpecs.fromSearchText(q);
+        var searchSpec = AdminUserSpecs.fromSearchText(q);
+        var spec = searchSpec == null ? AdminUserSpecs.excludingSystemUsers() : searchSpec.and(AdminUserSpecs.excludingSystemUsers());
         if (notVisibleInCatalog) {
             var notVisibleSpec = AdminUserSpecs.notVisibleInTalentCatalog();
-            spec = spec == null ? notVisibleSpec : spec.and(notVisibleSpec);
+            spec = spec.and(notVisibleSpec);
         }
 
         var result = userRepository.findAllIncludingDeleted(spec, pageable);

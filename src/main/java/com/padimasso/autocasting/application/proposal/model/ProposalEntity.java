@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.proposal.model;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.ProposalTypeOptionEntity;
 import jakarta.persistence.*;
@@ -58,4 +59,8 @@ public class ProposalEntity extends AuditableEntity {
 
     @Column
     private LocalDateTime claimedAt;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "casting_id", unique = true)
+    private CastingEntity casting;
 }

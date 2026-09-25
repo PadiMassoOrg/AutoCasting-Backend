@@ -3,19 +3,23 @@ package com.padimasso.autocasting.application.admin.controller;
 import com.padimasso.autocasting.application.admin.dto.response.AdminProposalRowResponse;
 import com.padimasso.autocasting.application.admin.service.AdminProposalService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
+import com.padimasso.autocasting.application.proposal.type.casting.dto.request.CastingProposalCreateRequest;
+import com.padimasso.autocasting.application.proposal.type.casting.dto.response.CastingProposalCreatedResponse;
+import com.padimasso.autocasting.application.proposal.type.casting.service.CastingProposalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_PROPOSALS_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_PROPOSALS_CASTINGS_API_URL;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +27,7 @@ import static com.padimasso.autocasting.config.AppConstants.ADMIN_PROPOSALS_API_
 public class AdminProposalController {
 
     private final AdminProposalService adminProposalService;
+    private final CastingProposalService castingProposalService;
 
     @Operation(
         summary = "List pending proposals (paginated)",
@@ -39,5 +44,17 @@ public class AdminProposalController {
         @RequestParam(required = false, name = "typeId") List<UUID> typeIds
     ) {
         return adminProposalService.listPendingProposals(page, size, q, typeIds);
+    }
+
+    @Operation(
+        summary = "Create a Casting Proposal",
+        description = "Creates a complete casting (with its roles) owned by the proposals system employer, in DRAFT, "
+            + "plus a PENDING proposal with its link token. Incomplete castings or past deadlines are rejected and nothing is saved.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(ADMIN_PROPOSALS_CASTINGS_API_URL)
+    @ResponseStatus(HttpStatus.CREATED)
+    public CastingProposalCreatedResponse createCastingProposal(@Valid @RequestBody CastingProposalCreateRequest request) {
+        return castingProposalService.create(request);
     }
 }

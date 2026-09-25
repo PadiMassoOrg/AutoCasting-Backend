@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
+import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.applications.repository.CastingApplicationRepository;
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
@@ -83,7 +84,8 @@ class CastingServiceImplTest {
             castingStatusTransitionPolicy,
             castingApplicationRepository,
             castingMapper,
-            castingMediaCleanupService
+            castingMediaCleanupService,
+            new CastingDataApplier(siteMetadataResolver)
         );
 
         employerProfileId = UUID.randomUUID();

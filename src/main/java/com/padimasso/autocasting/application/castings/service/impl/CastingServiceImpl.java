@@ -10,16 +10,15 @@ import com.padimasso.autocasting.application.castings.dto.response.*;
 import com.padimasso.autocasting.application.castings.dto.response.card.CastingCardResponse;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
-import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.order.EmployerCastingsOrderBy;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.castings.service.CastingMediaCleanupService;
 import com.padimasso.autocasting.application.castings.service.CastingService;
+import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
+import com.padimasso.autocasting.application.castings.service.internal.CastingPublishability;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
-import com.padimasso.autocasting.application.shared.util.PayRateTypeSupport;
-import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
@@ -51,6 +50,7 @@ public class CastingServiceImpl implements CastingService {
     private final CastingApplicationRepository castingApplicationRepository;
     private final CastingMapper castingMapper;
     private final CastingMediaCleanupService castingMediaCleanupService;
+    private final CastingDataApplier castingDataApplier;
 
     @Override
     @Transactional
@@ -99,7 +99,7 @@ public class CastingServiceImpl implements CastingService {
             .status(draftStatus)
             .build();
 
-        applyCastingData(casting, request);
+        castingDataApplier.applyCastingData(casting, request);
 
         CastingEntity saved = castingRepository.save(casting);
         return toCastingResponse(saved);
@@ -114,7 +114,7 @@ public class CastingServiceImpl implements CastingService {
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
         assertDraftEditable(casting);
 
-        applyCastingData(casting, request);
+        castingDataApplier.applyCastingData(casting, request);
 
         CastingEntity saved = castingRepository.save(casting);
         return toCastingResponse(saved);
@@ -132,7 +132,7 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findByDefaultCodeAndEmployerProfile_IdAndDeletedFalse(slug.trim(), employerProfileId)
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
-        return castingMapper.toEmployerCastingEditorResponse(casting, isPublishable(casting));
+        return castingMapper.toEmployerCastingEditorResponse(casting, CastingPublishability.isPublishable(casting));
     }
 
     @Override
@@ -201,7 +201,7 @@ public class CastingServiceImpl implements CastingService {
                 castingStatusTransitionPolicy.allowedNextStatuses(
                     casting.getStatus() != null ? casting.getStatus().getStringCode() : null,
                     casting.getApplicationDeadline(),
-                    isPublishable(casting)
+                    CastingPublishability.isPublishable(casting)
                 )
             ))
             .toList();
@@ -351,7 +351,7 @@ public class CastingServiceImpl implements CastingService {
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         String currentStatusCode = casting.getStatus() != null ? casting.getStatus().getStringCode() : null;
-        boolean publishable = isPublishable(casting);
+        boolean publishable = CastingPublishability.isPublishable(casting);
 
         switch (targetStatusCode) {
             case CASTING_STATUS_PUBLISHED -> castingStatusTransitionPolicy.assertCanPublish(currentStatusCode, casting.getApplicationDeadline(), publishable);
@@ -387,60 +387,8 @@ public class CastingServiceImpl implements CastingService {
         return castingMapper.toCastingResponse(
             casting,
             castingMapper.toCastingEmployerInfoResponse(casting.getEmployerProfile(), totalCastings, memberSince),
-            isPublishable(casting)
+            CastingPublishability.isPublishable(casting)
         );
-    }
-
-    private void applyCastingData(CastingEntity casting, CastingUpsertRequest request) {
-        casting.setTitle(TextNormalizer.normalizeNullable(request.title()));
-        casting.setProjectType(request.projectTypeId() != null
-            ? siteMetadataResolver.resolveProjectTypeOrThrow(request.projectTypeId())
-            : null);
-        casting.setCastingModality(request.castingModalityId() != null
-            ? siteMetadataResolver.resolveCastingModalityOrThrow(request.castingModalityId())
-            : null);
-        casting.setLocationText(TextNormalizer.normalizeNullable(request.locationText()));
-        casting.setApplicationDeadline(request.applicationDeadline());
-        casting.setHasWardrobeFitting(request.hasWardrobeFitting());
-        casting.setWardrobeFittingText(Boolean.FALSE.equals(request.hasWardrobeFitting())
-            ? null
-            : TextNormalizer.normalizeNullable(request.wardrobeFittingText()));
-        casting.setShootingStartDate(request.shootingStartDate());
-        casting.setShootingEndDate(request.shootingEndDate());
-        casting.setDescription(TextNormalizer.normalizeNullable(request.description()));
-    }
-
-    private boolean isPublishable(CastingEntity casting) {
-        if (!hasCompleteBasicInfo(casting)) return false;
-        List<CastingRoleEntity> activeRoles = casting.getRoles() == null
-            ? List.of()
-            : casting.getRoles().stream().filter(role -> role != null && !role.isDeleted()).toList();
-        if (activeRoles.isEmpty()) return false;
-        return activeRoles.stream().allMatch(this::hasCompleteRole);
-    }
-
-    private boolean hasCompleteBasicInfo(CastingEntity casting) {
-        if (casting == null) return false;
-        if (casting.getTitle() == null || casting.getProjectType() == null || casting.getCastingModality() == null) return false;
-        if (casting.getApplicationDeadline() == null || casting.getHasWardrobeFitting() == null) return false;
-        if (casting.getShootingStartDate() == null || casting.getShootingEndDate() == null) return false;
-        if (CASTING_MODALITY_ON_SITE.equals(casting.getCastingModality().getStringCode()) && casting.getLocationText() == null) return false;
-        return !Boolean.TRUE.equals(casting.getHasWardrobeFitting()) || casting.getWardrobeFittingText() != null;
-    }
-
-    private boolean hasCompleteRole(CastingRoleEntity role) {
-        if (role == null) return false;
-        if (role.getRoleName() == null || role.getRoleType() == null || role.getGender() == null) return false;
-        if (role.getAgeMin() == null || role.getAgeMax() == null || role.getAgeMin() > role.getAgeMax()) return false;
-        if (role.getPayRateType() == null) return false;
-
-        boolean isUnpaidLike = PayRateTypeSupport.isUnpaidLike(role.getPayRateType().getStringCode());
-
-        if (isUnpaidLike) {
-            return true;
-        }
-
-        return role.getCurrency() != null && role.getAmount() != null && role.getAmount().signum() > 0;
     }
 
     private void assertDraftEditable(CastingEntity casting) {

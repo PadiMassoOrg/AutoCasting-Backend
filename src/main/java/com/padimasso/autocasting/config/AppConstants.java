@@ -1,5 +1,7 @@
 package com.padimasso.autocasting.config;
 
+import java.util.UUID;
+
 public class AppConstants {
 
     public static final String BASE_API_URL = "/api/v1";
@@ -55,6 +57,7 @@ public class AppConstants {
     public static final String ADMIN_HISTORY_API_URL = ADMIN_API_URL + "/history";
     public static final String ADMIN_HISTORY_ENTITY_API_URL = ADMIN_HISTORY_API_URL + "/{entityType}/{entityId}";
     public static final String ADMIN_PROPOSALS_API_URL = ADMIN_API_URL + "/proposals";
+    public static final String ADMIN_PROPOSALS_CASTINGS_API_URL = ADMIN_PROPOSALS_API_URL + "/castings";
     // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
@@ -86,6 +89,11 @@ public class AppConstants {
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
     public static final String PAY_RATE_TYPE_TO_BE_AGREED = "sitemetadata.pay_rate_type.to_be_agreed";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
+    // Proposals
+    public static final String PROPOSAL_TYPE_CASTING = "sitemetadata.proposal_type.casting";
+    // Technical owner of pending proposal content (seeded by V56__seed_proposals_system_owner.sql).
+    public static final UUID PROPOSALS_SYSTEM_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000a01");
+    public static final UUID PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID = UUID.fromString("00000000-0000-0000-0000-000000000a02");
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";
     public static final String CASTING_APPLICATION_STATUS_VIEWED = "sitemetadata.application_status.viewed";
