@@ -4,14 +4,14 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWe
 import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
-import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
-import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -100,11 +100,11 @@ public class AdminUserController {
 
     @Operation(
         summary = "Get user's talent profile by ID",
-        description = "Returns the talent profile details for administrative usage.",
+        description = "Returns the full talent profile for administrative usage, including catalog visibility, onboarding status and audit fields.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ADMIN_USER_TALENT_PROFILE_API_URL)
-    public PublicProfileResponse getTalentProfileForAdmin(
+    public AdminTalentProfileResponse getTalentProfileForAdmin(
         @Parameter(description = "User ID.") @PathVariable UUID userId
     ) {
         return adminUserService.getTalentProfileForAdmin(userId);
@@ -128,11 +128,11 @@ public class AdminUserController {
 
     @Operation(
         summary = "Get user's employer profile by ID",
-        description = "Returns the employer profile details for administrative usage.",
+        description = "Returns the full employer profile for administrative usage, including onboarding status and audit fields.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @GetMapping(ADMIN_USER_EMPLOYER_PROFILE_API_URL)
-    public EmployerProfileResponse getEmployerProfileForAdmin(
+    public AdminEmployerProfileResponse getEmployerProfileForAdmin(
         @Parameter(description = "User ID.") @PathVariable UUID userId
     ) {
         return adminUserService.getEmployerProfileForAdmin(userId);

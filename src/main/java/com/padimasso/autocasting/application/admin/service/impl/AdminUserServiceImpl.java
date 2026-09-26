@@ -6,8 +6,11 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaS
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
+import com.padimasso.autocasting.application.admin.mapper.AdminProfileMapper;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
@@ -15,13 +18,9 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.common.model.EntityType;
-import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
-import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
-import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
-import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
@@ -51,12 +50,11 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
-    private final TalentProfileMapper talentProfileMapper;
     private final MediaRepository mediaRepository;
     private final MediaStorageService mediaStorageService;
     private final EmployerProfileRepository employerProfileRepository;
-    private final EmployerProfileMapper employerProfileMapper;
     private final AdminUserMapper adminUserMapper;
+    private final AdminProfileMapper adminProfileMapper;
     private final HistoryService historyService;
     private final TalentWelcomeEmailService talentWelcomeEmailService;
 
@@ -190,11 +188,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public PublicProfileResponse getTalentProfileForAdmin(UUID userId) {
+    public AdminTalentProfileResponse getTalentProfileForAdmin(UUID userId) {
+        findManageableUserOrThrow(userId);
         var profile = talentProfileRepository.findTalentProfileForAdminByUserId(userId)
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
-        return talentProfileMapper.toPublicProfileResponse(profile);
+        return adminProfileMapper.toTalentProfileResponse(profile);
     }
 
     @Override
@@ -250,11 +249,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public EmployerProfileResponse getEmployerProfileForAdmin(UUID userId) {
+    public AdminEmployerProfileResponse getEmployerProfileForAdmin(UUID userId) {
+        findManageableUserOrThrow(userId);
         var profile = employerProfileRepository.findEmployerProfileForAdminByUserId(userId)
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
-        return employerProfileMapper.toProfileResponse(profile, profile.getUser());
+        return adminProfileMapper.toEmployerProfileResponse(profile);
     }
 
     @Override
