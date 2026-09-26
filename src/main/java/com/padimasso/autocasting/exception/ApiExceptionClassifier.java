@@ -39,6 +39,8 @@ public class ApiExceptionClassifier {
     private static final Set<String> INTERNAL_EXACT_KEYS = Set.of(
         AUTH_INVALID_PLAN,
         AUTH_INVALID_ROLE,
+        PROPOSALS_TYPE_NOT_FOUND,
+        PROPOSALS_SYSTEM_OWNER_MISSING,
         "mail.send_failed",
         "legal.hash_generation_failed"
     );

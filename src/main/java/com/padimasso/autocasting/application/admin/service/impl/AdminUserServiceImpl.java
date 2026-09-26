@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
+import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_USER_ID;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.ADMIN_USER_UPDATE_NO_CHANGES;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_IDS_REQUIRED;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_INVALID_PARAMETER;
@@ -70,10 +71,11 @@ public class AdminUserServiceImpl implements AdminUserService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        var spec = AdminUserSpecs.fromSearchText(q);
+        var searchSpec = AdminUserSpecs.fromSearchText(q);
+        var spec = searchSpec == null ? AdminUserSpecs.excludingSystemUsers() : searchSpec.and(AdminUserSpecs.excludingSystemUsers());
         if (notVisibleInCatalog) {
             var notVisibleSpec = AdminUserSpecs.notVisibleInTalentCatalog();
-            spec = spec == null ? notVisibleSpec : spec.and(notVisibleSpec);
+            spec = spec.and(notVisibleSpec);
         }
 
         var result = userRepository.findAllIncludingDeleted(spec, pageable);
@@ -124,8 +126,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public AdminUserDetailResponse getUserDetail(UUID userId) {
-        var user = userRepository.findByIdIncludingDeleted(userId)
-            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+        var user = findManageableUserOrThrow(userId);
 
         return adminUserMapper.toDetailResponse(user);
     }
@@ -133,8 +134,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     @Transactional
     public AdminUserDetailResponse updateUserDetail(UUID userId, AdminUserUpdateRequest request) {
-        var user = userRepository.findByIdIncludingDeleted(userId)
-            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+        var user = findManageableUserOrThrow(userId);
 
         var nextEmail = request.email().trim();
         var nextActiveMode = request.activeMode();
@@ -175,8 +175,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     @Transactional
     public void updateSuspension(UUID userId, AdminUserSuspensionRequest request) {
-        var user = userRepository.findByIdIncludingDeleted(userId)
-            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
+        var user = findManageableUserOrThrow(userId);
 
         var previousSuspended = user.isSuspended();
 
@@ -292,5 +291,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         return new AdminBulkTalentWelcomeEmailResultResponse(sentCount, failures.size(), failures);
+    }
+
+    private UserEntity findManageableUserOrThrow(UUID userId) {
+        return userRepository.findByIdIncludingDeleted(userId)
+            .filter(user -> !PROPOSALS_SYSTEM_USER_ID.equals(user.getId()))
+            .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
     }
 }

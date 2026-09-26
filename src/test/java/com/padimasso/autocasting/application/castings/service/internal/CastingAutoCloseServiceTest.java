@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_CLOSED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PAUSED;
@@ -80,9 +81,9 @@ class CastingAutoCloseServiceTest {
         UUID castingId2 = UUID.randomUUID();
         UUID employerId2 = UUID.randomUUID();
 
-        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList()))
+        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID)))
             .thenReturn(List.of(target(castingId1, employerId1), target(castingId2, employerId2)));
-        when(castingRepository.closeExpiredCastings(eq(today), eq(closedStatusId), anyList())).thenReturn(2);
+        when(castingRepository.closeExpiredCastings(eq(today), eq(closedStatusId), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID))).thenReturn(2);
 
         int closedCount = service.closeExpiredCastings(today);
 
@@ -93,8 +94,8 @@ class CastingAutoCloseServiceTest {
 
     @Test
     void closeExpiredCastings_noExpiredCastings_doesNotCallCleanup() {
-        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList())).thenReturn(List.of());
-        when(castingRepository.closeExpiredCastings(eq(today), eq(closedStatusId), anyList())).thenReturn(0);
+        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID))).thenReturn(List.of());
+        when(castingRepository.closeExpiredCastings(eq(today), eq(closedStatusId), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID))).thenReturn(0);
 
         int closedCount = service.closeExpiredCastings(today);
 
@@ -109,9 +110,9 @@ class CastingAutoCloseServiceTest {
         UUID castingId2 = UUID.randomUUID();
         UUID employerId2 = UUID.randomUUID();
 
-        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList()))
+        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID)))
             .thenReturn(List.of(target(castingId1, employerId1), target(castingId2, employerId2)));
-        when(castingRepository.closeExpiredCastings(eq(today), eq(closedStatusId), anyList())).thenReturn(2);
+        when(castingRepository.closeExpiredCastings(eq(today), eq(closedStatusId), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID))).thenReturn(2);
         doThrow(new RuntimeException("supabase down"))
             .when(castingMediaCleanupService).deleteCastingFolder(employerId1, castingId1);
 

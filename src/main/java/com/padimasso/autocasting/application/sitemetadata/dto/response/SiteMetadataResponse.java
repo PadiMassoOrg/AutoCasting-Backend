@@ -27,6 +27,7 @@ public record SiteMetadataResponse(
     List<SiteMetadataObject> payRateTypeOptions,
     List<SiteMetadataObject> projectTypeOptions,
     List<SiteMetadataObject> roleTypeOptions,
-    List<SiteMetadataObject> castingApplicationStatusOptions
+    List<SiteMetadataObject> castingApplicationStatusOptions,
+    List<SiteMetadataObject> proposalTypeOptions
 ) {
 }

@@ -5,13 +5,18 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Locale;
 
+import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID;
+
 public final class AdminCastingSpecs {
 
     private AdminCastingSpecs() {
     }
 
     public static Specification<CastingEntity> fromSearchText(String q) {
-        Specification<CastingEntity> spec = (root, query, cb) -> cb.isFalse(root.get("deleted"));
+        Specification<CastingEntity> spec = (root, query, cb) -> cb.and(
+            cb.isFalse(root.get("deleted")),
+            cb.notEqual(root.get("employerProfile").get("id"), PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID)
+        );
 
         if (q == null || q.isBlank()) return spec;
 

@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Locale;
 
+import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_USER_ID;
+
 public final class AdminUserSpecs {
 
     private AdminUserSpecs() {
@@ -89,6 +91,10 @@ public final class AdminUserSpecs {
 
             return cb.and(cb.exists(talentExists), cb.not(cb.exists(visible)));
         };
+    }
+
+    public static Specification<UserEntity> excludingSystemUsers() {
+        return (root, query, cb) -> cb.notEqual(root.get("id"), PROPOSALS_SYSTEM_USER_ID);
     }
 
     private static Specification<UserEntity> or(Specification<UserEntity> base, Specification<UserEntity> next) {

@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
+import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
@@ -58,7 +59,8 @@ class CastingRoleServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new CastingRoleServiceImpl(
-            castingRoleRepository, castingRepository, siteMetadataResolver, castingMapper, mediaStorageService
+            castingRoleRepository, castingRepository, castingMapper, mediaStorageService,
+            new CastingDataApplier(siteMetadataResolver)
         );
 
         castingId = UUID.randomUUID();

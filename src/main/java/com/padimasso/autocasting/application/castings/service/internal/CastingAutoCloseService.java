@@ -17,6 +17,7 @@ import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_CLOSE
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PAUSED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PUBLISHED;
+import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +41,14 @@ public class CastingAutoCloseService {
         // hook to trigger Supabase cleanup from). Same WHERE clause as the UPDATE, so the two
         // queries always agree on which rows match.
         List<CastingCloseTargetProjection> closeTargets =
-            castingRepository.findExpiredCastingCloseTargets(today, allowedStatusIds);
+            castingRepository.findExpiredCastingCloseTargets(today, allowedStatusIds, PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID);
 
-        int closedCount = castingRepository.closeExpiredCastings(today, closed.getId(), allowedStatusIds);
+        int closedCount = castingRepository.closeExpiredCastings(
+            today,
+            closed.getId(),
+            allowedStatusIds,
+            PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID
+        );
 
         for (CastingCloseTargetProjection target : closeTargets) {
             try {

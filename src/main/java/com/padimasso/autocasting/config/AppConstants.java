@@ -1,5 +1,7 @@
 package com.padimasso.autocasting.config;
 
+import java.util.UUID;
+
 public class AppConstants {
 
     public static final String BASE_API_URL = "/api/v1";
@@ -54,10 +56,21 @@ public class AppConstants {
     public static final String ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL = ADMIN_USERS_API_URL + "/bulk/welcome-email";
     public static final String ADMIN_HISTORY_API_URL = ADMIN_API_URL + "/history";
     public static final String ADMIN_HISTORY_ENTITY_API_URL = ADMIN_HISTORY_API_URL + "/{entityType}/{entityId}";
+    public static final String ADMIN_PROPOSALS_API_URL = ADMIN_API_URL + "/proposals";
+    public static final String ADMIN_PROPOSAL_API_URL = ADMIN_PROPOSALS_API_URL + "/{proposalId}";
+    public static final String ADMIN_PROPOSAL_REGENERATE_LINK_API_URL = ADMIN_PROPOSAL_API_URL + "/regenerate-link";
+    public static final String ADMIN_PROPOSALS_CASTINGS_API_URL = ADMIN_PROPOSALS_API_URL + "/castings";
+    public static final String ADMIN_PROPOSAL_CASTING_API_URL = ADMIN_PROPOSALS_CASTINGS_API_URL + "/{proposalId}";
     // Casting - Public and Employer
     public static final String CASTING_DETAILS_URL = BASE_API_URL + "/casting";
     public static final String CASTING_ROLE_URL = CASTING_DETAILS_URL + "/role";
     public static final String CASTING_ROLE_ROLES_URL = CASTING_ROLE_URL + "/roles";
+    // Proposals - Public
+    public static final String PROPOSALS_API_URL = BASE_API_URL + "/proposals";
+    public static final String PROPOSAL_API_URL = PROPOSALS_API_URL + "/{token}";
+    public static final String PROPOSAL_ATTACH_API_URL = PROPOSAL_API_URL + "/attach";
+    public static final String PROPOSAL_CLAIM_API_URL = PROPOSAL_API_URL + "/claim";
+    public static final String PROPOSAL_CLAIM_RESULT_API_URL = PROPOSAL_API_URL + "/claim-result";
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
     public static final String LEGAL_REQUIREMENTS_API_URL = BASE_API_URL + "/legal/requirements";
@@ -85,6 +98,10 @@ public class AppConstants {
     public static final String PAY_RATE_TYPE_UNPAID = "sitemetadata.pay_rate_type.unpaid";
     public static final String PAY_RATE_TYPE_TO_BE_AGREED = "sitemetadata.pay_rate_type.to_be_agreed";
     public static final String CURRENCY_ARS = "sitemetadata.currency.ars";
+    // Proposals
+    public static final String PROPOSAL_TYPE_CASTING = "sitemetadata.proposal_type.casting";
+    public static final UUID PROPOSALS_SYSTEM_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000a01");
+    public static final UUID PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID = UUID.fromString("00000000-0000-0000-0000-000000000a02");
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";
     public static final String CASTING_APPLICATION_STATUS_VIEWED = "sitemetadata.application_status.viewed";
