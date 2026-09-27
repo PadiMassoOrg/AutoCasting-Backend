@@ -1,6 +1,7 @@
 package com.padimasso.autocasting.application.admin.controller;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminProposalRowResponse;
+import com.padimasso.autocasting.application.admin.repository.order.AdminProposalsOrderBy;
 import com.padimasso.autocasting.application.admin.service.AdminProposalService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.proposal.dto.response.ProposalLinkResponse;
@@ -50,9 +51,11 @@ public class AdminProposalController {
         @Parameter(description = "Proposal type option IDs (sitemetadata proposalTypeOptions). When omitted, proposals of every type are returned.")
         @RequestParam(required = false, name = "typeId") List<UUID> typeIds,
         @Parameter(description = "Statuses to include (PENDING, CLAIMED). When omitted, both are returned. REVOKED is never listed.")
-        @RequestParam(required = false, name = "status") List<ProposalStatus> statuses
+        @RequestParam(required = false, name = "status") List<ProposalStatus> statuses,
+        @Parameter(description = "Sort order by last modification date.")
+        @RequestParam(defaultValue = "MODIFIED_DATE_DESC") AdminProposalsOrderBy orderBy
     ) {
-        return adminProposalService.listProposals(page, size, q, typeIds, statuses);
+        return adminProposalService.listProposals(page, size, q, typeIds, statuses, orderBy);
     }
 
     @Operation(

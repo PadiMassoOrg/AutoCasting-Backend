@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 
 // The "Último guardado" timestamp the talent sees in their Frontend dashboard: the latest change
-// across the profile and every section they can edit.
+// across the profile and every section they can edit. The admin_user_activity view (V57) computes
+// the same value in SQL for the admin users list — keep both in sync.
 public final class TalentProfileLastSaved {
 
     private TalentProfileLastSaved() {

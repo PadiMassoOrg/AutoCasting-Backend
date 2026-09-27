@@ -10,6 +10,7 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailR
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
+import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,9 +56,11 @@ public class AdminUserController {
         @Parameter(description = "Free text search over email, employer company name and talent stage name.")
         @RequestParam(required = false) String q,
         @Parameter(description = "When true, only returns talents whose profile is not visible in the public catalog (e.g. missing required photos, suspended, or deleted).")
-        @RequestParam(defaultValue = "false") boolean notVisibleInCatalog
+        @RequestParam(defaultValue = "false") boolean notVisibleInCatalog,
+        @Parameter(description = "Sort order. Name and last-saved orders place users without a value last.")
+        @RequestParam(defaultValue = "CREATION_DATE_DESC") AdminUsersOrderBy orderBy
     ) {
-        return adminUserService.listUsers(page, size, q, notVisibleInCatalog);
+        return adminUserService.listUsers(page, size, q, notVisibleInCatalog, orderBy);
     }
 
     @Operation(

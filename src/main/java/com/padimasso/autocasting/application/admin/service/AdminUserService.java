@@ -10,12 +10,13 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentW
 import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
+import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 
 import java.util.UUID;
 
 public interface AdminUserService {
-    PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog);
+    PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog, AdminUsersOrderBy orderBy);
 
     AdminUserDetailResponse getUserDetail(UUID userId);
 

@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerPro
 import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminProfileMapper;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
+import com.padimasso.autocasting.application.admin.repository.AdminUserActivityRepository;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
@@ -11,7 +12,6 @@ import com.padimasso.autocasting.application.employer.repository.EmployerProfile
 import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
-import com.padimasso.autocasting.application.talent.repository.ProfileSocialMediaLinkRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
@@ -48,7 +48,7 @@ class AdminUserServiceImplProfileReadTest {
     @Mock
     private EmployerProfileRepository employerProfileRepository;
     @Mock
-    private ProfileSocialMediaLinkRepository socialMediaLinkRepository;
+    private AdminUserActivityRepository adminUserActivityRepository;
     @Mock
     private AdminUserMapper adminUserMapper;
     @Mock
@@ -71,7 +71,7 @@ class AdminUserServiceImplProfileReadTest {
             mediaRepository,
             mediaStorageService,
             employerProfileRepository,
-            socialMediaLinkRepository,
+            adminUserActivityRepository,
             adminUserMapper,
             adminProfileMapper,
             historyService,

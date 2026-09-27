@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,22 +30,6 @@ public interface ProfileSocialMediaLinkRepository
           and l.deleted = false
         """)
     List<ProfileSocialMediaLinkEntity> findAllByEmployerBasicInfoId(UUID employerBasicInfoId);
-
-    @Query("""
-        select l
-        from ProfileSocialMediaLinkEntity l
-        where l.talentProfile.id in :talentProfileIds
-          and l.deleted = false
-        """)
-    List<ProfileSocialMediaLinkEntity> findAllByTalentProfileIdIn(Collection<UUID> talentProfileIds);
-
-    @Query("""
-        select l
-        from ProfileSocialMediaLinkEntity l
-        where l.employerBasicInfo.id in :employerBasicInfoIds
-          and l.deleted = false
-        """)
-    List<ProfileSocialMediaLinkEntity> findAllByEmployerBasicInfoIdIn(Collection<UUID> employerBasicInfoIds);
 
     default Optional<ProfileSocialMediaLinkEntity> findIncludingDeletedByTalentProfileIdAndOptionId(
         UUID talentProfileId,

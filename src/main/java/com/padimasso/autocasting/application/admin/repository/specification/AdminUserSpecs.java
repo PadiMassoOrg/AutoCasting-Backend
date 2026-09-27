@@ -1,10 +1,15 @@
 package com.padimasso.autocasting.application.admin.repository.specification;
 
+import com.padimasso.autocasting.application.admin.model.AdminUserActivityEntity;
+import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.specification.TalentProfileSpecs;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;
+import org.hibernate.query.criteria.JpaRoot;
+import org.hibernate.query.sqm.tree.SqmJoinType;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Locale;
@@ -91,6 +96,36 @@ public final class AdminUserSpecs {
 
             return cb.and(cb.exists(talentExists), cb.not(cb.exists(visible)));
         };
+    }
+
+    // Sorts by a column of the admin_user_activity view, nulls last in both directions, then newest
+    // user first. Skipped on count queries, where ordering is not allowed.
+    public static Specification<UserEntity> orderByActivity(AdminUsersOrderBy orderBy) {
+        return (root, query, cb) -> {
+            if (!orderBy.isActivityOrder() || isCountQuery(query.getResultType())) {
+                return cb.conjunction();
+            }
+
+            var activity = ((JpaRoot<UserEntity>) root).join(AdminUserActivityEntity.class, SqmJoinType.LEFT);
+            activity.on(cb.equal(activity.get("userId"), root.get("id")));
+
+            var column = orderBy.activityColumn();
+            Expression<?> value = column.isText()
+                ? cb.lower(activity.<String>get(column.attribute()))
+                : activity.get(column.attribute());
+
+            query.orderBy(
+                cb.asc(cb.selectCase().when(cb.isNull(value), 1).otherwise(0)),
+                orderBy.isAscending() ? cb.asc(value) : cb.desc(value),
+                cb.desc(root.get("createdAt")),
+                cb.desc(root.get("id"))
+            );
+            return cb.conjunction();
+        };
+    }
+
+    private static boolean isCountQuery(Class<?> resultType) {
+        return Long.class.equals(resultType) || long.class.equals(resultType);
     }
 
     public static Specification<UserEntity> excludingSystemUsers() {
