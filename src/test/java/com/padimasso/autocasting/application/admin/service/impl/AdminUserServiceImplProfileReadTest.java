@@ -11,6 +11,7 @@ import com.padimasso.autocasting.application.employer.repository.EmployerProfile
 import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
+import com.padimasso.autocasting.application.talent.repository.ProfileSocialMediaLinkRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
@@ -47,6 +48,8 @@ class AdminUserServiceImplProfileReadTest {
     @Mock
     private EmployerProfileRepository employerProfileRepository;
     @Mock
+    private ProfileSocialMediaLinkRepository socialMediaLinkRepository;
+    @Mock
     private AdminUserMapper adminUserMapper;
     @Mock
     private AdminProfileMapper adminProfileMapper;
@@ -68,6 +71,7 @@ class AdminUserServiceImplProfileReadTest {
             mediaRepository,
             mediaStorageService,
             employerProfileRepository,
+            socialMediaLinkRepository,
             adminUserMapper,
             adminProfileMapper,
             historyService,

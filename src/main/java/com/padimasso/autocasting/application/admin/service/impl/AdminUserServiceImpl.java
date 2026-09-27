@@ -18,15 +18,22 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.common.model.EntityType;
+import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
+import com.padimasso.autocasting.application.employer.util.EmployerProfileLastSaved;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
+import com.padimasso.autocasting.application.talent.model.ProfileSocialMediaLinkEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
+import com.padimasso.autocasting.application.shared.util.LatestModifiedAt;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
+import com.padimasso.autocasting.application.talent.repository.ProfileSocialMediaLinkRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility;
+import com.padimasso.autocasting.application.talent.util.TalentProfileLastSaved;
 import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -34,7 +41,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_USER_ID;
@@ -53,6 +62,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final MediaRepository mediaRepository;
     private final MediaStorageService mediaStorageService;
     private final EmployerProfileRepository employerProfileRepository;
+    private final ProfileSocialMediaLinkRepository socialMediaLinkRepository;
     private final AdminUserMapper adminUserMapper;
     private final AdminProfileMapper adminProfileMapper;
     private final HistoryService historyService;
@@ -81,15 +91,20 @@ public class AdminUserServiceImpl implements AdminUserService {
         List<UserEntity> users = result.getContent();
         List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
 
+        List<EmployerProfileEntity> employerProfiles = userIds.isEmpty()
+            ? List.of()
+            : employerProfileRepository.findAllByUserIdInForAdmin(userIds);
+        List<TalentProfileEntity> talentProfiles = userIds.isEmpty()
+            ? List.of()
+            : talentProfileRepository.findAllWithSectionsByUserIdInForAdmin(userIds);
+
         Map<UUID, String> employerCompanyNames = new HashMap<>();
-        if (!userIds.isEmpty()) {
-            employerProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
-                var basicInfo = profile.getBasicInfo();
-                if (basicInfo != null && basicInfo.getCompanyName() != null) {
-                    employerCompanyNames.put(profile.getUser().getId(), basicInfo.getCompanyName());
-                }
-            });
-        }
+        employerProfiles.forEach(profile -> {
+            var basicInfo = profile.getBasicInfo();
+            if (basicInfo != null && basicInfo.getCompanyName() != null) {
+                employerCompanyNames.put(profile.getUser().getId(), basicInfo.getCompanyName());
+            }
+        });
 
         Map<UUID, String> talentStageNames = new HashMap<>();
         // A talent profile always has a slug (generated on creation) regardless of catalog
@@ -97,25 +112,26 @@ public class AdminUserServiceImpl implements AdminUserService {
         // when isVisibleInTalentCatalog is true, so the response's null/non-null here reflects
         // catalog visibility, not slug existence.
         Map<UUID, String> talentPublicSlugs = new HashMap<>();
-        if (!userIds.isEmpty()) {
-            talentProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
-                var userId = profile.getUser().getId();
-                var basicInfo = profile.getBasicInfo();
-                if (basicInfo != null && basicInfo.getStageName() != null) {
-                    talentStageNames.put(userId, basicInfo.getStageName());
-                }
-                if (TalentCatalogVisibility.isVisibleInCatalog(profile)) {
-                    talentPublicSlugs.put(userId, profile.getPublicSlug());
-                }
-            });
-        }
+        talentProfiles.forEach(profile -> {
+            var userId = profile.getUser().getId();
+            var basicInfo = profile.getBasicInfo();
+            if (basicInfo != null && basicInfo.getStageName() != null) {
+                talentStageNames.put(userId, basicInfo.getStageName());
+            }
+            if (TalentCatalogVisibility.isVisibleInCatalog(profile)) {
+                talentPublicSlugs.put(userId, profile.getPublicSlug());
+            }
+        });
+
+        Map<UUID, LocalDateTime> lastSavedAt = resolveLastSavedAtByUserId(talentProfiles, employerProfiles);
 
         var items = users.stream()
             .map(user -> adminUserMapper.toRowResponse(
                 user,
                 employerCompanyNames.get(user.getId()),
                 talentStageNames.get(user.getId()),
-                talentPublicSlugs.get(user.getId())
+                talentPublicSlugs.get(user.getId()),
+                lastSavedAt.get(user.getId())
             ))
             .toList();
 
@@ -291,6 +307,51 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         return new AdminBulkTalentWelcomeEmailResultResponse(sentCount, failures.size(), failures);
+    }
+
+    private Map<UUID, LocalDateTime> resolveLastSavedAtByUserId(
+        List<TalentProfileEntity> talentProfiles,
+        List<EmployerProfileEntity> employerProfiles
+    ) {
+        Map<UUID, LocalDateTime> lastSavedAt = new HashMap<>();
+
+        if (!talentProfiles.isEmpty()) {
+            var talentProfileIds = talentProfiles.stream().map(TalentProfileEntity::getId).toList();
+            var linksByProfileId = socialMediaLinkRepository.findAllByTalentProfileIdIn(talentProfileIds).stream()
+                .collect(Collectors.groupingBy(link -> link.getTalentProfile().getId()));
+            talentProfiles.forEach(profile -> mergeLatest(
+                lastSavedAt,
+                profile.getUser().getId(),
+                TalentProfileLastSaved.of(profile, linksByProfileId.getOrDefault(profile.getId(), List.of()))
+            ));
+        }
+
+        if (!employerProfiles.isEmpty()) {
+            var basicInfoIds = employerProfiles.stream()
+                .map(EmployerProfileEntity::getBasicInfo)
+                .filter(Objects::nonNull)
+                .map(EmployerBasicInfoEntity::getId)
+                .toList();
+            var linksByBasicInfoId = basicInfoIds.isEmpty()
+                ? Map.<UUID, List<ProfileSocialMediaLinkEntity>>of()
+                : socialMediaLinkRepository.findAllByEmployerBasicInfoIdIn(basicInfoIds).stream()
+                    .collect(Collectors.groupingBy(link -> link.getEmployerBasicInfo().getId()));
+            employerProfiles.forEach(profile -> {
+                var basicInfo = profile.getBasicInfo();
+                List<ProfileSocialMediaLinkEntity> links = basicInfo != null
+                    ? linksByBasicInfoId.getOrDefault(basicInfo.getId(), List.of())
+                    : List.of();
+                mergeLatest(lastSavedAt, profile.getUser().getId(), EmployerProfileLastSaved.of(profile, links));
+            });
+        }
+
+        return lastSavedAt;
+    }
+
+    private static void mergeLatest(Map<UUID, LocalDateTime> target, UUID userId, LocalDateTime value) {
+        if (value != null) {
+            target.merge(userId, value, LatestModifiedAt::of);
+        }
     }
 
     private UserEntity findManageableUserOrThrow(UUID userId) {

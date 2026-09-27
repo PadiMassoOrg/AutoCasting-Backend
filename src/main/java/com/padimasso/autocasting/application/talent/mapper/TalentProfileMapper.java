@@ -1,11 +1,13 @@
 package com.padimasso.autocasting.application.talent.mapper;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.shared.util.LatestModifiedAt;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
 import com.padimasso.autocasting.application.sitemetadata.model.SiteMetadataBase;
 import com.padimasso.autocasting.application.talent.dto.response.*;
 import com.padimasso.autocasting.application.talent.model.*;
 import com.padimasso.autocasting.application.talent.repository.ProfileSocialMediaLinkRepository;
+import com.padimasso.autocasting.application.talent.util.TalentProfileLastSaved;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,13 +34,13 @@ public class TalentProfileMapper {
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
-            toSocialMediaResponse(links, maxModifiedAt(profile.getModifiedAt(), maxLinksModifiedAt(links))),
+            toSocialMediaResponse(links, LatestModifiedAt.of(profile.getModifiedAt(), LatestModifiedAt.ofEntities(links))),
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
             profile.getCredits().stream().map(this::toCreditResponse).collect(Collectors.toSet()),
             profile.getEducation().stream().map(this::toEducationResponse).collect(Collectors.toSet()),
-            resolveProfileModifiedAt(profile, links)
+            TalentProfileLastSaved.of(profile, links)
         );
     }
 
@@ -53,7 +55,7 @@ public class TalentProfileMapper {
             profile.getPublicSlug(),
             toBasicInfoResponse(profile.getBasicInfo()),
             toContactResponse(profile.getContact()),
-            toSocialMediaResponse(links, maxModifiedAt(profile.getModifiedAt(), maxLinksModifiedAt(links))),
+            toSocialMediaResponse(links, LatestModifiedAt.of(profile.getModifiedAt(), LatestModifiedAt.ofEntities(links))),
             toMediaResponse(profile.getMedia()),
             toCharacteristicsResponse(profile.getCharacteristics()),
             mapToSiteMetadataObjectList(profile.getSkills()),
@@ -148,7 +150,7 @@ public class TalentProfileMapper {
     }
 
     public static SocialMediaResponse toSocialMediaResponse(List<ProfileSocialMediaLinkEntity> links) {
-        return toSocialMediaResponse(links, maxLinksModifiedAt(links));
+        return toSocialMediaResponse(links, LatestModifiedAt.ofEntities(links));
     }
 
     public static SocialMediaResponse toSocialMediaResponse(
@@ -175,63 +177,5 @@ public class TalentProfileMapper {
             entity.getProfessions().stream().map(TalentProfileMapper::mapToSiteMetadataObject).toList(),
             entity.getModifiedAt()
         );
-    }
-
-    private LocalDateTime resolveProfileModifiedAt(
-        TalentProfileEntity profile,
-        List<ProfileSocialMediaLinkEntity> links
-    ) {
-        LocalDateTime modifiedAt = maxModifiedAt(
-            profile.getModifiedAt(),
-            profile.getBasicInfo() != null ? profile.getBasicInfo().getModifiedAt() : null,
-            profile.getContact() != null ? profile.getContact().getModifiedAt() : null,
-            profile.getMedia() != null ? profile.getMedia().getModifiedAt() : null,
-            profile.getCharacteristics() != null ? profile.getCharacteristics().getModifiedAt() : null
-        );
-
-        if (profile.getCredits() != null) {
-            for (CreditEntity credit : profile.getCredits()) {
-                modifiedAt = maxModifiedAt(modifiedAt, credit.getModifiedAt());
-            }
-        }
-
-        if (profile.getEducation() != null) {
-            for (EducationEntity education : profile.getEducation()) {
-                modifiedAt = maxModifiedAt(modifiedAt, education.getModifiedAt());
-            }
-        }
-
-        if (links != null) {
-            for (ProfileSocialMediaLinkEntity link : links) {
-                modifiedAt = maxModifiedAt(modifiedAt, link.getModifiedAt());
-            }
-        }
-
-        return modifiedAt;
-    }
-
-    private LocalDateTime maxModifiedAt(LocalDateTime... values) {
-        return maxModifiedAtValues(values);
-    }
-
-    private static LocalDateTime maxLinksModifiedAt(List<ProfileSocialMediaLinkEntity> links) {
-        if (links == null) return null;
-        LocalDateTime max = null;
-        for (ProfileSocialMediaLinkEntity link : links) {
-            if (link != null) {
-                max = maxModifiedAtValues(max, link.getModifiedAt());
-            }
-        }
-        return max;
-    }
-
-    private static LocalDateTime maxModifiedAtValues(LocalDateTime... values) {
-        LocalDateTime max = null;
-        for (LocalDateTime value : values) {
-            if (value != null && (max == null || value.isAfter(max))) {
-                max = value;
-            }
-        }
-        return max;
     }
 }
