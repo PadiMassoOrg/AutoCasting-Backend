@@ -157,7 +157,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
           from casting
          where deleted = false
            and application_deadline is not null
-           and application_deadline <= :today
+           and application_deadline < :today
            and casting_status_option_id in (:allowedStatusIds)
            and employer_profile_id <> :excludedEmployerProfileId
         """, nativeQuery = true)
@@ -174,7 +174,7 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
                modified_at = CURRENT_TIMESTAMP
          where deleted = false
            and application_deadline is not null
-           and application_deadline <= :today
+           and application_deadline < :today
            and casting_status_option_id in (:allowedStatusIds)
            and employer_profile_id <> :excludedEmployerProfileId
         """, nativeQuery = true)

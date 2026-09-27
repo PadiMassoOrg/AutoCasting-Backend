@@ -19,6 +19,8 @@ import com.padimasso.autocasting.application.castings.service.CastingService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.castings.service.internal.CastingPublishability;
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
+import com.padimasso.autocasting.application.castings.util.CastingAvailability;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
@@ -210,7 +212,8 @@ public class CastingServiceImpl implements CastingService {
     @Override
     @Transactional
     public void deleteCasting(UUID castingId) {
-        CastingEntity casting = castingRepository.findByIdAndDeletedFalse(castingId)
+        EmployerPrincipal employer = employerContext.getCurrentEmployerOrThrow();
+        CastingEntity casting = castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employer.employerProfile().getId())
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
         castingRepository.softDelete(casting);
 
@@ -254,19 +257,7 @@ public class CastingServiceImpl implements CastingService {
         if (slug == null || slug.isBlank()) throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
         if (roleId == null) throw new IllegalArgumentException(GENERAL_ROLE_ID_REQUIRED);
 
-        CastingEntity casting = castingRepository.findByDefaultCodeAndDeletedFalse(slug.trim())
-            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
-
-        if (casting.getEmployerProfile() != null
-            && casting.getEmployerProfile().getUser() != null
-            && casting.getEmployerProfile().getUser().isSuspended()) {
-            throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
-        }
-
-        String statusCode = casting.getStatus() != null ? casting.getStatus().getStringCode() : null;
-        if (!List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED).contains(statusCode)) {
-            throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
-        }
+        CastingEntity casting = findCastingOpenToTalentsOrThrow(slug);
 
         PublicCastingResponse response = toPublicCastingResponse(casting);
         List<PublicCastingRoleResponse> filteredRoles = response.roles().stream()
@@ -304,6 +295,18 @@ public class CastingServiceImpl implements CastingService {
     public PublicCastingOverviewResponse getPublicCastingDetailsBySlug(String slug) {
         if (slug == null || slug.isBlank()) throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
 
+        CastingEntity casting = findCastingOpenToTalentsOrThrow(slug);
+
+        List<UUID> appliedRoleIds = authContext.getCurrentUserOptional()
+            .flatMap(user -> talentProfileRepository.findByUserId(user.getId()))
+            .map(profile -> castingApplicationRepository.findAppliedRoleIdsByTalentProfileIdAndCastingId(profile.getId(), casting.getId()))
+            .orElse(List.of());
+
+        return new PublicCastingOverviewResponse(toPublicCastingResponse(casting), appliedRoleIds);
+    }
+
+    // Public detail pages only exist for castings currently offered to talents (same rule as the catalog).
+    private CastingEntity findCastingOpenToTalentsOrThrow(String slug) {
         CastingEntity casting = castingRepository.findByDefaultCodeAndDeletedFalse(slug.trim())
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
@@ -314,16 +317,10 @@ public class CastingServiceImpl implements CastingService {
         }
 
         String statusCode = casting.getStatus() != null ? casting.getStatus().getStringCode() : null;
-        if (!List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED).contains(statusCode)) {
+        if (!CastingAvailability.isOpenToTalents(statusCode, casting.getApplicationDeadline(), CastingDeadlines.today())) {
             throw new IllegalArgumentException(CASTINGS_NOT_FOUND);
         }
-
-        List<UUID> appliedRoleIds = authContext.getCurrentUserOptional()
-            .flatMap(user -> talentProfileRepository.findByUserId(user.getId()))
-            .map(profile -> castingApplicationRepository.findAppliedRoleIdsByTalentProfileIdAndCastingId(profile.getId(), casting.getId()))
-            .orElse(List.of());
-
-        return new PublicCastingOverviewResponse(toPublicCastingResponse(casting), appliedRoleIds);
+        return casting;
     }
 
     private PublicCastingResponse toPublicCastingResponse(CastingEntity casting) {

@@ -71,7 +71,6 @@ app:
         close-expired-castings:
             enabled: true
             cron: ${AUTO_CLOSE_CASTINGS_CRON:0 0 0 * * *}
-            zone: ${AUTO_CLOSE_CASTINGS_ZONE:UTC}
 
 server:
     port: ${PORT:8080}

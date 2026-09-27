@@ -8,6 +8,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -18,7 +19,8 @@ public final class CastingRoleSpecs {
     private CastingRoleSpecs() {
     }
 
-    public static Specification<CastingRoleEntity> fromFilter(CastingRoleFilter filter) {
+    // Base condition mirrors CastingAvailability.isOpenToTalents (published and deadline >= today).
+    public static Specification<CastingRoleEntity> fromFilter(CastingRoleFilter filter, LocalDate today) {
         Specification<CastingRoleEntity> spec = (root, query, cb) -> {
             var casting = root.join("casting", JoinType.INNER);
             var employerProfile = casting.join("employerProfile", JoinType.INNER);
@@ -27,6 +29,7 @@ public final class CastingRoleSpecs {
             return cb.and(
                 cb.isFalse(root.get("deleted")),
                 cb.equal(casting.get("status").get("stringCode"), "sitemetadata.casting_status.published"),
+                cb.greaterThanOrEqualTo(casting.get("applicationDeadline"), today),
                 cb.isFalse(casting.get("deleted")),
                 cb.isFalse(employerUser.get("suspended"))
             );

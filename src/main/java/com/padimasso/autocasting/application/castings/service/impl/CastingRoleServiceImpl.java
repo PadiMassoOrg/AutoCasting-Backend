@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -38,12 +39,12 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final CastingMapper castingMapper;
     private final MediaStorageService mediaStorageService;
     private final CastingDataApplier castingDataApplier;
+    private final EmployerContext employerContext;
 
     @Override
     @Transactional
     public CastingRoleResponse createCastingRole(CastingRoleRequest request) {
-        CastingEntity casting = castingRepository.findByIdAndDeletedFalse(request.castingId())
-            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
+        CastingEntity casting = findOwnedCastingOrThrow(request.castingId());
         assertDraftEditable(casting);
 
         CastingRoleEntity role = CastingRoleEntity.builder()
@@ -57,6 +58,8 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     @Transactional
     public List<CastingRoleEmployerCardResponse> getCastingRolesByCastingId(EmployerCastingRoleFilter filter, int page, int size) {
+        findOwnedCastingOrThrow(filter.castingId());
+
         var pageable = PageRequest.of(
             page,
             Math.min(Math.max(size, 1), MAX_PAGE_SIZE),
@@ -73,8 +76,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     @Transactional
     public CastingRoleResponse updateCastingRole(UUID roleId, CastingRoleRequest request) {
-        CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        CastingRoleEntity role = findOwnedRoleOrThrow(roleId);
 
         if (role.getCasting() == null || !role.getCasting().getId().equals(request.castingId())) {
             throw new IllegalArgumentException(CASTINGS_ROLE_MISMATCH);
@@ -88,8 +90,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     @Override
     @Transactional
     public LastModifiedResponse deleteCastingRole(UUID roleId) {
-        CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        CastingRoleEntity role = findOwnedRoleOrThrow(roleId);
         assertDraftEditable(role.getCasting());
 
         UUID castingId = role.getCasting() != null ? role.getCasting().getId() : null;
@@ -105,16 +106,13 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
     @Override
     public CastingRoleResponse getById(UUID roleId) {
-        return castingRoleRepository.findByIdAndDeletedFalse(roleId)
-            .map(castingMapper::toRoleResponse)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        return castingMapper.toRoleResponse(findOwnedRoleOrThrow(roleId));
     }
 
     @Override
     @Transactional
     public CastingRoleResponse duplicateCastingRole(UUID roleId, String roleName) {
-        CastingRoleEntity sourceRole = castingRoleRepository.findByIdAndDeletedFalse(roleId)
-            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        CastingRoleEntity sourceRole = findOwnedRoleOrThrow(roleId);
         assertDraftEditable(sourceRole.getCasting());
         String duplicatedRoleName = TextNormalizer.normalizeNullable(roleName);
 
@@ -148,6 +146,25 @@ public class CastingRoleServiceImpl implements CastingRoleService {
 
         castingDataApplier.validateRole(duplicatedRole);
         return castingMapper.toRoleResponse(castingRoleRepository.save(duplicatedRole));
+    }
+
+    private UUID currentEmployerProfileId() {
+        return employerContext.getCurrentEmployerOrThrow().employerProfile().getId();
+    }
+
+    private CastingEntity findOwnedCastingOrThrow(UUID castingId) {
+        return castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, currentEmployerProfileId())
+            .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
+    }
+
+    // Roles of another employer's casting are reported as not found, never as forbidden.
+    private CastingRoleEntity findOwnedRoleOrThrow(UUID roleId) {
+        UUID employerProfileId = currentEmployerProfileId();
+        return castingRoleRepository.findByIdAndDeletedFalse(roleId)
+            .filter(role -> role.getCasting() != null
+                && role.getCasting().getEmployerProfile() != null
+                && employerProfileId.equals(role.getCasting().getEmployerProfile().getId()))
+            .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
     }
 
     private void assertDraftEditable(CastingEntity casting) {

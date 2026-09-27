@@ -20,12 +20,14 @@ import com.padimasso.autocasting.application.applications.repository.projection.
 import com.padimasso.autocasting.application.applications.repository.projection.ApplicationRequirementSubmissionProjection;
 import com.padimasso.autocasting.application.applications.repository.specification.CastingApplicationSpecs;
 import com.padimasso.autocasting.application.applications.service.CastingApplicationService;
+import com.padimasso.autocasting.application.applications.util.CastingApplicationEligibility;
 import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetadataObject;
@@ -102,6 +104,14 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
         }
         CastingRoleEntity role = castingRoleRepository.findByIdAndDeletedFalse(roleId)
             .orElseThrow(() -> new IllegalArgumentException(CASTING_ROLE_NOT_FOUND));
+        var casting = role.getCasting();
+        CastingApplicationEligibility.rejectionReason(
+            casting.getStatus().getStringCode(),
+            casting.getApplicationDeadline(),
+            CastingDeadlines.today()
+        ).ifPresent(reason -> {
+            throw new IllegalStateException(reason);
+        });
         if (castingApplicationRepository.existsByCastingRoleIdAndTalentProfileId(roleId, profile.getId())) {
             throw new IllegalStateException(APPLICATIONS_ALREADY_APPLIED);
         }

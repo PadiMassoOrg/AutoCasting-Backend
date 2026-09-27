@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.controller;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCloseExpiredCastingsResponse;
 import com.padimasso.autocasting.application.admin.service.AdminCastingService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_CLOSE_EXPIRED_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_DETAILS_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLE_API_URL;
 
@@ -64,5 +67,15 @@ public class AdminCastingController {
     @GetMapping(ADMIN_CASTING_ROLE_API_URL)
     public ResponseEntity<CastingRoleResponse> getCastingRole(@Parameter(description = "Role ID.") @PathVariable UUID roleId) {
         return ResponseEntity.ok(adminCastingService.getCastingRoleById(roleId));
+    }
+
+    @Operation(
+        summary = "Emergency close of expired castings",
+        description = "Runs the nightly auto-close job on demand, for when it did not run: closes every published or paused casting whose application deadline was yesterday or earlier (Buenos Aires time). Drafts are left untouched. Safe to run repeatedly.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(ADMIN_CASTINGS_CLOSE_EXPIRED_API_URL)
+    public AdminCloseExpiredCastingsResponse closeExpiredCastings() {
+        return adminCastingService.closeExpiredCastings();
     }
 }

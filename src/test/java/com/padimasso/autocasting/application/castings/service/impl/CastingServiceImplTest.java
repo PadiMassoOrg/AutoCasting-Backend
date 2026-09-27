@@ -22,6 +22,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptio
 import com.padimasso.autocasting.application.sitemetadata.model.RoleTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +38,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -366,7 +368,7 @@ class CastingServiceImplTest {
         UUID castingId = UUID.randomUUID();
         EmployerProfileEntity employerProfile = EmployerProfileEntity.builder().id(employerProfileId).build();
         CastingEntity casting = CastingEntity.builder().id(castingId).employerProfile(employerProfile).build();
-        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(java.util.Optional.of(casting));
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(java.util.Optional.of(casting));
 
         service.deleteCasting(castingId);
 
@@ -378,7 +380,7 @@ class CastingServiceImplTest {
     void deleteCasting_missingEmployerProfile_softDeletesWithoutCleanupCall() {
         UUID castingId = UUID.randomUUID();
         CastingEntity casting = CastingEntity.builder().id(castingId).employerProfile(null).build();
-        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(java.util.Optional.of(casting));
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(java.util.Optional.of(casting));
 
         service.deleteCasting(castingId);
 
@@ -388,13 +390,80 @@ class CastingServiceImplTest {
     }
 
     @Test
-    void deleteCasting_notFound_throws() {
+    void deleteCasting_castingOfAnotherEmployerOrMissing_throwsWithoutDeletingOrCleaningUp() {
         UUID castingId = UUID.randomUUID();
-        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(java.util.Optional.empty());
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(java.util.Optional.empty());
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.deleteCasting(castingId));
 
         org.mockito.Mockito.verify(castingMediaCleanupService, org.mockito.Mockito.never())
             .deleteCastingFolder(any(), any());
+    }
+
+    // ---- public casting details: only castings open to talents ----
+
+    private CastingEntity publicCasting(String statusCode, LocalDate deadline) {
+        CastingStatusOptionEntity status = new CastingStatusOptionEntity();
+        status.setStringCode(statusCode);
+        CastingEntity casting = CastingEntity.builder()
+            .id(UUID.randomUUID())
+            .defaultCode(SLUG)
+            .employerProfile(EmployerProfileEntity.builder().id(employerProfileId).build())
+            .status(status)
+            .applicationDeadline(deadline)
+            .build();
+        when(castingRepository.findByDefaultCodeAndDeletedFalse(SLUG)).thenReturn(Optional.of(casting));
+        return casting;
+    }
+
+    @Test
+    void getPublicCastingDetailsBySlug_publishedWithDeadlineToday_isReturned() {
+        CastingEntity casting = publicCasting(CASTING_STATUS_PUBLISHED, CastingDeadlines.today());
+
+        service.getPublicCastingDetailsBySlug(SLUG);
+
+        org.mockito.Mockito.verify(castingMapper).toPublicCastingResponse(eq(casting), any());
+    }
+
+    @Test
+    void getPublicCastingDetailsBySlug_publishedPastDeadline_isNotFoundEvenBeforeTheJobCloses() {
+        publicCasting(CASTING_STATUS_PUBLISHED, CastingDeadlines.today().minusDays(1));
+
+        var ex = org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> service.getPublicCastingDetailsBySlug(SLUG));
+
+        org.junit.jupiter.api.Assertions.assertEquals(CASTINGS_NOT_FOUND, ex.getMessage());
+    }
+
+    @Test
+    void getPublicCastingDetailsBySlug_closedCasting_isNotFound() {
+        publicCasting(CASTING_STATUS_CLOSED, CastingDeadlines.today().plusDays(5));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> service.getPublicCastingDetailsBySlug(SLUG));
+    }
+
+    @Test
+    void getPublicCastingDetailsBySlug_pausedCasting_isNotFound() {
+        publicCasting(CASTING_STATUS_PAUSED, CastingDeadlines.today().plusDays(5));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> service.getPublicCastingDetailsBySlug(SLUG));
+    }
+
+    @Test
+    void getPublicCastingDetailsBySlugAndRoleId_closedCasting_isNotFound() {
+        publicCasting(CASTING_STATUS_CLOSED, CastingDeadlines.today().plusDays(5));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> service.getPublicCastingDetailsBySlugAndRoleId(SLUG, UUID.randomUUID()));
+    }
+
+    @Test
+    void getPublicCastingDetailsBySlugAndRoleId_publishedPastDeadline_isNotFound() {
+        publicCasting(CASTING_STATUS_PUBLISHED, CastingDeadlines.today().minusDays(1));
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+            () -> service.getPublicCastingDetailsBySlugAndRoleId(SLUG, UUID.randomUUID()));
     }
 }

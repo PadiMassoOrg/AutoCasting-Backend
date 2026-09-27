@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
@@ -15,7 +16,7 @@ public class CastingStatusTransitionPolicy {
     public List<String> allowedNextStatuses(String currentStatusCode, LocalDate applicationDeadline, boolean publishable) {
         if (currentStatusCode == null) return List.of();
 
-        if (applicationDeadline != null && applicationDeadline.isBefore(LocalDate.now())) {
+        if (CastingDeadlines.hasPassed(applicationDeadline, CastingDeadlines.today())) {
             if (CASTING_STATUS_ARCHIVED.equals(currentStatusCode)) return List.of();
             if (CASTING_STATUS_CLOSED.equals(currentStatusCode)) return List.of(CASTING_STATUS_ARCHIVED);
             return List.of(CASTING_STATUS_CLOSED, CASTING_STATUS_ARCHIVED);
@@ -41,7 +42,7 @@ public class CastingStatusTransitionPolicy {
         if (applicationDeadline == null) {
             throw new IllegalStateException(CASTINGS_DEADLINE_REQUIRED);
         }
-        if (applicationDeadline.isBefore(LocalDate.now())) {
+        if (CastingDeadlines.hasPassed(applicationDeadline, CastingDeadlines.today())) {
             throw new IllegalStateException(CASTINGS_DEADLINE_PASSED);
         }
         if (!(CASTING_STATUS_DRAFT.equals(currentStatusCode) || CASTING_STATUS_PAUSED.equals(currentStatusCode))) {

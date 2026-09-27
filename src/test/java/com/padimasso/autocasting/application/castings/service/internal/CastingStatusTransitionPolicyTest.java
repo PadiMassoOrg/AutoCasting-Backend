@@ -1,12 +1,13 @@
 package com.padimasso.autocasting.application.castings.service.internal;
 
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,68 +20,68 @@ class CastingStatusTransitionPolicyTest {
 
     @Test
     void allowedNextStatuses_nullCurrentStatus_returnsEmpty() {
-        assertTrue(policy.allowedNextStatuses(null, LocalDate.now().plusDays(1), true).isEmpty());
+        assertTrue(policy.allowedNextStatuses(null, CastingDeadlines.today().plusDays(1), true).isEmpty());
     }
 
     @Test
     void allowedNextStatuses_deadlinePassed_archived_returnsEmpty() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_ARCHIVED, LocalDate.now().minusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_ARCHIVED, CastingDeadlines.today().minusDays(1), true);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
     void allowedNextStatuses_deadlinePassed_closed_returnsOnlyArchived() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_CLOSED, LocalDate.now().minusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_CLOSED, CastingDeadlines.today().minusDays(1), true);
 
         assertEquals(List.of(CASTING_STATUS_ARCHIVED), result);
     }
 
     @Test
     void allowedNextStatuses_deadlinePassed_otherStatus_returnsClosedAndArchived() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PUBLISHED, LocalDate.now().minusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PUBLISHED, CastingDeadlines.today().minusDays(1), true);
 
         assertEquals(List.of(CASTING_STATUS_CLOSED, CASTING_STATUS_ARCHIVED), result);
     }
 
     @Test
-    void allowedNextStatuses_deadlineToday_treatedAsPassed() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PUBLISHED, LocalDate.now(), true);
+    void allowedNextStatuses_deadlineToday_isStillOpen() {
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PUBLISHED, CastingDeadlines.today(), true);
 
         assertEquals(List.of(CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED), result);
     }
 
     @Test
     void allowedNextStatuses_closed_returnsArchived() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_CLOSED, LocalDate.now().plusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_CLOSED, CastingDeadlines.today().plusDays(1), true);
 
         assertEquals(List.of(CASTING_STATUS_ARCHIVED), result);
     }
 
     @Test
     void allowedNextStatuses_published_returnsPausedAndClosed() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PUBLISHED, LocalDate.now().plusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PUBLISHED, CastingDeadlines.today().plusDays(1), true);
 
         assertEquals(List.of(CASTING_STATUS_PAUSED, CASTING_STATUS_CLOSED), result);
     }
 
     @Test
     void allowedNextStatuses_paused_publishable_returnsPublishedAndClosed() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PAUSED, LocalDate.now().plusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PAUSED, CastingDeadlines.today().plusDays(1), true);
 
         assertEquals(List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_CLOSED), result);
     }
 
     @Test
     void allowedNextStatuses_paused_notPublishable_returnsOnlyClosed() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PAUSED, LocalDate.now().plusDays(1), false);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_PAUSED, CastingDeadlines.today().plusDays(1), false);
 
         assertEquals(List.of(CASTING_STATUS_CLOSED), result);
     }
 
     @Test
     void allowedNextStatuses_draft_returnsEmpty() {
-        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_DRAFT, LocalDate.now().plusDays(1), true);
+        List<String> result = policy.allowedNextStatuses(CASTING_STATUS_DRAFT, CastingDeadlines.today().plusDays(1), true);
 
         assertTrue(result.isEmpty());
     }
@@ -104,7 +105,7 @@ class CastingStatusTransitionPolicyTest {
     @Test
     void assertCanPublish_notPublishable_throws() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> policy.assertCanPublish(CASTING_STATUS_DRAFT, LocalDate.now().plusDays(1), false));
+                () -> policy.assertCanPublish(CASTING_STATUS_DRAFT, CastingDeadlines.today().plusDays(1), false));
 
         assertEquals(CASTINGS_NOT_PUBLISHABLE, exception.getMessage());
     }
@@ -120,27 +121,32 @@ class CastingStatusTransitionPolicyTest {
     @Test
     void assertCanPublish_deadlinePassed_throws() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> policy.assertCanPublish(CASTING_STATUS_DRAFT, LocalDate.now().minusDays(1), true));
+                () -> policy.assertCanPublish(CASTING_STATUS_DRAFT, CastingDeadlines.today().minusDays(1), true));
 
         assertEquals(CASTINGS_DEADLINE_PASSED, exception.getMessage());
     }
 
     @Test
+    void assertCanPublish_deadlineToday_isAllowed() {
+        assertDoesNotThrow(() -> policy.assertCanPublish(CASTING_STATUS_DRAFT, CastingDeadlines.today(), true));
+    }
+
+    @Test
     void assertCanPublish_invalidCurrentStatus_throws() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> policy.assertCanPublish(CASTING_STATUS_PUBLISHED, LocalDate.now().plusDays(1), true));
+                () -> policy.assertCanPublish(CASTING_STATUS_PUBLISHED, CastingDeadlines.today().plusDays(1), true));
 
         assertEquals(CASTINGS_INVALID_STATUS_TRANSITION, exception.getMessage());
     }
 
     @Test
     void assertCanPublish_fromDraft_doesNotThrow() {
-        policy.assertCanPublish(CASTING_STATUS_DRAFT, LocalDate.now().plusDays(1), true);
+        policy.assertCanPublish(CASTING_STATUS_DRAFT, CastingDeadlines.today().plusDays(1), true);
     }
 
     @Test
     void assertCanPublish_fromPaused_doesNotThrow() {
-        policy.assertCanPublish(CASTING_STATUS_PAUSED, LocalDate.now().plusDays(1), true);
+        policy.assertCanPublish(CASTING_STATUS_PAUSED, CastingDeadlines.today().plusDays(1), true);
     }
 
     // ---- assertCanSetDraft ----

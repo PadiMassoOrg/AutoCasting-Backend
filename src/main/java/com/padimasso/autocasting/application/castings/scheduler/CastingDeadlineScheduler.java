@@ -1,15 +1,16 @@
 package com.padimasso.autocasting.application.castings.scheduler;
 
 import com.padimasso.autocasting.application.castings.service.internal.CastingAutoCloseService;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 
 @Slf4j
 @Component
@@ -23,21 +24,28 @@ public class CastingDeadlineScheduler {
 
     private final CastingAutoCloseService castingAutoCloseService;
 
-    @Value("${app.jobs.close-expired-castings.zone:UTC}")
-    private String schedulerZone;
-
     @Scheduled(
         cron = "${app.jobs.close-expired-castings.cron:0 0 0 * * *}",
-        zone = "${app.jobs.close-expired-castings.zone:UTC}"
+        zone = CastingDeadlines.ZONE_ID
     )
     public void closeExpiredCastings() {
-        LocalDate todayInJobZone = LocalDate.now(ZoneId.of(schedulerZone));
+        run("scheduled");
+    }
+
+    // Spring does not replay scheduled runs missed while the backend was down, so catch up on start.
+    @EventListener(ApplicationReadyEvent.class)
+    public void closeExpiredCastingsOnStartup() {
+        run("startup");
+    }
+
+    private void run(String trigger) {
+        LocalDate today = CastingDeadlines.today();
 
         try {
-            int closedCount = castingAutoCloseService.closeExpiredCastings(todayInJobZone);
-            log.info("Auto-close job executed. date={}, closedCastings={}", todayInJobZone, closedCount);
+            int closedCount = castingAutoCloseService.closeExpiredCastings(today);
+            log.info("Auto-close job executed. trigger={}, date={}, closedCastings={}", trigger, today, closedCount);
         } catch (Exception exception) {
-            log.error("Auto-close job failed. date={}", todayInJobZone, exception);
+            log.error("Auto-close job failed. trigger={}, date={}", trigger, today, exception);
         }
     }
 }
