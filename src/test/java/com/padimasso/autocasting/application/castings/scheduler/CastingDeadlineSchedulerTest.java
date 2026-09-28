@@ -1,15 +1,14 @@
 package com.padimasso.autocasting.application.castings.scheduler;
 
 import com.padimasso.autocasting.application.castings.service.internal.CastingAutoCloseService;
-import org.junit.jupiter.api.BeforeEach;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
-
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,30 +19,27 @@ class CastingDeadlineSchedulerTest {
     @Mock
     private CastingAutoCloseService castingAutoCloseService;
 
+    @InjectMocks
     private CastingDeadlineScheduler scheduler;
 
-    @BeforeEach
-    void setUp() {
-        scheduler = new CastingDeadlineScheduler(castingAutoCloseService);
-        ReflectionTestUtils.setField(scheduler, "schedulerZone", "UTC");
+    @Test
+    void scheduledRun_closesCastingsUpToTodayInArgentina() {
+        scheduler.closeExpiredCastings();
+
+        verify(castingAutoCloseService).closeExpiredCastings(CastingDeadlines.today());
     }
 
     @Test
-    void closeExpiredCastings_serviceSucceeds_doesNotThrow() {
-        when(castingAutoCloseService.closeExpiredCastings(any(LocalDate.class))).thenReturn(3);
+    void startupRun_catchesUpCastingsMissedWhileTheBackendWasDown() {
+        scheduler.closeExpiredCastingsOnStartup();
 
-        scheduler.closeExpiredCastings();
-
-        verify(castingAutoCloseService).closeExpiredCastings(any(LocalDate.class));
+        verify(castingAutoCloseService).closeExpiredCastings(CastingDeadlines.today());
     }
 
     @Test
-    void closeExpiredCastings_serviceThrows_isSwallowedAndDoesNotPropagate() {
-        when(castingAutoCloseService.closeExpiredCastings(any(LocalDate.class)))
-                .thenThrow(new IllegalStateException("missing casting status row"));
+    void failures_areLoggedAndDoNotPropagate() {
+        when(castingAutoCloseService.closeExpiredCastings(any())).thenThrow(new RuntimeException("db down"));
 
-        scheduler.closeExpiredCastings();
-
-        verify(castingAutoCloseService).closeExpiredCastings(any(LocalDate.class));
+        assertDoesNotThrow(() -> scheduler.closeExpiredCastingsOnStartup());
     }
 }

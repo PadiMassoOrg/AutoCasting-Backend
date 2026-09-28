@@ -1,5 +1,8 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
+import com.padimasso.autocasting.application.auth.context.EmployerContext;
+import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
+import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
@@ -7,6 +10,7 @@ import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEntity;
@@ -20,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -32,6 +38,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,10 +56,14 @@ class CastingRoleServiceImplTest {
     private CastingMapper castingMapper;
     @Mock
     private MediaStorageService mediaStorageService;
+    @Mock
+    private EmployerContext employerContext;
 
     private CastingRoleServiceImpl service;
 
     private UUID castingId;
+    private UUID employerProfileId;
+    private EmployerProfileEntity employerProfile;
     private CastingEntity draftCasting;
     private RoleTypeOptionEntity roleType;
     private GenderOptionEntity indistinctGender;
@@ -60,16 +73,20 @@ class CastingRoleServiceImplTest {
     void setUp() {
         service = new CastingRoleServiceImpl(
             castingRoleRepository, castingRepository, castingMapper, mediaStorageService,
-            new CastingDataApplier(siteMetadataResolver)
+            new CastingDataApplier(siteMetadataResolver), employerContext
         );
 
         castingId = UUID.randomUUID();
+        employerProfileId = UUID.randomUUID();
+        employerProfile = EmployerProfileEntity.builder().id(employerProfileId).build();
+        lenient().when(employerContext.getCurrentEmployerOrThrow()).thenReturn(new EmployerPrincipal(null, employerProfile));
 
         CastingStatusOptionEntity draftStatus = new CastingStatusOptionEntity();
         draftStatus.setStringCode(CASTING_STATUS_DRAFT);
 
         draftCasting = CastingEntity.builder()
             .id(castingId)
+            .employerProfile(employerProfile)
             .status(draftStatus)
             .build();
 
@@ -110,7 +127,7 @@ class CastingRoleServiceImplTest {
     }
 
     private void stubCommonResolutions(PayRateTypeOptionEntity payRateType) {
-        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(draftCasting));
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(Optional.of(draftCasting));
         when(siteMetadataResolver.resolveRoleTypeOrThrow(any())).thenReturn(roleType);
         when(siteMetadataResolver.resolveGenderByCodeOrThrow(GENDER_OPTION_INDISTINCT)).thenReturn(indistinctGender);
         when(siteMetadataResolver.resolveProfessionsOrThrow(any())).thenReturn(Set.of());
@@ -473,9 +490,9 @@ class CastingRoleServiceImplTest {
     void createCastingRole_nonDraftCasting_throws() {
         CastingStatusOptionEntity publishedStatus = new CastingStatusOptionEntity();
         publishedStatus.setStringCode(CASTING_STATUS_PUBLISHED);
-        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).status(publishedStatus).build();
+        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).employerProfile(employerProfile).status(publishedStatus).build();
 
-        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(publishedCasting));
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(Optional.of(publishedCasting));
 
         CastingRoleRequest request = baseRequestBuilder(UUID.randomUUID(), null, null);
 
@@ -489,7 +506,7 @@ class CastingRoleServiceImplTest {
     void updateCastingRole_nonDraftCasting_throws() {
         CastingStatusOptionEntity publishedStatus = new CastingStatusOptionEntity();
         publishedStatus.setStringCode(CASTING_STATUS_PUBLISHED);
-        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).status(publishedStatus).build();
+        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).employerProfile(employerProfile).status(publishedStatus).build();
 
         UUID roleId = UUID.randomUUID();
         CastingRoleEntity existingRole = CastingRoleEntity.builder().id(roleId).casting(publishedCasting).build();
@@ -507,7 +524,7 @@ class CastingRoleServiceImplTest {
     void deleteCastingRole_nonDraftCasting_throws() {
         CastingStatusOptionEntity publishedStatus = new CastingStatusOptionEntity();
         publishedStatus.setStringCode(CASTING_STATUS_PUBLISHED);
-        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).status(publishedStatus).build();
+        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).employerProfile(employerProfile).status(publishedStatus).build();
 
         UUID roleId = UUID.randomUUID();
         CastingRoleEntity existingRole = CastingRoleEntity.builder().id(roleId).casting(publishedCasting).build();
@@ -523,7 +540,7 @@ class CastingRoleServiceImplTest {
     void duplicateCastingRole_nonDraftCasting_throws() {
         CastingStatusOptionEntity publishedStatus = new CastingStatusOptionEntity();
         publishedStatus.setStringCode(CASTING_STATUS_PUBLISHED);
-        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).status(publishedStatus).build();
+        CastingEntity publishedCasting = CastingEntity.builder().id(castingId).employerProfile(employerProfile).status(publishedStatus).build();
 
         UUID roleId = UUID.randomUUID();
         CastingRoleEntity existingRole = CastingRoleEntity.builder().id(roleId).casting(publishedCasting).build();
@@ -551,5 +568,81 @@ class CastingRoleServiceImplTest {
             () -> service.updateCastingRole(roleId, request));
 
         assertEquals(CASTINGS_ROLE_MISMATCH, exception.getMessage());
+    }
+
+    // ---- ownership guard ----
+
+    private CastingRoleEntity roleOfAnotherEmployer(UUID roleId) {
+        CastingEntity foreignCasting = CastingEntity.builder()
+            .id(UUID.randomUUID())
+            .employerProfile(EmployerProfileEntity.builder().id(UUID.randomUUID()).build())
+            .status(draftCasting.getStatus())
+            .build();
+        return CastingRoleEntity.builder().id(roleId).casting(foreignCasting).referencePhotoUrl("https://example.com/p.jpg").build();
+    }
+
+    @Test
+    void createCastingRole_castingOfAnotherEmployer_throwsNotFound() {
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> service.createCastingRole(baseRequestBuilder(UUID.randomUUID(), null, null)));
+
+        assertEquals(CASTINGS_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    void getCastingRolesByCastingId_castingOfAnotherEmployer_throwsNotFoundWithoutQueryingRoles() {
+        when(castingRepository.findByIdAndEmployerProfile_IdAndDeletedFalse(castingId, employerProfileId)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> service.getCastingRolesByCastingId(new EmployerCastingRoleFilter(castingId), 0, 10));
+
+        assertEquals(CASTINGS_NOT_FOUND, exception.getMessage());
+        verify(castingRoleRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getById_roleOfAnotherEmployer_throwsNotFound() {
+        UUID roleId = UUID.randomUUID();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(roleOfAnotherEmployer(roleId)));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.getById(roleId));
+
+        assertEquals(CASTING_ROLE_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    void updateCastingRole_roleOfAnotherEmployer_throwsNotFound() {
+        UUID roleId = UUID.randomUUID();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(roleOfAnotherEmployer(roleId)));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> service.updateCastingRole(roleId, baseRequestBuilder(UUID.randomUUID(), null, null)));
+
+        assertEquals(CASTING_ROLE_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    void deleteCastingRole_roleOfAnotherEmployer_throwsNotFoundAndKeepsItsPhoto() {
+        UUID roleId = UUID.randomUUID();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(roleOfAnotherEmployer(roleId)));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.deleteCastingRole(roleId));
+
+        assertEquals(CASTING_ROLE_NOT_FOUND, exception.getMessage());
+        verify(castingRoleRepository, never()).softDelete(any());
+        verify(mediaStorageService, never()).deleteByPublicUrl(any());
+    }
+
+    @Test
+    void duplicateCastingRole_roleOfAnotherEmployer_throwsNotFound() {
+        UUID roleId = UUID.randomUUID();
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(roleOfAnotherEmployer(roleId)));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+            () -> service.duplicateCastingRole(roleId, null));
+
+        assertEquals(CASTING_ROLE_NOT_FOUND, exception.getMessage());
     }
 }

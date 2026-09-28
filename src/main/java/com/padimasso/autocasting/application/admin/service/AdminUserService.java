@@ -7,15 +7,16 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWe
 import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
+import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
-import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
-import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 
 import java.util.UUID;
 
 public interface AdminUserService {
-    PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog);
+    PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog, AdminUsersOrderBy orderBy);
 
     AdminUserDetailResponse getUserDetail(UUID userId);
 
@@ -23,11 +24,11 @@ public interface AdminUserService {
 
     void updateSuspension(UUID userId, AdminUserSuspensionRequest request);
 
-    PublicProfileResponse getTalentProfileForAdmin(UUID userId);
+    AdminTalentProfileResponse getTalentProfileForAdmin(UUID userId);
 
     void removeTalentMedia(UUID userId, AdminTalentMediaSlot slot, Integer index, AdminRemoveTalentMediaRequest request);
 
-    EmployerProfileResponse getEmployerProfileForAdmin(UUID userId);
+    AdminEmployerProfileResponse getEmployerProfileForAdmin(UUID userId);
 
     AdminBulkTalentWelcomeEmailResultResponse sendBulkTalentWelcomeEmail(AdminBulkTalentWelcomeEmailRequest request);
 }

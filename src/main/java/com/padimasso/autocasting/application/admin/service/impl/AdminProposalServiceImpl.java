@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminProposalRowResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminProposalMapper;
+import com.padimasso.autocasting.application.admin.repository.order.AdminProposalsOrderBy;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminProposalSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminProposalService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
@@ -15,7 +16,6 @@ import com.padimasso.autocasting.application.proposal.type.ProposalTypeHandlerRe
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -42,16 +42,14 @@ public class AdminProposalServiceImpl implements AdminProposalService {
         int size,
         String q,
         List<UUID> typeIds,
-        List<ProposalStatus> statuses
+        List<ProposalStatus> statuses,
+        AdminProposalsOrderBy orderBy
     ) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
 
-        var pageable = PageRequest.of(
-            normalizedPage,
-            normalizedSize,
-            Sort.by(Sort.Direction.DESC, "modifiedAt", "id")
-        );
+        var effectiveOrderBy = orderBy != null ? orderBy : AdminProposalsOrderBy.MODIFIED_DATE_DESC;
+        var pageable = PageRequest.of(normalizedPage, normalizedSize, effectiveOrderBy.toSort());
 
         var spec = AdminProposalSpecs.listable(typeIds, statuses).and(AdminProposalSpecs.fromSearchText(q));
         var result = proposalRepository.findAll(spec, pageable);

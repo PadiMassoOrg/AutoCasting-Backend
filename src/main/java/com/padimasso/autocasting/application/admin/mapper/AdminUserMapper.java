@@ -8,6 +8,7 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -18,7 +19,8 @@ public class AdminUserMapper {
         UserEntity user,
         String employerCompanyName,
         String talentStageName,
-        String talentPublicSlug
+        String talentPublicSlug,
+        LocalDateTime lastSavedAt
     ) {
         return new AdminUserRowResponse(
             user.getId(),
@@ -31,6 +33,7 @@ public class AdminUserMapper {
             user.getTalentOnboardingStatus(),
             user.getEmployerOnboardingStatus(),
             talentPublicSlug,
+            lastSavedAt,
             user.isSuspended(),
             user.isDeleted(),
             user.getCreatedAt(),

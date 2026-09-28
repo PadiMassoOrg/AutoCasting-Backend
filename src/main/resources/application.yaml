@@ -71,7 +71,7 @@ app:
         close-expired-castings:
             enabled: true
             cron: ${AUTO_CLOSE_CASTINGS_CRON:0 0 0 * * *}
-            zone: ${AUTO_CLOSE_CASTINGS_ZONE:UTC}
+            zone: ${AUTO_CLOSE_CASTINGS_ZONE:America/Argentina/Buenos_Aires}
 
 server:
     port: ${PORT:8080}

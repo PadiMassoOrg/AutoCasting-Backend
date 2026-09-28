@@ -2,13 +2,13 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
+import com.padimasso.autocasting.application.admin.mapper.AdminProfileMapper;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
+import com.padimasso.autocasting.application.admin.repository.AdminUserActivityRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.model.EntityType;
-import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.history.service.HistoryService;
-import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.MediaEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
@@ -46,17 +46,17 @@ class AdminUserServiceImplRemoveTalentMediaTest {
     @Mock
     private TalentProfileRepository talentProfileRepository;
     @Mock
-    private TalentProfileMapper talentProfileMapper;
-    @Mock
     private MediaRepository mediaRepository;
     @Mock
     private MediaStorageService mediaStorageService;
     @Mock
     private EmployerProfileRepository employerProfileRepository;
     @Mock
-    private EmployerProfileMapper employerProfileMapper;
+    private AdminUserActivityRepository adminUserActivityRepository;
     @Mock
     private AdminUserMapper adminUserMapper;
+    @Mock
+    private AdminProfileMapper adminProfileMapper;
     @Mock
     private HistoryService historyService;
     @Mock
@@ -74,12 +74,12 @@ class AdminUserServiceImplRemoveTalentMediaTest {
         service = new AdminUserServiceImpl(
             userRepository,
             talentProfileRepository,
-            talentProfileMapper,
             mediaRepository,
             mediaStorageService,
             employerProfileRepository,
-            employerProfileMapper,
+            adminUserActivityRepository,
             adminUserMapper,
+            adminProfileMapper,
             historyService,
             talentWelcomeEmailService
         );

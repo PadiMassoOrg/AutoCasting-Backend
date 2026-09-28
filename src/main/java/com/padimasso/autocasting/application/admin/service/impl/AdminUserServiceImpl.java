@@ -6,8 +6,14 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaS
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
+import com.padimasso.autocasting.application.admin.mapper.AdminProfileMapper;
+import com.padimasso.autocasting.application.admin.model.AdminUserActivityEntity;
+import com.padimasso.autocasting.application.admin.repository.AdminUserActivityRepository;
+import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
 import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
@@ -15,13 +21,9 @@ import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.common.model.EntityType;
-import com.padimasso.autocasting.application.employer.dto.response.EmployerProfileResponse;
-import com.padimasso.autocasting.application.employer.mapper.EmployerProfileMapper;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
-import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
-import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
@@ -31,11 +33,12 @@ import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility
 import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_USER_ID;
@@ -51,25 +54,28 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private final UserRepository userRepository;
     private final TalentProfileRepository talentProfileRepository;
-    private final TalentProfileMapper talentProfileMapper;
     private final MediaRepository mediaRepository;
     private final MediaStorageService mediaStorageService;
     private final EmployerProfileRepository employerProfileRepository;
-    private final EmployerProfileMapper employerProfileMapper;
+    private final AdminUserActivityRepository adminUserActivityRepository;
     private final AdminUserMapper adminUserMapper;
+    private final AdminProfileMapper adminProfileMapper;
     private final HistoryService historyService;
     private final TalentWelcomeEmailService talentWelcomeEmailService;
 
     @Override
-    public PageResponse<AdminUserRowResponse> listUsers(int page, int size, String q, boolean notVisibleInCatalog) {
+    public PageResponse<AdminUserRowResponse> listUsers(
+        int page,
+        int size,
+        String q,
+        boolean notVisibleInCatalog,
+        AdminUsersOrderBy orderBy
+    ) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
+        var effectiveOrderBy = orderBy != null ? orderBy : AdminUsersOrderBy.CREATION_DATE_DESC;
 
-        var pageable = PageRequest.of(
-            normalizedPage,
-            normalizedSize,
-            Sort.by(Sort.Direction.DESC, "createdAt", "id")
-        );
+        var pageable = PageRequest.of(normalizedPage, normalizedSize, effectiveOrderBy.toSort());
 
         var searchSpec = AdminUserSpecs.fromSearchText(q);
         var spec = searchSpec == null ? AdminUserSpecs.excludingSystemUsers() : searchSpec.and(AdminUserSpecs.excludingSystemUsers());
@@ -77,23 +83,20 @@ public class AdminUserServiceImpl implements AdminUserService {
             var notVisibleSpec = AdminUserSpecs.notVisibleInTalentCatalog();
             spec = spec.and(notVisibleSpec);
         }
+        if (effectiveOrderBy.isActivityOrder()) {
+            spec = spec.and(AdminUserSpecs.orderByActivity(effectiveOrderBy));
+        }
 
         var result = userRepository.findAllIncludingDeleted(spec, pageable);
 
         List<UserEntity> users = result.getContent();
         List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
 
-        Map<UUID, String> employerCompanyNames = new HashMap<>();
-        if (!userIds.isEmpty()) {
-            employerProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
-                var basicInfo = profile.getBasicInfo();
-                if (basicInfo != null && basicInfo.getCompanyName() != null) {
-                    employerCompanyNames.put(profile.getUser().getId(), basicInfo.getCompanyName());
-                }
-            });
-        }
+        Map<UUID, AdminUserActivityEntity> activityByUserId = userIds.isEmpty()
+            ? Map.of()
+            : adminUserActivityRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(AdminUserActivityEntity::getUserId, Function.identity()));
 
-        Map<UUID, String> talentStageNames = new HashMap<>();
         // A talent profile always has a slug (generated on creation) regardless of catalog
         // visibility. Only entered into this map — and thus only returned to the admin row —
         // when isVisibleInTalentCatalog is true, so the response's null/non-null here reflects
@@ -101,24 +104,23 @@ public class AdminUserServiceImpl implements AdminUserService {
         Map<UUID, String> talentPublicSlugs = new HashMap<>();
         if (!userIds.isEmpty()) {
             talentProfileRepository.findAllByUserIdInForAdmin(userIds).forEach(profile -> {
-                var userId = profile.getUser().getId();
-                var basicInfo = profile.getBasicInfo();
-                if (basicInfo != null && basicInfo.getStageName() != null) {
-                    talentStageNames.put(userId, basicInfo.getStageName());
-                }
                 if (TalentCatalogVisibility.isVisibleInCatalog(profile)) {
-                    talentPublicSlugs.put(userId, profile.getPublicSlug());
+                    talentPublicSlugs.put(profile.getUser().getId(), profile.getPublicSlug());
                 }
             });
         }
 
         var items = users.stream()
-            .map(user -> adminUserMapper.toRowResponse(
-                user,
-                employerCompanyNames.get(user.getId()),
-                talentStageNames.get(user.getId()),
-                talentPublicSlugs.get(user.getId())
-            ))
+            .map(user -> {
+                var activity = activityByUserId.get(user.getId());
+                return adminUserMapper.toRowResponse(
+                    user,
+                    activity != null ? activity.getEmployerCompanyName() : null,
+                    activity != null ? activity.getTalentStageName() : null,
+                    talentPublicSlugs.get(user.getId()),
+                    activity != null ? activity.getLastSavedAt() : null
+                );
+            })
             .toList();
 
         return adminUserMapper.toPageResponse(items, result);
@@ -190,11 +192,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public PublicProfileResponse getTalentProfileForAdmin(UUID userId) {
+    public AdminTalentProfileResponse getTalentProfileForAdmin(UUID userId) {
+        findManageableUserOrThrow(userId);
         var profile = talentProfileRepository.findTalentProfileForAdminByUserId(userId)
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
-        return talentProfileMapper.toPublicProfileResponse(profile);
+        return adminProfileMapper.toTalentProfileResponse(profile);
     }
 
     @Override
@@ -250,11 +253,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public EmployerProfileResponse getEmployerProfileForAdmin(UUID userId) {
+    public AdminEmployerProfileResponse getEmployerProfileForAdmin(UUID userId) {
+        findManageableUserOrThrow(userId);
         var profile = employerProfileRepository.findEmployerProfileForAdminByUserId(userId)
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
-        return employerProfileMapper.toProfileResponse(profile, profile.getUser());
+        return adminProfileMapper.toEmployerProfileResponse(profile);
     }
 
     @Override

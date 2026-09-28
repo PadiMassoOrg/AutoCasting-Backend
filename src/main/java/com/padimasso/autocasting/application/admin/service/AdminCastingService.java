@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.service;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCloseExpiredCastingsResponse;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 
@@ -12,4 +13,6 @@ public interface AdminCastingService {
     PageResponse<AdminCastingRowResponse> listCastings(int page, int size, String q, List<String> statusIdTokens);
     AdminCastingDetailsResponse getCastingDetailsBySlug(String slug);
     CastingRoleResponse getCastingRoleById(UUID roleId);
+
+    AdminCloseExpiredCastingsResponse closeExpiredCastings();
 }

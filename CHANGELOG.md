@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-27
+
+- Versión: `1.4.0`
+- Feature (AI-52, AI-53): Proposals de casting. Admin crea un casting completo con sus roles (`POST /admin/proposals/castings`), en borrador y a nombre de un employer de sistema "Autocasting" (V56), junto a una proposal `PENDING` con link único (`ProposalTokenGenerator`). Se rechazan castings incompletos o con fecha límite pasada. Acciones de Admin: regenerar link y revocar. Endpoints públicos de preview por token, attach, claim y resultado del claim; el claim también se ejecuta al completar el onboarding de employer. Al reclamar, el casting pasa al employer y se publica si es posible (si no, queda en borrador). El listado de Admin incluye proposals reclamadas y filtro por estado. `CastingDataApplier` y `CastingPublishability` se extraen de los servicios de casting para compartir reglas.
+- Feature (AI-61): los endpoints de Admin de perfil de talento y de empleador devuelven DTOs propios (`AdminTalentProfileResponse` con visibilidad en catálogo, onboarding, auditoría y último guardado; `AdminEmployerProfileResponse`), sin datos de plan, y excluyen al usuario de sistema.
+- Feature (AI-61): el listado de usuarios de Admin incluye "Último guardado" y acepta `orderBy` (`AdminUsersOrderBy`: fecha de creación, email, último guardado, nombre de talento, nombre de empleador). Nueva vista `admin_user_activity` (V57) que calcula último guardado y nombres por usuario. El listado de proposals acepta `orderBy` por fecha de modificación (`AdminProposalsOrderBy`).
+- Feature (AI-61): regla única de fecha límite de castings en la zona horaria del negocio (`CastingDeadlines`, configurable con `AUTO_CLOSE_CASTINGS_ZONE`, por defecto Buenos Aires): el día límite es el último día para postularse. `CastingAvailability` (publicado y fecha límite ≥ hoy) rige el catálogo público, el detalle público de casting/rol y las postulaciones; publicar y las proposals usan la misma regla.
+- Scheduler (AI-61): el cierre automático corre a las 00:00 de la zona configurada en `AUTO_CLOSE_CASTINGS_ZONE` (por defecto `America/Argentina/Buenos_Aires`) y también al iniciar el backend. La misma zona define el "hoy" de todas las reglas de fecha límite (catálogo, detalle público, postulaciones, publicación, proposals), sin depender de la zona horaria del servidor; una zona inválida impide el arranque. Cierra castings publicados o pausados con fecha límite anterior a hoy; los borradores nunca se cierran. Nuevo endpoint de emergencia `POST /admin/castings/close-expired` que ejecuta el mismo job.
+- Fix (AI-61): `POST /apply/{roleId}` rechaza castings no publicados o con fecha límite vencida aunque el job no haya corrido; los endpoints públicos de detalle solo sirven castings activos.
+- Fix (AI-61): el flag `publishable` que reciben los clientes (editor del casting, respuesta de casting y respuesta tras un cambio de estado) ahora exige además que la fecha límite no haya pasado (`CastingPublishability.isPublishableOn`), por lo que el botón de publicar en web y mobile se deshabilita con una fecha límite vencida. La validación de la transición sigue distinguiendo "no publicable" de "fecha límite vencida".
+- Seguridad (AI-61): `deleteCasting` y todos los endpoints de roles de casting del employer (listar, ver, crear, editar, borrar, duplicar) validan que el casting pertenezca al employer autenticado.
+- Scripts: sin cambios de datos en `SEED_DEMO_30_USERS_3_EMPLOYERS.sql`; `HARD_DELETE.sql` ya elimina vistas, por lo que cubre `admin_user_activity`.
+
 ## 2026-09-23
 
 - Versión: `1.3.4`

@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminProposalRowResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminProposalMapper;
+import com.padimasso.autocasting.application.admin.repository.order.AdminProposalsOrderBy;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.common.model.EntityType;
@@ -98,7 +99,7 @@ class AdminProposalServiceImplTest {
         givenPage(List.of(generated, opened, attached));
         when(proposalRepository.findAttachedProposalIds(anyCollection())).thenReturn(List.of(attached.getId()));
 
-        PageResponse<AdminProposalRowResponse> response = service.listProposals(0, 20, null, List.of(castingType.getId()), null);
+        PageResponse<AdminProposalRowResponse> response = service.listProposals(0, 20, null, List.of(castingType.getId()), null, null);
 
         assertEquals(
             List.of(ProposalProgress.LINK_GENERATED, ProposalProgress.LINK_OPENED, ProposalProgress.ACCOUNT_ATTACHED),
@@ -124,7 +125,7 @@ class AdminProposalServiceImplTest {
         );
         when(castingHandler.associatedEntities(claimed)).thenReturn(associated);
 
-        PageResponse<AdminProposalRowResponse> response = service.listProposals(0, 20, null, null, null);
+        PageResponse<AdminProposalRowResponse> response = service.listProposals(0, 20, null, null, null, null);
 
         AdminProposalRowResponse claimedRow = response.items().get(0);
         assertEquals(ProposalProgress.CLAIMED, claimedRow.progress());
@@ -142,7 +143,7 @@ class AdminProposalServiceImplTest {
     void listProposals_emptyPage_skipsAttachmentsLookup() {
         givenPage(List.of());
 
-        PageResponse<AdminProposalRowResponse> response = service.listProposals(0, 20, null, null, null);
+        PageResponse<AdminProposalRowResponse> response = service.listProposals(0, 20, null, null, null, null);
 
         assertTrue(response.items().isEmpty());
         verify(proposalRepository, never()).findAttachedProposalIds(anyCollection());
@@ -153,13 +154,25 @@ class AdminProposalServiceImplTest {
     void listProposals_clampsPagingAndSortsByLastModified() {
         givenPage(List.of());
 
-        service.listProposals(-3, 500, null, null, null);
+        service.listProposals(-3, 500, null, null, null, null);
 
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(proposalRepository).findAll(any(Specification.class), pageable.capture());
         assertEquals(0, pageable.getValue().getPageNumber());
         assertEquals(MAX_PAGE_SIZE, pageable.getValue().getPageSize());
         assertEquals(Sort.by(Sort.Direction.DESC, "modifiedAt", "id"), pageable.getValue().getSort());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void listProposals_modifiedAscOrder_sortsOldestModifiedFirst() {
+        givenPage(List.of());
+
+        service.listProposals(0, 20, null, null, null, AdminProposalsOrderBy.MODIFIED_DATE_ASC);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(proposalRepository).findAll(any(Specification.class), pageable.capture());
+        assertEquals(Sort.by(Sort.Direction.ASC, "modifiedAt", "id"), pageable.getValue().getSort());
     }
 
     private ProposalEntity lockedProposal(ProposalStatus status) {

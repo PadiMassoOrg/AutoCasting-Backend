@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.admin.service.impl;
 
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCloseExpiredCastingsResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminCastingMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminCastingSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminCastingService;
@@ -12,7 +13,10 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
+import com.padimasso.autocasting.application.castings.service.internal.CastingAutoCloseService;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ import java.util.UUID;
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_NOT_FOUND;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminCastingServiceImpl implements AdminCastingService {
@@ -30,6 +35,7 @@ public class AdminCastingServiceImpl implements AdminCastingService {
     private final CastingRepository castingRepository;
     private final CastingRoleRepository castingRoleRepository;
     private final AdminCastingMapper adminCastingMapper;
+    private final CastingAutoCloseService castingAutoCloseService;
 
     @Override
     public PageResponse<AdminCastingRowResponse> listCastings(int page, int size, String q, List<String> statusIdTokens) {
@@ -78,5 +84,13 @@ public class AdminCastingServiceImpl implements AdminCastingService {
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
         return adminCastingMapper.toRoleResponse(role);
+    }
+
+    @Override
+    public AdminCloseExpiredCastingsResponse closeExpiredCastings() {
+        var today = CastingDeadlines.today();
+        int closedCount = castingAutoCloseService.closeExpiredCastings(today);
+        log.info("Auto-close job executed. trigger=admin, date={}, closedCastings={}", today, closedCount);
+        return new AdminCloseExpiredCastingsResponse(closedCount);
     }
 }

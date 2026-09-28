@@ -17,7 +17,6 @@ import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_CLOSED;
-import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PAUSED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PUBLISHED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +42,8 @@ class CastingAutoCloseServiceTest {
 
     private final LocalDate today = LocalDate.of(2026, 9, 23);
     private final UUID closedStatusId = UUID.randomUUID();
+    private final UUID publishedStatusId = UUID.randomUUID();
+    private final UUID pausedStatusId = UUID.randomUUID();
 
     private static CastingStatusOptionEntity status(UUID id) {
         CastingStatusOptionEntity option = new CastingStatusOptionEntity();
@@ -69,9 +70,22 @@ class CastingAutoCloseServiceTest {
         service = new CastingAutoCloseService(castingRepository, siteMetadataResolver, castingMediaCleanupService);
 
         when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_CLOSED)).thenReturn(status(closedStatusId));
-        when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_DRAFT)).thenReturn(status(UUID.randomUUID()));
-        when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PUBLISHED)).thenReturn(status(UUID.randomUUID()));
-        when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PAUSED)).thenReturn(status(UUID.randomUUID()));
+        when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PUBLISHED)).thenReturn(status(publishedStatusId));
+        when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_PAUSED)).thenReturn(status(pausedStatusId));
+    }
+
+    @Test
+    void closeExpiredCastings_onlyClosesPublishedAndPausedCastings_neverDrafts() {
+        when(castingRepository.findExpiredCastingCloseTargets(eq(today), anyList(), eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID))).thenReturn(List.of());
+
+        service.closeExpiredCastings(today);
+
+        verify(castingRepository).closeExpiredCastings(
+            eq(today),
+            eq(closedStatusId),
+            eq(List.of(publishedStatusId, pausedStatusId)),
+            eq(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID)
+        );
     }
 
     @Test

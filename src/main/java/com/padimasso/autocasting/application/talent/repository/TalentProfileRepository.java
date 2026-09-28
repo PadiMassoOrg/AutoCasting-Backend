@@ -59,6 +59,7 @@ public interface TalentProfileRepository extends SoftDeleteRepository<TalentProf
     );
 
     @EntityGraph(attributePaths = {
+        "user",
         "plan",
         "basicInfo",
         "basicInfo.professions",

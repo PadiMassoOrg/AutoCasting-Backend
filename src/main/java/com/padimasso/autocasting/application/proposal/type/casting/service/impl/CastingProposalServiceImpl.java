@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.castings.service.internal.CastingPublishability;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.proposal.dto.request.ProposalInternalReferenceRequest;
@@ -27,7 +28,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +144,7 @@ public class CastingProposalServiceImpl implements CastingProposalService {
         if (!CastingPublishability.isPublishable(casting)) {
             throw new IllegalArgumentException(PROPOSALS_CASTING_INCOMPLETE);
         }
-        if (casting.getApplicationDeadline().isBefore(LocalDate.now())) {
+        if (CastingDeadlines.hasPassed(casting.getApplicationDeadline(), CastingDeadlines.today())) {
             throw new IllegalArgumentException(PROPOSALS_CASTING_DEADLINE_PASSED);
         }
     }
