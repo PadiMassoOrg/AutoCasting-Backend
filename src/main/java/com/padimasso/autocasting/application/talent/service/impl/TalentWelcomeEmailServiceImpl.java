@@ -18,7 +18,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 @RequiredArgsConstructor
 public class TalentWelcomeEmailServiceImpl implements TalentWelcomeEmailService {
 
-    private static final String COMPLETE_PROFILE_PATH = "/dashboard/talent";
+    static final String COMPLETE_PROFILE_PATH = "/dashboard/talent";
 
     private final EmailService emailService;
     private final SpringTemplateEngine templateEngine;

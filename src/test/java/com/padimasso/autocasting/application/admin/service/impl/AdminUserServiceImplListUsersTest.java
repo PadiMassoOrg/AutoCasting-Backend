@@ -12,6 +12,7 @@ import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
+import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,6 +63,8 @@ class AdminUserServiceImplListUsersTest {
     private HistoryService historyService;
     @Mock
     private TalentWelcomeEmailService talentWelcomeEmailService;
+    @Mock
+    private TalentPhotoRemovedEmailService talentPhotoRemovedEmailService;
 
     private AdminUserServiceImpl service;
     private UserEntity user;
@@ -78,7 +81,8 @@ class AdminUserServiceImplListUsersTest {
             adminUserMapper,
             adminProfileMapper,
             historyService,
-            talentWelcomeEmailService
+            talentWelcomeEmailService,
+            talentPhotoRemovedEmailService
         );
         user = UserEntity.builder().id(UUID.randomUUID()).build();
     }

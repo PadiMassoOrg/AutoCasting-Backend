@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record AdminRemoveTalentMediaRequest(
     @NotBlank(message = "validation.required")
-    String reason
+    String reason,
+    boolean notifyTalent
 ) {
 }
