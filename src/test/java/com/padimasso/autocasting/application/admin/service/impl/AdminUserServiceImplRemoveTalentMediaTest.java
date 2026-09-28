@@ -14,6 +14,7 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
+import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,8 @@ class AdminUserServiceImplRemoveTalentMediaTest {
     private HistoryService historyService;
     @Mock
     private TalentWelcomeEmailService talentWelcomeEmailService;
+    @Mock
+    private TalentPhotoRemovedEmailService talentPhotoRemovedEmailService;
 
     private AdminUserServiceImpl service;
 
@@ -81,7 +84,8 @@ class AdminUserServiceImplRemoveTalentMediaTest {
             adminUserMapper,
             adminProfileMapper,
             historyService,
-            talentWelcomeEmailService
+            talentWelcomeEmailService,
+            talentPhotoRemovedEmailService
         );
 
         userId = UUID.randomUUID();
@@ -100,7 +104,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
     void removeTalentMedia_headshot_nullsFieldAndRecordsHistory() {
         when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
 
-        service.removeTalentMedia(userId, AdminTalentMediaSlot.HEADSHOT, null, new AdminRemoveTalentMediaRequest("inappropriate content"));
+        service.removeTalentMedia(userId, AdminTalentMediaSlot.HEADSHOT, null, new AdminRemoveTalentMediaRequest("inappropriate content", false));
 
         assertNull(media.getHeadshotImageUrl());
         verify(mediaRepository).save(media);
@@ -117,7 +121,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
     void removeTalentMedia_otherPicture_nullsSlotWithoutShiftingList() {
         when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
 
-        service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, 0, new AdminRemoveTalentMediaRequest("reason"));
+        service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, 0, new AdminRemoveTalentMediaRequest("reason", false));
 
         assertEquals(2, media.getOtherPicturesUrl().size());
         assertNull(media.getOtherPicturesUrl().get(0));
@@ -135,7 +139,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
         when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
 
         assertThrows(ApiException.class, () ->
-            service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, 5, new AdminRemoveTalentMediaRequest("reason"))
+            service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, 5, new AdminRemoveTalentMediaRequest("reason", false))
         );
         verify(mediaRepository, never()).save(any());
         verify(mediaStorageService, never()).deleteByPublicUrl(any());
@@ -147,7 +151,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
         when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
 
         assertThrows(ApiException.class, () ->
-            service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, null, new AdminRemoveTalentMediaRequest("reason"))
+            service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, null, new AdminRemoveTalentMediaRequest("reason", false))
         );
     }
 
@@ -156,7 +160,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
         when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.empty());
 
         assertThrows(ApiException.class, () ->
-            service.removeTalentMedia(userId, AdminTalentMediaSlot.HEADSHOT, null, new AdminRemoveTalentMediaRequest("reason"))
+            service.removeTalentMedia(userId, AdminTalentMediaSlot.HEADSHOT, null, new AdminRemoveTalentMediaRequest("reason", false))
         );
     }
 
@@ -165,7 +169,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
         when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
         ArgumentCaptor<Object> changesCaptor = ArgumentCaptor.forClass(Object.class);
 
-        service.removeTalentMedia(userId, AdminTalentMediaSlot.FULL_BODY, null, new AdminRemoveTalentMediaRequest("reason"));
+        service.removeTalentMedia(userId, AdminTalentMediaSlot.FULL_BODY, null, new AdminRemoveTalentMediaRequest("reason", false));
 
         verify(historyService, times(1)).createHistoryEntry(
             eq(EntityType.TALENT_PROFILE),
@@ -175,5 +179,34 @@ class AdminUserServiceImplRemoveTalentMediaTest {
         );
         assertEquals("fullBodyImageUrl: removed", changesCaptor.getValue());
         assertNull(media.getFullBodyImageUrl());
+    }
+
+    @Test
+    void removeTalentMedia_notifyTalent_sendsPhotoRemovedEmail() {
+        when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
+
+        service.removeTalentMedia(userId, AdminTalentMediaSlot.HEADSHOT, null, new AdminRemoveTalentMediaRequest("reason", true));
+
+        verify(talentPhotoRemovedEmailService).sendPhotoRemovedEmail(profile);
+    }
+
+    @Test
+    void removeTalentMedia_withoutNotifyTalent_doesNotSendEmail() {
+        when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
+
+        service.removeTalentMedia(userId, AdminTalentMediaSlot.HEADSHOT, null, new AdminRemoveTalentMediaRequest("reason", false));
+
+        verify(talentPhotoRemovedEmailService, never()).sendPhotoRemovedEmail(any());
+    }
+
+    @Test
+    void removeTalentMedia_invalidSlot_doesNotSendEmail() {
+        when(talentProfileRepository.findTalentProfileForAdminByUserId(userId)).thenReturn(Optional.of(profile));
+
+        assertThrows(ApiException.class, () ->
+            service.removeTalentMedia(userId, AdminTalentMediaSlot.OTHER_PICTURE, 5, new AdminRemoveTalentMediaRequest("reason", true))
+        );
+
+        verify(talentPhotoRemovedEmailService, never()).sendPhotoRemovedEmail(any());
     }
 }

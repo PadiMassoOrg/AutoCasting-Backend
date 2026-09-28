@@ -28,6 +28,7 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
+import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility;
 import com.padimasso.autocasting.exception.ApiException;
@@ -62,6 +63,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final AdminProfileMapper adminProfileMapper;
     private final HistoryService historyService;
     private final TalentWelcomeEmailService talentWelcomeEmailService;
+    private final TalentPhotoRemovedEmailService talentPhotoRemovedEmailService;
 
     @Override
     public PageResponse<AdminUserRowResponse> listUsers(
@@ -250,6 +252,10 @@ public class AdminUserServiceImpl implements AdminUserService {
             note,
             fieldKey + ": removed"
         );
+
+        if (request.notifyTalent()) {
+            talentPhotoRemovedEmailService.sendPhotoRemovedEmail(profile);
+        }
     }
 
     @Override

@@ -8,11 +8,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +29,7 @@ public class EmailServiceImpl implements EmailService {
     private String fromEmail;
 
     @Override
-    public void sendHtmlEmail(String to, String subject, String htmlBody) {
+    public void sendHtmlEmail(String to, String subject, String htmlBody, Map<String, Resource> inlineResources) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -38,6 +40,9 @@ public class EmailServiceImpl implements EmailService {
             helper.setFrom(fromEmail, FROM_PERSONAL_NAME);
             helper.addInline("autocasting-logo", new ClassPathResource("static/email/autocasting_logo.png"));
             helper.addInline("autocasting-insta-icon", new ClassPathResource("static/email/insta_icon.png"));
+            for (var inline : inlineResources.entrySet()) {
+                helper.addInline(inline.getKey(), inline.getValue());
+            }
 
             mailSender.send(message);
             log.info("Email sent to {}", to);
