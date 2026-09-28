@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-28
+
+- Versión: `1.4.1`
+- Fix (AI-66): la foto del employer deja de ser obligatoria — `PATCH /employer/basic-info` con `imageUrl` `null` o vacío ahora borra el logo en vez de responder 400 `profile.media.must_have_one_photo`.
+- Feature (AI-67): `DELETE /admin/users/{userId}/profiles/talent/media/{slot}` acepta `notifyTalent`; si es `true`, después de quitar la foto se envía al talento el email "foto removida" (`talent_photo_removed_email`) con los requisitos de una foto aprobada y dos fotos de ejemplo adjuntas inline (`static/email/talent_photo_example_{1,2}.jpg`). Un fallo en el envío se loguea y no revierte la quita.
+- Email: `EmailService` permite adjuntar recursos inline adicionales por email (además del logo e íconos).
+- Scripts: sin cambios en `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` ni `HARD_DELETE.sql` (sin cambios de esquema).
+
 ## 2026-09-27
 
 - Versión: `1.4.0`
