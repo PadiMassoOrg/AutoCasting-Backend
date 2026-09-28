@@ -11,7 +11,6 @@ import com.padimasso.autocasting.application.employer.repository.EmployerProfile
 import com.padimasso.autocasting.application.employer.service.EmployerBasicInfoService;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
-import com.padimasso.autocasting.exception.ApiException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,10 +38,6 @@ public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
                                 .employerProfile(profile)
                                 .build()
                 ));
-
-        if (req.imageUrl().isPresent() && TextNormalizer.normalizeNullable(req.imageUrl().orElse(null)) == null) {
-            throw ApiException.badRequest("profile.media.must_have_one_photo");
-        }
 
         if (req.companyTypeId() != null) {
             basicInfo.setCompanyType(siteMetadataResolver.resolveCompanyTypeOrThrow(req.companyTypeId()));
