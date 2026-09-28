@@ -2,8 +2,10 @@ package com.padimasso.autocasting.application.castings.service.internal;
 
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import com.padimasso.autocasting.application.shared.util.PayRateTypeSupport;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.padimasso.autocasting.config.AppConstants.CASTING_MODALITY_ON_SITE;
@@ -11,6 +13,13 @@ import static com.padimasso.autocasting.config.AppConstants.CASTING_MODALITY_ON_
 public final class CastingPublishability {
 
     private CastingPublishability() {
+    }
+
+    // What clients see as "publishable": complete AND the deadline has not passed (CastingDeadlines), so
+    // the publish button matches what the publish transition accepts. isPublishable stays
+    // completeness-only so transition errors can report "not publishable" and "deadline passed" apart.
+    public static boolean isPublishableOn(CastingEntity casting, LocalDate today) {
+        return isPublishable(casting) && !CastingDeadlines.hasPassed(casting.getApplicationDeadline(), today);
     }
 
     public static boolean isPublishable(CastingEntity casting) {

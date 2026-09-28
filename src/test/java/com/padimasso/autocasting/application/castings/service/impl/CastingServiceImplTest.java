@@ -355,6 +355,24 @@ class CastingServiceImplTest {
         assertTrue(invokeIsPublishableViaEditor(casting));
     }
 
+    @Test
+    void editor_completeCastingWithPassedDeadline_isNotPublishable() {
+        CastingEntity casting = completeCastingBase();
+        casting.setApplicationDeadline(CastingDeadlines.today().minusDays(1));
+        casting.setRoles(Set.of(completeRole(unpaidPayRateType(), null, null)));
+
+        org.junit.jupiter.api.Assertions.assertFalse(invokeIsPublishableViaEditor(casting));
+    }
+
+    @Test
+    void editor_completeCastingWithDeadlineToday_isPublishable() {
+        CastingEntity casting = completeCastingBase();
+        casting.setApplicationDeadline(CastingDeadlines.today());
+        casting.setRoles(Set.of(completeRole(unpaidPayRateType(), null, null)));
+
+        assertTrue(invokeIsPublishableViaEditor(casting));
+    }
+
     private PayRateTypeOptionEntity unpaidPayRateType() {
         PayRateTypeOptionEntity unpaid = new PayRateTypeOptionEntity();
         unpaid.setStringCode(PAY_RATE_TYPE_UNPAID);

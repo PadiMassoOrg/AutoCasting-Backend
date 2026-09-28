@@ -134,4 +134,34 @@ class CastingPublishabilityTest {
 
         assertTrue(CastingPublishability.isPublishable(casting));
     }
+
+    // ---- isPublishableOn: completeness plus the deadline rule ----
+
+    private static final LocalDate TODAY = LocalDate.of(2026, 9, 28);
+
+    @Test
+    void isPublishableOn_completeWithDeadlineToday_returnsTrue() {
+        CastingEntity casting = completeCasting();
+        casting.setApplicationDeadline(TODAY);
+
+        assertTrue(CastingPublishability.isPublishableOn(casting, TODAY));
+    }
+
+    @Test
+    void isPublishableOn_completeWithPassedDeadline_returnsFalse() {
+        CastingEntity casting = completeCasting();
+        casting.setApplicationDeadline(TODAY.minusDays(1));
+
+        assertFalse(CastingPublishability.isPublishableOn(casting, TODAY));
+        assertTrue(CastingPublishability.isPublishable(casting));
+    }
+
+    @Test
+    void isPublishableOn_incompleteWithFutureDeadline_returnsFalse() {
+        CastingEntity casting = completeCasting();
+        casting.setApplicationDeadline(TODAY.plusDays(5));
+        casting.setTitle(null);
+
+        assertFalse(CastingPublishability.isPublishableOn(casting, TODAY));
+    }
 }

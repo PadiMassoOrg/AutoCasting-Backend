@@ -134,7 +134,10 @@ public class CastingServiceImpl implements CastingService {
         CastingEntity casting = castingRepository.findByDefaultCodeAndEmployerProfile_IdAndDeletedFalse(slug.trim(), employerProfileId)
             .orElseThrow(() -> new IllegalArgumentException(CASTINGS_NOT_FOUND));
 
-        return castingMapper.toEmployerCastingEditorResponse(casting, CastingPublishability.isPublishable(casting));
+        return castingMapper.toEmployerCastingEditorResponse(
+            casting,
+            CastingPublishability.isPublishableOn(casting, CastingDeadlines.today())
+        );
     }
 
     @Override
@@ -366,7 +369,10 @@ public class CastingServiceImpl implements CastingService {
             castingMediaCleanupService.deleteCastingFolder(casting.getEmployerProfile().getId(), casting.getId());
         }
 
-        return castingMapper.toEmployerCastingEditorResponse(casting, publishable);
+        return castingMapper.toEmployerCastingEditorResponse(
+            casting,
+            CastingPublishability.isPublishableOn(casting, CastingDeadlines.today())
+        );
     }
 
     private CastingResponse toCastingResponse(CastingEntity casting) {
@@ -384,7 +390,7 @@ public class CastingServiceImpl implements CastingService {
         return castingMapper.toCastingResponse(
             casting,
             castingMapper.toCastingEmployerInfoResponse(casting.getEmployerProfile(), totalCastings, memberSince),
-            CastingPublishability.isPublishable(casting)
+            CastingPublishability.isPublishableOn(casting, CastingDeadlines.today())
         );
     }
 
