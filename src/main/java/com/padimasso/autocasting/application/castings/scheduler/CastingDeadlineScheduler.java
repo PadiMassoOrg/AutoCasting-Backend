@@ -26,7 +26,7 @@ public class CastingDeadlineScheduler {
 
     @Scheduled(
         cron = "${app.jobs.close-expired-castings.cron:0 0 0 * * *}",
-        zone = CastingDeadlines.ZONE_ID
+        zone = "${app.jobs.close-expired-castings.zone:" + CastingDeadlines.DEFAULT_ZONE_ID + "}"
     )
     public void closeExpiredCastings() {
         run("scheduled");

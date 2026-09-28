@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.castings.util;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -7,16 +8,32 @@ import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CastingDeadlinesTest {
 
     private static final LocalDate TODAY = LocalDate.of(2026, 9, 26);
 
+    @AfterEach
+    void restoreDefaultZone() {
+        CastingDeadlines.configureZone(ZoneId.of(CastingDeadlines.DEFAULT_ZONE_ID));
+    }
+
     @Test
-    void zone_isArgentina() {
-        assertEquals(ZoneId.of("America/Argentina/Buenos_Aires"), CastingDeadlines.ZONE);
-        assertEquals(CastingDeadlines.ZONE, ZoneId.of(CastingDeadlines.ZONE_ID));
+    void defaultZone_isBuenosAires() {
+        assertEquals(ZoneId.of("America/Argentina/Buenos_Aires"), CastingDeadlines.zone());
+    }
+
+    @Test
+    void configuredZone_drivesToday() {
+        // UTC+14 and UTC-11 are always on different calendar days.
+        CastingDeadlines.configureZone(ZoneId.of("Pacific/Kiritimati"));
+        LocalDate farEast = CastingDeadlines.today();
+        CastingDeadlines.configureZone(ZoneId.of("Pacific/Pago_Pago"));
+        LocalDate farWest = CastingDeadlines.today();
+
+        assertNotEquals(farEast, farWest);
     }
 
     @Test
