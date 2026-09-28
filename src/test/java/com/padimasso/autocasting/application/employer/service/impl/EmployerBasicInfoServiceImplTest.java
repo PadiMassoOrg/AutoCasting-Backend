@@ -10,7 +10,6 @@ import com.padimasso.autocasting.application.employer.repository.EmployerBasicIn
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.sitemetadata.model.CompanyTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
-import com.padimasso.autocasting.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +23,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -118,15 +116,31 @@ class EmployerBasicInfoServiceImplTest {
     }
 
     @Test
-    void patchMyBasicInfo_presentButBlankImageUrl_throws() {
-        EmployerBasicInfoEntity existing = EmployerBasicInfoEntity.builder().id(UUID.randomUUID()).employerProfile(employerProfile).build();
+    void patchMyBasicInfo_presentButBlankImageUrl_clearsIt() {
+        EmployerBasicInfoEntity existing = EmployerBasicInfoEntity.builder()
+            .id(UUID.randomUUID())
+            .employerProfile(employerProfile)
+            .imageUrl("https://example.com/logo.png")
+            .build();
         when(employerBasicInfoRepository.findByEmployerProfileId(employerProfileId)).thenReturn(Optional.of(existing));
 
-        EmployerBasicInfoPatchRequest request = patchWith("imageUrl", "   ");
+        service.patchMyBasicInfo(patchWith("imageUrl", "   "));
 
-        ApiException exception = assertThrows(ApiException.class, () -> service.patchMyBasicInfo(request));
+        assertNull(existing.getImageUrl());
+    }
 
-        assertEquals("profile.media.must_have_one_photo", exception.getMessage());
+    @Test
+    void patchMyBasicInfo_nullImageUrl_clearsIt() {
+        EmployerBasicInfoEntity existing = EmployerBasicInfoEntity.builder()
+            .id(UUID.randomUUID())
+            .employerProfile(employerProfile)
+            .imageUrl("https://example.com/logo.png")
+            .build();
+        when(employerBasicInfoRepository.findByEmployerProfileId(employerProfileId)).thenReturn(Optional.of(existing));
+
+        service.patchMyBasicInfo(patchWith("imageUrl", null));
+
+        assertNull(existing.getImageUrl());
     }
 
     @Test
