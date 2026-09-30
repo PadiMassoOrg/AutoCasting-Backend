@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-30
+
+- Versión: `1.5.0`
+- Infra (AI-74): configuración para desplegar el Backend en Fly.io (Argentina). Nuevo `fly.toml` para la app `autocasting-ar-api` (región `gru`, 1 × `shared-cpu-1x`, 768 MB, siempre encendida para el cron de cierre de castings). En `[env]` solo va el tuning de JVM, pool y threads; toda la configuración de la app viene de los secrets de Fly. La base de datos y el storage pasan a un proyecto Supabase Pro en `sa-east-1`. Heroku no cambia: ignora `fly.toml`.
+- Seguridad: los archivos `.env` quedan fuera de git (`.gitignore`) y del contexto de build de Docker (`.dockerignore`).
+- Docs: sección "Deploy (Fly.io — Argentina)" en el README con el flujo de deploy manual desde `release/*`, los nombres de los secrets requeridos y el control de costos.
+- Sin cambios de código de la aplicación ni de esquema.
+- Scripts: sin cambios en `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` ni `HARD_DELETE.sql` (sin cambios de esquema).
+
 ## 2026-09-28
 
 - Versión: `1.4.1`
