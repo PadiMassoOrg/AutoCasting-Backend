@@ -37,6 +37,10 @@ out/
 .vscode/
 /.run/
 
+# Local env / secrets
+.env
+.env.*
+
 # AI Stuff
 mcp.json
 .codex/*
