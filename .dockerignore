@@ -1,5 +1,8 @@
 .git
 .gitignore
+.env
+.env.*
+fly.toml
 .gradle
 build/
 bin/
