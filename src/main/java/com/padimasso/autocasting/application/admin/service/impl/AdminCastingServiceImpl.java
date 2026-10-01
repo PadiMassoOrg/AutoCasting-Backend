@@ -15,6 +15,7 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.castings.repository.specification.CastingSpecs;
 import com.padimasso.autocasting.application.castings.service.internal.CastingAutoCloseService;
 import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
+import com.padimasso.autocasting.application.shared.util.PageHydration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -53,7 +54,11 @@ public class AdminCastingServiceImpl implements AdminCastingService {
             spec = spec.and(CastingSpecs.statusInTokens(statusIdTokens));
         }
 
-        var result = castingRepository.findAll(spec, pageable);
+        var result = PageHydration.hydrate(
+            castingRepository.findAll(spec, pageable),
+            CastingEntity::getId,
+            castingRepository::findAllWithDetailsByIdIn
+        );
 
         var items = result.getContent().stream()
             .map(adminCastingMapper::toRowResponse)

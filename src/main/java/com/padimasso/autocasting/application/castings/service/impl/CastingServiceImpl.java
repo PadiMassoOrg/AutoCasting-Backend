@@ -21,6 +21,7 @@ import com.padimasso.autocasting.application.castings.service.internal.CastingPu
 import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
 import com.padimasso.autocasting.application.castings.util.CastingAvailability;
 import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
+import com.padimasso.autocasting.application.shared.util.PageHydration;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
@@ -200,7 +201,11 @@ public class CastingServiceImpl implements CastingService {
             spec = spec.and(CastingSpecs.orderByDeadlineDescNullsLast());
         }
 
-        return castingRepository.findAll(spec, pageable).getContent().stream()
+        return PageHydration.hydrate(
+                castingRepository.findAll(spec, pageable),
+                CastingEntity::getId,
+                castingRepository::findAllWithDetailsByIdIn
+            ).getContent().stream()
             .map(casting -> castingMapper.toCardResponse(
                 casting,
                 castingStatusTransitionPolicy.allowedNextStatuses(

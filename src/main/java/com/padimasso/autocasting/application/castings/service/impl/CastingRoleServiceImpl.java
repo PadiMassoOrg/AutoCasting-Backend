@@ -14,6 +14,7 @@ import com.padimasso.autocasting.application.castings.repository.specification.C
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
+import com.padimasso.autocasting.application.shared.util.PageHydration;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import jakarta.transaction.Transactional;
@@ -66,7 +67,11 @@ public class CastingRoleServiceImpl implements CastingRoleService {
             Sort.by(Sort.Direction.DESC, "createdAt", "id")
         );
 
-        return castingRoleRepository.findAll(CastingRoleSpecs.fromEmployerFilter(filter), pageable)
+        return PageHydration.hydrate(
+                castingRoleRepository.findAll(CastingRoleSpecs.fromEmployerFilter(filter), pageable),
+                CastingRoleEntity::getId,
+                castingRoleRepository::findAllWithDetailsByIdIn
+            )
             .getContent()
             .stream()
             .map(castingMapper::toEmployerRoleCardResponse)

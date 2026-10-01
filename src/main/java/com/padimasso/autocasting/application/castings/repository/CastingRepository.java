@@ -21,6 +21,8 @@ import java.util.UUID;
 public interface CastingRepository extends SoftDeleteRepository<CastingEntity, UUID> {
 
     @Override
+    Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
+
     @EntityGraph(attributePaths = {
         "status",
         "projectType",
@@ -36,7 +38,12 @@ public interface CastingRepository extends SoftDeleteRepository<CastingEntity, U
         "roles.payRateType",
         "roles.currency"
     })
-    Page<CastingEntity> findAll(@Nullable Specification<CastingEntity> spec, Pageable pageable);
+    @Query("""
+        select distinct c
+        from CastingEntity c
+        where c.id in :ids
+        """)
+    List<CastingEntity> findAllWithDetailsByIdIn(@Param("ids") List<UUID> ids);
 
     @EntityGraph(attributePaths = {
         "status",
