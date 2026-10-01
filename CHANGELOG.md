@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-01
+
+- Versión: `1.6.0`
+- Feature: el listado de usuarios de Admin (`GET /admin/users`) ordena por defecto por "último guardado" (`LAST_SAVED_DESC`) en vez de fecha de creación; los usuarios sin perfil quedan al final. Un `orderBy` explícito sigue funcionando igual.
+- Feature (AI-83): al borrar una foto de talento se borra también su thumbnail (`<key>.thumb.webp`) en una sola llamada de borrado masivo de Supabase; los objetos inexistentes se ignoran. La convención de la clave vive en `MediaThumbnails`, espejada en Frontend y Admin.
+- Feature (AI-79): compresión gzip de respuestas (`server.compression`, JSON/XML/HTML/texto/CSS/JS de al menos 1024 bytes). El ETag de site metadata pasa a ser débil (Tomcat no comprime respuestas con ETag fuerte); `If-None-Match` acepta ambos, por lo que los clientes con el ETag anterior siguen recibiendo 304.
+- Fix (AI-80): la paginación de castings y roles (listados de Admin, employer y búsqueda de roles) se aplica en la base de datos y no en memoria (HHH90003004): se pagina sin joins de colecciones y luego se cargan las colecciones de la página (`PageHydration`).
+- Scripts: `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` ya no escribe URLs del Supabase anterior (los employers se siembran sin logo y una re-ejecución limpia los logos que apuntan al proyecto viejo) y, junto con `HARD_DELETE_USER_BY_EMAIL.sql`, borra las proposals que referencian los castings o el usuario eliminados. Sin cambios de esquema; `HARD_DELETE.sql` sin cambios.
+
 ## 2026-09-30
 
 - Versión: `1.5.0`
