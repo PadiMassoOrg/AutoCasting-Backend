@@ -24,6 +24,10 @@
 --   habilitar pruebas de scroll en el InfoCarousel de public-profile
 -- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
 --
+-- - los employers seed no tienen logo (image_url NULL); las fotos de talent usan URLs externas (Pexels).
+--   El seed no escribe URLs de Supabase Storage.
+-- - antes de borrar los castings seed también borra las proposals que los referencian (V54/V56).
+--
 -- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
 -- Requiere schema y metadata al día (Flyway aplicado).
 --
@@ -970,7 +974,9 @@ JOIN tmp_credit_producer_pool prp
 JOIN tmp_credit_role_pool rp
   ON rp.idx = ((abs(hashtext(t.email || ':credit:' || gs.i || ':role')) % 6) + 1);
 
--- Employer basic info: 3 personas con datos reales, resto queda con stub mínimo
+-- Employer basic info: 3 personas con datos reales, resto queda con stub mínimo.
+-- Sin logo (image_url NULL, opcional desde AI-66): el seed no depende de ningún proyecto de Supabase Storage;
+-- el UPDATE de abajo limpia el logo de corridas anteriores que apuntaban al proyecto Supabase viejo.
 INSERT INTO public.employer_basic_info (
   id, created_at, created_by, deleted, modified_at, modified_by,
   company_name, tax_number, company_type_id, company_email, image_url, address, website_url, about, employer_profile_id
@@ -981,7 +987,7 @@ SELECT
   ep_persona.tax_number,
   cto.id,
   t.email,
-  'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/b6adeb92-127e-4fc3-a82b-1bbcdf2d50ec.png',
+  NULL,
   ep_persona.address,
   ep_persona.website_url,
   ep_persona.about,
@@ -999,7 +1005,7 @@ SET company_name = COALESCE(ep_persona.company_name, ebi.company_name),
     tax_number = COALESCE(ep_persona.tax_number, ebi.tax_number),
     company_type_id = COALESCE(cto.id, ebi.company_type_id),
     company_email = t.email,
-    image_url = COALESCE(ebi.image_url, 'https://qmtzkcmnmhvmaerqhaex.supabase.co/storage/v1/object/public/profile-media-develop/autocasting/b6adeb92-127e-4fc3-a82b-1bbcdf2d50ec.png'),
+    image_url = CASE WHEN ebi.image_url LIKE '%qmtzkcmnmhvmaerqhaex.supabase.co%' THEN NULL ELSE ebi.image_url END,
     address = COALESCE(ep_persona.address, ebi.address),
     website_url = COALESCE(ep_persona.website_url, ebi.website_url),
     about = COALESCE(ep_persona.about, ebi.about),
@@ -1027,6 +1033,15 @@ WHERE ca.casting_role_id IN (
   SELECT cr.id
   FROM public.casting_role cr
   JOIN public.casting c ON c.id = cr.casting_id
+  WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
+);
+
+-- Una proposal reclamada deja su casting a nombre del employer que la reclamó; proposals.casting_id
+-- referencia casting, así que esas proposals se borran antes (proposal_attachments cae por CASCADE).
+DELETE FROM public.proposals
+WHERE casting_id IN (
+  SELECT c.id
+  FROM public.casting c
   WHERE c.employer_profile_id IN (SELECT employer_profile_id FROM tmp_casting_employers)
 );
 
