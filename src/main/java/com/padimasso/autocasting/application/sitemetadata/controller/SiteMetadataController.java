@@ -37,9 +37,10 @@ public class SiteMetadataController {
     ) {
         // ETag-based revalidation (version)
         VersionResponse version = siteMetadataService.getVersionOnly();
-        String etag = "\"" + version.version() + "\"";
+        // Weak ETag: Tomcat skips gzip for responses carrying a strong ETag
+        String etag = "W/\"" + version.version() + "\"";
 
-        if (etag.equals(ifNoneMatch)) {
+        if (ifNoneMatch != null && ifNoneMatch.replaceFirst("^W/", "").equals(etag.substring(2))) {
             // Client already has this version -> 304 Not Modified
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                 .eTag(etag)
