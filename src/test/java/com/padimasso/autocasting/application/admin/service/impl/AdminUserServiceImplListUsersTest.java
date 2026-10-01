@@ -124,10 +124,10 @@ class AdminUserServiceImplListUsersTest {
     }
 
     @Test
-    void listUsers_withoutOrderBy_defaultsToNewestCreatedFirst() {
+    void listUsers_withoutOrderBy_defaultsToLastSavedFirst() {
         var pageable = listAndCapturePageable(null);
 
-        assertEquals(AdminUsersOrderBy.CREATION_DATE_DESC.toSort(), pageable.getSort());
+        assertTrue(pageable.getSort().isUnsorted());
     }
 
     @Test

@@ -75,7 +75,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     ) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
-        var effectiveOrderBy = orderBy != null ? orderBy : AdminUsersOrderBy.CREATION_DATE_DESC;
+        var effectiveOrderBy = orderBy != null ? orderBy : AdminUsersOrderBy.LAST_SAVED_DESC;
 
         var pageable = PageRequest.of(normalizedPage, normalizedSize, effectiveOrderBy.toSort());
 

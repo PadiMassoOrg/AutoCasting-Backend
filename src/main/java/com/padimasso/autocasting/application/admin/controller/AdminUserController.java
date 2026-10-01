@@ -58,7 +58,7 @@ public class AdminUserController {
         @Parameter(description = "When true, only returns talents whose profile is not visible in the public catalog (e.g. missing required photos, suspended, or deleted).")
         @RequestParam(defaultValue = "false") boolean notVisibleInCatalog,
         @Parameter(description = "Sort order. Name and last-saved orders place users without a value last.")
-        @RequestParam(defaultValue = "CREATION_DATE_DESC") AdminUsersOrderBy orderBy
+        @RequestParam(defaultValue = "LAST_SAVED_DESC") AdminUsersOrderBy orderBy
     ) {
         return adminUserService.listUsers(page, size, q, notVisibleInCatalog, orderBy);
     }
