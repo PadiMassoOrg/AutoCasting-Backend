@@ -1,16 +1,19 @@
 package com.padimasso.autocasting.application.talent.service.impl;
 
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
+import com.padimasso.autocasting.application.talent.util.MediaThumbnails;
 import com.padimasso.autocasting.config.AppProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriUtils;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,17 +40,20 @@ public class MediaStorageServiceImpl implements MediaStorageService {
             return;
         }
 
-        String encodedObjectKey = UriUtils.encodePath(objectKey, StandardCharsets.UTF_8);
         String apiBase = trimTrailingSlash(cfg.getUrl());
-        String deleteUrl = apiBase + "/storage/v1/object/" + cfg.getMediaBucket() + "/" + encodedObjectKey;
+        String deleteUrl = apiBase + "/storage/v1/object/" + cfg.getMediaBucket();
 
+        // Bulk delete ignores keys that don't exist, so photos without a thumbnail (uploaded before
+        // thumbnails existed, or non-talent media) are not an error.
         try {
             RestClient.builder()
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + cfg.getServiceRoleKey())
                 .defaultHeader("apikey", cfg.getServiceRoleKey())
                 .build()
-                .delete()
+                .method(HttpMethod.DELETE)
                 .uri(deleteUrl)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("prefixes", MediaThumbnails.withThumbnail(objectKey)))
                 .retrieve()
                 .toBodilessEntity();
         } catch (Exception ex) {

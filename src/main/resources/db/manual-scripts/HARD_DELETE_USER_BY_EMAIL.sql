@@ -45,6 +45,15 @@ BEGIN
         WHERE c.employer_profile_id = v_employer_profile_id
       );
 
+      -- Eliminar proposals que referencian estos castings (proposals.casting_id -> casting, sin CASCADE;
+      -- proposal_attachments cae por CASCADE desde proposals).
+      DELETE FROM public.proposals
+      WHERE casting_id IN (
+        SELECT c.id
+        FROM public.casting c
+        WHERE c.employer_profile_id = v_employer_profile_id
+      );
+
       -- Eliminar castings (cascading borra basic/roles/requirements/remuneration y subtablas).
       DELETE FROM public.casting
       WHERE employer_profile_id = v_employer_profile_id;
@@ -116,6 +125,10 @@ BEGIN
 
     DELETE FROM public.legal_acceptances
     WHERE user_id = v_user_id;
+
+    -- proposals.claimed_by_user_id -> users no tiene CASCADE.
+    DELETE FROM public.proposals
+    WHERE claimed_by_user_id = v_user_id;
 
     IF v_talent_profile_id IS NOT NULL THEN
       DELETE FROM public.talent_profile
