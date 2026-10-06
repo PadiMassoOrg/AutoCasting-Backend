@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.auth.context.AuthContext;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.EducationRequest;
+import com.padimasso.autocasting.application.talent.dto.request.EducationUpsertRequest;
 import com.padimasso.autocasting.application.talent.dto.response.EducationResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.EducationEntity;
@@ -16,8 +17,14 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
@@ -86,6 +93,41 @@ public class EducationServiceImpl implements EducationService {
         talentProfileRepository.touchModifiedAt(profileId);
 
         return new LastModifiedResponse(talentProfileRepository.findModifiedAtById(profileId));
+    }
+
+    @Override
+    @Transactional
+    public List<EducationResponse> replaceEducation(TalentProfileEntity profile, List<EducationUpsertRequest> items) {
+        Map<UUID, EducationEntity> existingById = educationRepository.findAllByTalentProfileId(profile.getId())
+            .stream()
+            .collect(Collectors.toMap(EducationEntity::getId, Function.identity()));
+        Set<UUID> keptIds = new HashSet<>();
+        List<EducationEntity> result = new ArrayList<>();
+
+        for (EducationUpsertRequest item : items) {
+            EducationRequest data = item.education();
+            EducationEntity education;
+            if (item.id() == null) {
+                education = EducationEntity.builder().talentProfile(profile).build();
+            } else {
+                education = existingById.get(item.id());
+                if (education == null) {
+                    throw new IllegalArgumentException("education.not_found");
+                }
+                keptIds.add(education.getId());
+            }
+            education.setInstitution(TextNormalizer.normalizeNullable(data.institution()));
+            education.setCourseName(TextNormalizer.normalizeNullable(data.courseName()));
+            education.setGraduationYear(TextNormalizer.normalizeNullable(data.graduationYear()));
+            result.add(educationRepository.save(education));
+        }
+
+        existingById.values().stream()
+            .filter(education -> !keptIds.contains(education.getId()))
+            .forEach(educationRepository::softDelete);
+        talentProfileRepository.touchModifiedAt(profile.getId());
+
+        return result.stream().map(talentProfileMapper::toEducationResponse).toList();
     }
 
     /* ---------------- Helpers ---------------- */

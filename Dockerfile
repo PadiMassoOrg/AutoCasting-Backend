@@ -15,4 +15,4 @@ COPY --from=build /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java -Dfile.encoding=UTF-8 -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dfile.encoding=UTF-8 -Duser.timezone=UTC -jar app.jar"]

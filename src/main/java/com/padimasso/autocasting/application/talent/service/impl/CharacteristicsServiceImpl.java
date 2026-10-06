@@ -33,6 +33,11 @@ public class CharacteristicsServiceImpl implements CharacteristicsService {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchCharacteristics(profile, request);
+    }
+
+    @Override
+    public CharacteristicsResponse patchCharacteristics(TalentProfileEntity profile, CharacteristicsPatchRequest request) {
         CharacteristicsEntity characteristics = characteristicsRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> characteristicsRepository.save(CharacteristicsEntity.builder().talentProfile(profile).build()));
 

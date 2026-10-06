@@ -1,8 +1,10 @@
 package com.padimasso.autocasting.application.admin.controller;
 
 import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminEmployerProfileUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
+import com.padimasso.autocasting.application.admin.dto.request.AdminTalentProfileUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
@@ -11,6 +13,8 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResp
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
+import com.padimasso.autocasting.application.admin.service.AdminEmployerProfileEditService;
+import com.padimasso.autocasting.application.admin.service.AdminTalentProfileEditService;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +47,8 @@ import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_BULK_WEL
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
+    private final AdminTalentProfileEditService adminTalentProfileEditService;
+    private final AdminEmployerProfileEditService adminEmployerProfileEditService;
 
     @Operation(
         summary = "List users (paginated)",
@@ -114,6 +120,19 @@ public class AdminUserController {
     }
 
     @Operation(
+        summary = "Update user's talent profile",
+        description = "Atomically updates the provided talent profile sections on behalf of an admin and records the audit entry with the admin's reason. Omitted sections are left untouched.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping(ADMIN_USER_TALENT_PROFILE_API_URL)
+    public AdminTalentProfileResponse updateTalentProfileForAdmin(
+        @Parameter(description = "User ID.") @PathVariable UUID userId,
+        @Valid @RequestBody AdminTalentProfileUpdateRequest request
+    ) {
+        return adminTalentProfileEditService.updateTalentProfile(userId, request);
+    }
+
+    @Operation(
         summary = "Remove a talent's media item",
         description = "Clears a single media slot (headshot, full body, or an other-picture index) from a talent's profile for administrative moderation, without suspending the account.",
         security = @SecurityRequirement(name = "bearerAuth")
@@ -127,6 +146,19 @@ public class AdminUserController {
         @Valid @RequestBody AdminRemoveTalentMediaRequest request
     ) {
         adminUserService.removeTalentMedia(userId, slot, index, request);
+    }
+
+    @Operation(
+        summary = "Update user's employer profile",
+        description = "Atomically updates the provided employer profile sections on behalf of an admin and records the audit entry with the admin's reason. Omitted sections are left untouched.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PatchMapping(ADMIN_USER_EMPLOYER_PROFILE_API_URL)
+    public AdminEmployerProfileResponse updateEmployerProfileForAdmin(
+        @Parameter(description = "User ID.") @PathVariable UUID userId,
+        @Valid @RequestBody AdminEmployerProfileUpdateRequest request
+    ) {
+        return adminEmployerProfileEditService.updateEmployerProfile(userId, request);
     }
 
     @Operation(

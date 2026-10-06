@@ -67,7 +67,12 @@ public class TalentProfileServiceImpl implements TalentProfileService {
         UserEntity user = authContext.getCurrentUserOrThrow();
         var foundProfile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchSkills(foundProfile, request);
+    }
 
+    @Override
+    @Transactional
+    public SkillsResponse patchSkills(TalentProfileEntity foundProfile, SkillsPatchRequest request) {
         if (request.skillIds() != null) {
             Set<UUID> ids = request.skillIds();
             if (ids.isEmpty()) {
