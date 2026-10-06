@@ -4,7 +4,7 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminTalentProfil
 import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminProfileMapper;
 import com.padimasso.autocasting.application.admin.service.AdminTalentProfileEditService;
-import com.padimasso.autocasting.application.admin.util.TalentProfileChangeDiff;
+import com.padimasso.autocasting.application.admin.util.ProfileChangeDiff;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
@@ -117,6 +117,6 @@ public class AdminTalentProfileEditServiceImpl implements AdminTalentProfileEdit
     }
 
     private List<HistoryChangeEntry> diff(String section, JsonNode before, JsonNode after) {
-        return TalentProfileChangeDiff.diff(objectMapper, section, before, after);
+        return ProfileChangeDiff.diff(objectMapper, section, before, after);
     }
 }

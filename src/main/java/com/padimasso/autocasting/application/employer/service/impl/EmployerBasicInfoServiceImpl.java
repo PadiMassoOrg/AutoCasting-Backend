@@ -30,7 +30,12 @@ public class EmployerBasicInfoServiceImpl implements EmployerBasicInfoService {
     @Override
     public EmployerBasicInfoResponse patchMyBasicInfo(EmployerBasicInfoPatchRequest req) {
         var principal = employerContext.getCurrentEmployerOrThrow();
-        EmployerProfileEntity profile = principal.employerProfile();
+        return patchBasicInfo(principal.employerProfile(), req);
+    }
+
+    @Transactional
+    @Override
+    public EmployerBasicInfoResponse patchBasicInfo(EmployerProfileEntity profile, EmployerBasicInfoPatchRequest req) {
         EmployerBasicInfoEntity basicInfo = employerBasicInfoRepository
                 .findByEmployerProfileId(profile.getId())
                 .orElseGet(() -> employerBasicInfoRepository.save(

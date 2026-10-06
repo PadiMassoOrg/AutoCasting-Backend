@@ -19,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class TalentProfileChangeDiffTest {
+class ProfileChangeDiffTest {
 
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
     private List<HistoryChangeEntry> diff(String section, Object before, Object after) {
-        return TalentProfileChangeDiff.diff(mapper, section, mapper.valueToTree(before), mapper.valueToTree(after));
+        return ProfileChangeDiff.diff(mapper, section, mapper.valueToTree(before), mapper.valueToTree(after));
     }
 
     private static Map<String, Object> meta(String id, String code) {
@@ -210,9 +210,9 @@ class TalentProfileChangeDiffTest {
         var beforeTree = mapper.valueToTree(before);
         var afterTree = mapper.valueToTree(after);
 
-        var skills = TalentProfileChangeDiff.diff(mapper, "skills", beforeTree.get("skills"), afterTree.get("skills"));
-        var credits = TalentProfileChangeDiff.diff(mapper, "credits", beforeTree.get("credits"), afterTree.get("credits"));
-        var education = TalentProfileChangeDiff.diff(mapper, "education", beforeTree.get("education"), afterTree.get("education"));
+        var skills = ProfileChangeDiff.diff(mapper, "skills", beforeTree.get("skills"), afterTree.get("skills"));
+        var credits = ProfileChangeDiff.diff(mapper, "credits", beforeTree.get("credits"), afterTree.get("credits"));
+        var education = ProfileChangeDiff.diff(mapper, "education", beforeTree.get("education"), afterTree.get("education"));
 
         assertEquals(List.of("skills.added"), keys(skills));
         assertEquals(List.of(Map.of("stringCode", "skill.cycling")), skills.get(0).newValue());

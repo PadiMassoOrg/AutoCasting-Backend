@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Turns before/after snapshots of a profile section into a compact audit trail: only what changed.
+ * Turns before/after snapshots of a talent or employer profile section into a compact audit trail: only what changed.
  *
  * <ul>
  *   <li>Scalars and single metadata values: {@code section.field: previous -> new}.</li>
@@ -28,12 +28,12 @@ import java.util.Set;
  *       Storage URLs are shortened to the file name.</li>
  * </ul>
  */
-public final class TalentProfileChangeDiff {
+public final class ProfileChangeDiff {
 
     private static final Set<String> IGNORED_FIELDS = Set.of("id", "optionId", "modifiedAt");
     private static final String STORAGE_PATH = "/storage/v1/object/public/";
 
-    private TalentProfileChangeDiff() {
+    private ProfileChangeDiff() {
     }
 
     public static List<HistoryChangeEntry> diff(ObjectMapper mapper, String section, JsonNode before, JsonNode after) {
@@ -55,6 +55,13 @@ public final class TalentProfileChangeDiff {
 
         if (isArray(previous) || isArray(next)) {
             diffList(mapper, entries, key, items(previous), items(next));
+            return;
+        }
+
+        if ((isObject(previous) || isObject(next)) && !isMetadata(previous) && !isMetadata(next)) {
+            for (String field : fieldNames(previous, next)) {
+                diffValue(mapper, entries, key + "." + field, child(previous, field), child(next, field));
+            }
             return;
         }
 
@@ -209,6 +216,10 @@ public final class TalentProfileChangeDiff {
         List<JsonNode> result = new ArrayList<>();
         if (isArray(node)) node.forEach(result::add);
         return result;
+    }
+
+    private static boolean isMetadata(JsonNode node) {
+        return isObject(node) && node.has("stringCode");
     }
 
     private static boolean isObject(JsonNode node) {

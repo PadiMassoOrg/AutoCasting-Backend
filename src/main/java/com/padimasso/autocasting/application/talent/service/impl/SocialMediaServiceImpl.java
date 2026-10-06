@@ -96,7 +96,12 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
         EmployerProfileEntity profile = employerProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchEmployerSocialMedia(profile, request);
+    }
 
+    @Transactional
+    @Override
+    public SocialMediaResponse patchEmployerSocialMedia(EmployerProfileEntity profile, SocialMediaPatchRequest request) {
         EmployerBasicInfoEntity basicInfo = profile.getBasicInfo();
 
         if (request.links() != null) {
