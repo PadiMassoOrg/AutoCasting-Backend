@@ -37,6 +37,12 @@ public class MediaServiceImpl implements MediaService {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchMedia(profile, request);
+    }
+
+    @Transactional
+    @Override
+    public MediaResponse patchMedia(TalentProfileEntity profile, MediaPatchRequest request) {
         MediaEntity media = mediaRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> mediaRepository.save(MediaEntity.builder().talentProfile(profile).build()));
 

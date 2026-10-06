@@ -40,7 +40,12 @@ public class SocialMediaServiceImpl implements SocialMediaService {
 
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchSocialMedia(profile, request);
+    }
 
+    @Transactional
+    @Override
+    public SocialMediaResponse patchSocialMedia(TalentProfileEntity profile, SocialMediaPatchRequest request) {
         if (request.links() != null) {
             for (SocialMediaLinkDto rawDto : request.links()) {
                 if (rawDto == null || rawDto.optionId() == null) {

@@ -39,6 +39,12 @@ public class BasicInfoServiceImpl implements BasicInfoService {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchBasicInfo(profile, req);
+    }
+
+    @Transactional
+    @Override
+    public BasicInfoResponse patchBasicInfo(TalentProfileEntity profile, BasicInfoPatchRequest req) {
         BasicInfoEntity basicInfo = basicInfoRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> basicInfoRepository.save(BasicInfoEntity.builder().talentProfile(profile).build()));
 

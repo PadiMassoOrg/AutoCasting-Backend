@@ -2,6 +2,8 @@ package com.padimasso.autocasting.application.talent.service;
 
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
+import com.padimasso.autocasting.application.talent.dto.request.CreditUpsertRequest;
+import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.dto.response.CreditResponse;
 
 import java.util.List;
@@ -18,5 +20,7 @@ public interface CreditService {
     CreditResponse patchMyCredit(UUID id, CreditRequest request);
 
     LastModifiedResponse deleteMyCredit(UUID id);
+
+    List<CreditResponse> replaceCredits(TalentProfileEntity profile, List<CreditUpsertRequest> items);
 
 }

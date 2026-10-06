@@ -6,6 +6,7 @@ import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.dto.request.CreditRequest;
+import com.padimasso.autocasting.application.talent.dto.request.CreditUpsertRequest;
 import com.padimasso.autocasting.application.talent.dto.response.CreditResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.CreditEntity;
@@ -17,8 +18,14 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
@@ -98,6 +105,42 @@ public class CreditServiceImpl implements CreditService {
         return new LastModifiedResponse(talentProfileRepository.findModifiedAtById(profileId));
     }
 
+    @Override
+    @Transactional
+    public List<CreditResponse> replaceCredits(TalentProfileEntity profile, List<CreditUpsertRequest> items) {
+        Map<UUID, CreditEntity> existingById = creditRepository.findAllByTalentProfileId(profile.getId())
+            .stream()
+            .collect(Collectors.toMap(CreditEntity::getId, Function.identity()));
+        Set<UUID> keptIds = new HashSet<>();
+        List<CreditEntity> result = new ArrayList<>();
+
+        for (CreditUpsertRequest item : items) {
+            CreditRequest data = item.credit();
+            CreditEntity credit;
+            if (item.id() == null) {
+                credit = CreditEntity.builder().talentProfile(profile).build();
+            } else {
+                credit = existingById.get(item.id());
+                if (credit == null) {
+                    throw new IllegalArgumentException("credit.not_found");
+                }
+                keptIds.add(credit.getId());
+            }
+            credit.setProductionType(siteMetadataResolver.resolveProductionTypeOrThrow(data.productionTypeId()));
+            credit.setProjectName(TextNormalizer.normalizeNullable(data.projectName()));
+            credit.setProducerName(TextNormalizer.normalizeNullable(data.producerName()));
+            credit.setRole(TextNormalizer.normalizeNullable(data.role()));
+            credit.setYear(TextNormalizer.normalizeNullable(data.year()));
+            result.add(creditRepository.save(credit));
+        }
+
+        existingById.values().stream()
+            .filter(credit -> !keptIds.contains(credit.getId()))
+            .forEach(creditRepository::softDelete);
+        talentProfileRepository.touchModifiedAt(profile.getId());
+
+        return result.stream().map(talentProfileMapper::toCreditResponse).toList();
+    }
 
     /* ---------------- Helpers ---------------- */
 

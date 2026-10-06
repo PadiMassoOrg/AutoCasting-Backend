@@ -33,6 +33,12 @@ public class ContactServiceImpl implements ContactService {
         UserEntity user = authContext.getCurrentUserOrThrow();
         TalentProfileEntity profile = talentProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new IllegalArgumentException(PROFILE_NOT_FOUND));
+        return patchContact(profile, request);
+    }
+
+    @Transactional
+    @Override
+    public ContactResponse patchContact(TalentProfileEntity profile, ContactPatchRequest request) {
         ContactEntity contact = contactRepository.findByTalentProfileId(profile.getId())
             .orElseGet(() -> contactRepository.save(ContactEntity.builder().talentProfile(profile).build()));
 

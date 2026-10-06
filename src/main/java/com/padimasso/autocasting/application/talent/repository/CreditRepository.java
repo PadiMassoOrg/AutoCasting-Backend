@@ -9,11 +9,11 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 public interface CreditRepository extends SoftDeleteRepository<CreditEntity, UUID> {
     default List<CreditEntity> findAllByTalentProfileId(UUID id) {
-        return findAllByPropertyEquals("talent.id", id);
+        return findAllByPropertyEquals("talentProfile.id", id);
     }
 
     // Si un día necesitas admin (incluye borrados):
     default List<CreditEntity> findAllByTalentProfileIdIncludingDeleted(UUID id) {
-        return findAllIncludingDeletedByPropertyEquals("talent.id", id);
+        return findAllIncludingDeletedByPropertyEquals("talentProfile.id", id);
     }
 }

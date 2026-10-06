@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.talent.service;
 
+import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.dto.request.SkillsPatchRequest;
 import com.padimasso.autocasting.application.talent.dto.response.PublicProfileResponse;
 import com.padimasso.autocasting.application.talent.dto.response.SkillsResponse;
@@ -13,4 +14,6 @@ public interface TalentProfileService {
     PublicProfileResponse getProfileBySlug(String slug);
 
     SkillsResponse patchMySkills(@Valid SkillsPatchRequest request);
+
+    SkillsResponse patchSkills(TalentProfileEntity profile, SkillsPatchRequest request);
 }
