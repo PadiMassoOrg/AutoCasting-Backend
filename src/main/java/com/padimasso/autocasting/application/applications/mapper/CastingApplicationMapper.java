@@ -12,7 +12,14 @@ import java.util.List;
 @Component
 public class CastingApplicationMapper {
 
-    public TalentCastingApplicationCardResponse toTalentCardFromEntity(CastingApplicationEntity a) {
+    /**
+     * The card of an application whose role an admin deleted keeps all its data, but reports the casting as
+     * {@code withdrawnRoleStatus} (CLOSED): the role is no longer in play, whatever the casting's status.
+     */
+    public TalentCastingApplicationCardResponse toTalentCardFromEntity(
+        CastingApplicationEntity a,
+        SiteMetadataObject withdrawnRoleStatus
+    ) {
         var role = a.getCastingRole();
         var casting = role.getCasting();
         var employerProfile = casting.getEmployerProfile();
@@ -31,7 +38,9 @@ public class CastingApplicationMapper {
                 casting.getCastingModality().getStringCode(),
                 casting.getCastingModality().getCategoryStringCode()
             ) : null,
-            casting.getStatus() != null ? new SiteMetadataObject(
+            role.isDeleted() && withdrawnRoleStatus != null
+                ? withdrawnRoleStatus
+                : casting.getStatus() != null ? new SiteMetadataObject(
                 casting.getStatus().getId(),
                 casting.getStatus().getStringCode(),
                 casting.getStatus().getCategoryStringCode()

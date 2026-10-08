@@ -69,4 +69,28 @@ class AdminCastingUpdateRequestValidationTest {
         assertTrue(ageBackwards.stream().anyMatch(v -> v.contains("age_range_invalid")));
         assertTrue(blankTitle.stream().anyMatch(v -> v.contains("title_required")));
     }
+
+    @Test
+    void roleCreateDuplicateAndDeleteRequireAReason() {
+        assertTrue(violations(new AdminCastingRoleCreateRequest(" ", role("A", (short) 18, (short) 30, null)))
+            .stream().anyMatch(v -> v.startsWith("reason")));
+        assertTrue(violations(new AdminCastingRoleDuplicateRequest("", null)).stream().anyMatch(v -> v.startsWith("reason")));
+        assertTrue(violations(new AdminCastingRoleDeleteRequest(null)).stream().anyMatch(v -> v.startsWith("reason")));
+    }
+
+    @Test
+    void roleCreateAppliesTheSameRoleRulesAsUpdate() {
+        assertEquals(java.util.List.of(), violations(new AdminCastingRoleCreateRequest("r", role(MAX_TEXT, (short) 0, (short) 99, "x".repeat(3000)))));
+        assertTrue(violations(new AdminCastingRoleCreateRequest("r", role("A", (short) 40, (short) 30, null)))
+            .stream().anyMatch(v -> v.contains("age_range_invalid")));
+        assertTrue(violations(new AdminCastingRoleCreateRequest("r", null)).stream().anyMatch(v -> v.startsWith("role")));
+    }
+
+    @Test
+    void duplicateRoleNameIsOptionalButBounded() {
+        assertEquals(java.util.List.of(), violations(new AdminCastingRoleDuplicateRequest("r", null)));
+        assertEquals(java.util.List.of(), violations(new AdminCastingRoleDuplicateRequest("r", MAX_TEXT)));
+        assertTrue(violations(new AdminCastingRoleDuplicateRequest("r", "x".repeat(256)))
+            .stream().anyMatch(v -> v.contains("role_name_max_length")));
+    }
 }

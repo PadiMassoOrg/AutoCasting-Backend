@@ -1,5 +1,8 @@
 package com.padimasso.autocasting.application.admin.controller;
 
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleCreateRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDeleteRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDuplicateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
@@ -16,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +36,8 @@ import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_API_U
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_CLOSE_EXPIRED_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_DETAILS_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLE_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLE_DUPLICATE_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLES_API_URL;
 
 @RestController
 @RequiredArgsConstructor
@@ -101,6 +107,42 @@ public class AdminCastingController {
         @Valid @RequestBody AdminCastingRoleUpdateRequest request
     ) {
         return adminCastingEditService.updateCastingRole(roleId, request);
+    }
+
+    @Operation(
+        summary = "Add a casting role",
+        description = "Adds a role to a draft, published or paused casting on behalf of an admin and records the audit entry with the admin's reason. The role is created without a reference photo.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(ADMIN_CASTING_ROLES_API_URL)
+    public CastingRoleResponse createCastingRole(@Valid @RequestBody AdminCastingRoleCreateRequest request) {
+        return adminCastingEditService.createCastingRole(request);
+    }
+
+    @Operation(
+        summary = "Duplicate a casting role",
+        description = "Copies a role (without its reference photo) inside its casting and records the audit entry with the admin's reason.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PostMapping(ADMIN_CASTING_ROLE_DUPLICATE_API_URL)
+    public CastingRoleResponse duplicateCastingRole(
+        @Parameter(description = "Role ID.") @PathVariable UUID roleId,
+        @Valid @RequestBody AdminCastingRoleDuplicateRequest request
+    ) {
+        return adminCastingEditService.duplicateCastingRole(roleId, request);
+    }
+
+    @Operation(
+        summary = "Delete a casting role",
+        description = "Soft-deletes a role and records the audit entry with the admin's reason. The role's applications are kept: talents still see them, with the casting reported as closed. Rejected when the role has a selected application or is the last role of a published or paused casting.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @DeleteMapping(ADMIN_CASTING_ROLE_API_URL)
+    public void deleteCastingRole(
+        @Parameter(description = "Role ID.") @PathVariable UUID roleId,
+        @Valid @RequestBody AdminCastingRoleDeleteRequest request
+    ) {
+        adminCastingEditService.deleteCastingRole(roleId, request);
     }
 
     @Operation(

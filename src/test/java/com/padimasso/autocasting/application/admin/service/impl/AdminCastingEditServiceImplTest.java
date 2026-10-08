@@ -6,6 +6,11 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleU
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
 import com.padimasso.autocasting.application.admin.mapper.AdminCastingMapper;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleCreateRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDeleteRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDuplicateRequest;
+import com.padimasso.autocasting.application.applications.repository.CastingApplicationRepository;
+import com.padimasso.autocasting.application.applications.repository.projection.ApplicationStatusCountProjection;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.dto.request.CastingUpsertRequest;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -14,6 +19,7 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
+import com.padimasso.autocasting.application.castings.service.internal.CastingRoleDuplicator;
 import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
@@ -24,6 +30,7 @@ import com.padimasso.autocasting.application.sitemetadata.model.GenderOptionEnti
 import com.padimasso.autocasting.application.sitemetadata.model.PayRateTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.RoleTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
+import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +45,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.padimasso.autocasting.config.AppConstants.CASTING_APPLICATION_STATUS_BLANK;
+import static com.padimasso.autocasting.config.AppConstants.CASTING_APPLICATION_STATUS_SELECTED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_ARCHIVED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_CLOSED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT;
@@ -46,6 +55,8 @@ import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PUBLI
 import static com.padimasso.autocasting.config.AppConstants.CURRENCY_ARS;
 import static com.padimasso.autocasting.config.AppConstants.GENDER_OPTION_INDISTINCT;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_ADMIN_NOT_EDITABLE;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_LAST_ROLE_REQUIRED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_ROLE_HAS_SELECTED_APPLICATIONS;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTING_ROLE_NOT_FOUND;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_NOT_FOUND;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_ROLE_MISMATCH;
@@ -56,6 +67,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -70,6 +82,10 @@ class AdminCastingEditServiceImplTest {
     @Mock
     private SiteMetadataResolver siteMetadataResolver;
     @Mock
+    private CastingApplicationRepository castingApplicationRepository;
+    @Mock
+    private MediaStorageService mediaStorageService;
+    @Mock
     private AdminCastingMapper adminCastingMapper;
     @Mock
     private HistoryService historyService;
@@ -82,9 +98,10 @@ class AdminCastingEditServiceImplTest {
     @BeforeEach
     void setUp() {
         var objectMapper = new ObjectMapper().findAndRegisterModules().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        var dataApplier = new CastingDataApplier(siteMetadataResolver);
         service = new AdminCastingEditServiceImpl(
-            castingRepository, castingRoleRepository, new CastingDataApplier(siteMetadataResolver),
-            adminCastingMapper, historyService, objectMapper
+            castingRepository, castingRoleRepository, castingApplicationRepository, dataApplier,
+            new CastingRoleDuplicator(dataApplier), mediaStorageService, adminCastingMapper, historyService, objectMapper
         );
         castingId = UUID.randomUUID();
         roleId = UUID.randomUUID();
@@ -277,5 +294,179 @@ class AdminCastingEditServiceImplTest {
 
             service.updateCasting(castingId, new AdminCastingUpdateRequest("r", castingRequest("Old title", null)));
         }
+    }
+
+    // ---- create / duplicate / delete
+
+    private static ApplicationStatusCountProjection count(String statusCode, long total) {
+        return new ApplicationStatusCountProjection() {
+            @Override
+            public String getStatusCode() {
+                return statusCode;
+            }
+
+            @Override
+            public long getTotal() {
+                return total;
+            }
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<HistoryChangeEntry> capturedChanges(EntityType type, UUID entityId, String reason) {
+        ArgumentCaptor<Object> changes = ArgumentCaptor.forClass(Object.class);
+        verify(historyService).createHistoryEntry(eq(type), eq(entityId), eq(reason), changes.capture());
+        return (List<HistoryChangeEntry>) changes.getValue();
+    }
+
+    private final UUID newRoleId = UUID.randomUUID();
+
+    private CastingRoleEntity persisted(CastingRoleEntity role) {
+        role.setId(newRoleId);
+        return role;
+    }
+
+    @Test
+    void createCastingRole_savesRoleWithoutPhotoEvenIfClientSendsOne() {
+        stubResolutions();
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(casting));
+        when(castingRoleRepository.saveAndFlush(any())).thenAnswer(invocation -> persisted(invocation.getArgument(0)));
+        var created = roleResponse("Villain");
+        when(adminCastingMapper.toRoleResponse(any(CastingRoleEntity.class))).thenReturn(created);
+
+        var result = service.createCastingRole(new AdminCastingRoleCreateRequest("new role", roleRequest(castingId, "Villain")));
+
+        assertSame(created, result);
+        ArgumentCaptor<CastingRoleEntity> saved = ArgumentCaptor.forClass(CastingRoleEntity.class);
+        verify(castingRoleRepository).saveAndFlush(saved.capture());
+        assertEquals("Villain", saved.getValue().getRoleName());
+        assertSame(casting, saved.getValue().getCasting());
+        assertEquals(null, saved.getValue().getReferencePhotoUrl());
+        var entries = capturedChanges(EntityType.CASTING_ROLE, newRoleId, "new role");
+        assertTrue(entries.stream().anyMatch(entry -> entry.fieldKey().equals("role.roleName") && "Villain".equals(entry.newValue())));
+        assertTrue(entries.stream().noneMatch(entry -> entry.fieldKey().contains("referencePhotoUrl")));
+    }
+
+    @Test
+    void createCastingRole_unknownOrClosedCasting_isRejected() {
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.empty());
+        var missing = assertThrows(IllegalArgumentException.class,
+            () -> service.createCastingRole(new AdminCastingRoleCreateRequest("r", roleRequest(castingId, "A"))));
+        assertEquals(CASTINGS_NOT_FOUND, missing.getMessage());
+
+        casting.setStatus(status(CASTING_STATUS_CLOSED));
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(casting));
+        var closed = assertThrows(IllegalStateException.class,
+            () -> service.createCastingRole(new AdminCastingRoleCreateRequest("r", roleRequest(castingId, "A"))));
+        assertEquals(CASTINGS_ADMIN_NOT_EDITABLE, closed.getMessage());
+
+        verify(castingRoleRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(historyService);
+    }
+
+    @Test
+    void duplicateCastingRole_copiesWithoutPhotoAndRecordsTheSource() {
+        var source = role(castingId);
+        source.setAgeMin((short) 18);
+        source.setAgeMax((short) 30);
+        source.setPayRateType(payRate("sitemetadata.pay_rate.unpaid"));
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(source));
+        when(castingRoleRepository.saveAndFlush(any())).thenAnswer(invocation -> persisted(invocation.getArgument(0)));
+        when(adminCastingMapper.toRoleResponse(any(CastingRoleEntity.class))).thenReturn(roleResponse("Copia de Lead"));
+        lenient().when(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS)).thenReturn(new CurrencyOptionEntity());
+
+        service.duplicateCastingRole(roleId, new AdminCastingRoleDuplicateRequest("copy", "  Copia de Lead "));
+
+        ArgumentCaptor<CastingRoleEntity> saved = ArgumentCaptor.forClass(CastingRoleEntity.class);
+        verify(castingRoleRepository).saveAndFlush(saved.capture());
+        assertEquals("Copia de Lead", saved.getValue().getRoleName());
+        assertEquals(null, saved.getValue().getReferencePhotoUrl());
+        assertSame(source.getCasting(), saved.getValue().getCasting());
+        var entries = capturedChanges(EntityType.CASTING_ROLE, newRoleId, "copy");
+        assertTrue(entries.stream().anyMatch(entry -> entry.fieldKey().equals("role.duplicatedFrom") && roleId.toString().equals(entry.newValue())));
+    }
+
+    @Test
+    void duplicateCastingRole_roleOfClosedCasting_isRejected() {
+        var source = role(castingId);
+        source.getCasting().setStatus(status(CASTING_STATUS_ARCHIVED));
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(source));
+
+        var error = assertThrows(IllegalStateException.class,
+            () -> service.duplicateCastingRole(roleId, new AdminCastingRoleDuplicateRequest("r", null)));
+
+        assertEquals(CASTINGS_ADMIN_NOT_EDITABLE, error.getMessage());
+        verify(castingRoleRepository, never()).saveAndFlush(any());
+    }
+
+    private static PayRateTypeOptionEntity payRate(String code) {
+        var payRate = new PayRateTypeOptionEntity();
+        payRate.setStringCode(code);
+        return payRate;
+    }
+
+    @Test
+    void deleteCastingRole_withSelectedApplication_isRejectedAndKeepsEverything() {
+        var entity = role(castingId);
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(entity));
+        when(castingApplicationRepository.countByStatusForRole(roleId))
+            .thenReturn(List.of(count(CASTING_APPLICATION_STATUS_BLANK, 3), count(CASTING_APPLICATION_STATUS_SELECTED, 1)));
+
+        var error = assertThrows(IllegalStateException.class,
+            () -> service.deleteCastingRole(roleId, new AdminCastingRoleDeleteRequest("r")));
+
+        assertEquals(CASTINGS_ROLE_HAS_SELECTED_APPLICATIONS, error.getMessage());
+        verify(castingRoleRepository, never()).softDelete(any());
+        verifyNoInteractions(historyService, mediaStorageService);
+    }
+
+    @Test
+    void deleteCastingRole_lastRoleOfPublishedOrPausedCasting_isRejected() {
+        for (String code : List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_PAUSED)) {
+            var entity = role(castingId);
+            entity.getCasting().setStatus(status(code));
+            when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(entity));
+            when(castingApplicationRepository.countByStatusForRole(roleId)).thenReturn(List.of());
+            when(castingRoleRepository.countByCasting_IdAndDeletedFalse(castingId)).thenReturn(1L);
+
+            var error = assertThrows(IllegalStateException.class,
+                () -> service.deleteCastingRole(roleId, new AdminCastingRoleDeleteRequest("r")));
+
+            assertEquals(CASTINGS_LAST_ROLE_REQUIRED, error.getMessage());
+        }
+        verify(castingRoleRepository, never()).softDelete(any());
+        verifyNoInteractions(historyService);
+    }
+
+    @Test
+    void deleteCastingRole_lastRoleOfDraftCasting_isAllowed() {
+        var entity = role(castingId);
+        entity.getCasting().setStatus(status(CASTING_STATUS_DRAFT));
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(entity));
+        when(castingApplicationRepository.countByStatusForRole(roleId)).thenReturn(List.of());
+        when(adminCastingMapper.toRoleResponse(entity)).thenReturn(roleResponse("Lead"));
+
+        service.deleteCastingRole(roleId, new AdminCastingRoleDeleteRequest("cleanup"));
+
+        verify(castingRoleRepository).softDelete(entity);
+        verify(castingRoleRepository, never()).countByCasting_IdAndDeletedFalse(any());
+    }
+
+    @Test
+    void deleteCastingRole_keepsApplicationsRemovesPhotoAndRecordsWhatTalentsKeep() {
+        var entity = role(castingId);
+        when(castingRoleRepository.findByIdAndDeletedFalse(roleId)).thenReturn(Optional.of(entity));
+        when(castingApplicationRepository.countByStatusForRole(roleId)).thenReturn(List.of(count(CASTING_APPLICATION_STATUS_BLANK, 2)));
+        when(castingRoleRepository.countByCasting_IdAndDeletedFalse(castingId)).thenReturn(2L);
+        when(adminCastingMapper.toRoleResponse(entity)).thenReturn(roleResponse("Lead"));
+
+        service.deleteCastingRole(roleId, new AdminCastingRoleDeleteRequest("wrong role"));
+
+        verify(castingRoleRepository).softDelete(entity);
+        verify(mediaStorageService).deleteByPublicUrl("https://x/photo.png");
+        var entries = capturedChanges(EntityType.CASTING_ROLE, roleId, "wrong role");
+        assertTrue(entries.stream().anyMatch(entry -> entry.fieldKey().equals("role.deleted") && Boolean.TRUE.equals(entry.newValue())));
+        var kept = entries.stream().filter(entry -> entry.fieldKey().equals("role.applicationsKept")).findFirst().orElseThrow();
+        assertEquals(java.util.Map.of(CASTING_APPLICATION_STATUS_BLANK, 2L), kept.newValue());
     }
 }

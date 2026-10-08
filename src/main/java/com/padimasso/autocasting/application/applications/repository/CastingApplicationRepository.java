@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.applications.repository;
 
 import com.padimasso.autocasting.application.applications.model.CastingApplicationEntity;
 import com.padimasso.autocasting.application.applications.repository.projection.ApplicationProfessionProjection;
+import com.padimasso.autocasting.application.applications.repository.projection.ApplicationStatusCountProjection;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
 import com.padimasso.autocasting.config.jpa.SoftDeleteRepository;
 import jakarta.annotation.Nullable;
@@ -125,6 +126,7 @@ public interface CastingApplicationRepository
            set a.status = :status
          where a.id = :applicationId
            and a.castingRole.casting.employerProfile.id = :employerProfileId
+           and a.castingRole.deleted = false
            and a.deleted = false
         """)
     int setStatusIfOwned(
@@ -139,6 +141,7 @@ public interface CastingApplicationRepository
            set a.status = :status
          where a.id in :applicationIds
            and a.castingRole.casting.employerProfile.id = :employerProfileId
+           and a.castingRole.deleted = false
            and a.deleted = false
         """)
     int setStatusIfOwnedBulk(
@@ -146,4 +149,14 @@ public interface CastingApplicationRepository
         @Param("employerProfileId") UUID employerProfileId,
         @Param("status") CastingApplicationStatusOptionEntity status
     );
+
+    // ===== Admin =====
+    @Query("""
+        select a.status.stringCode as statusCode, count(a) as total
+        from CastingApplicationEntity a
+        where a.deleted = false
+          and a.castingRole.id = :roleId
+        group by a.status.stringCode
+        """)
+    List<ApplicationStatusCountProjection> countByStatusForRole(@Param("roleId") UUID roleId);
 }

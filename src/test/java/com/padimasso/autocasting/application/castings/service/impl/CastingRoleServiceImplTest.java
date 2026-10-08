@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.auth.context.EmployerContext;
 import com.padimasso.autocasting.application.auth.dto.response.EmployerPrincipal;
 import com.padimasso.autocasting.application.castings.dto.EmployerCastingRoleFilter;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
+import com.padimasso.autocasting.application.castings.service.internal.CastingRoleDuplicator;
 import com.padimasso.autocasting.application.castings.dto.request.CastingRoleRequest;
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
@@ -73,7 +74,8 @@ class CastingRoleServiceImplTest {
     void setUp() {
         service = new CastingRoleServiceImpl(
             castingRoleRepository, castingRepository, castingMapper, mediaStorageService,
-            new CastingDataApplier(siteMetadataResolver), employerContext
+            new CastingDataApplier(siteMetadataResolver),
+            new CastingRoleDuplicator(new CastingDataApplier(siteMetadataResolver)), employerContext
         );
 
         castingId = UUID.randomUUID();

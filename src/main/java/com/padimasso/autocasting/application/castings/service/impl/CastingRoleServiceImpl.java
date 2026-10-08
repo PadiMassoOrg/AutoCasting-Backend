@@ -13,9 +13,9 @@ import com.padimasso.autocasting.application.castings.repository.CastingRoleRepo
 import com.padimasso.autocasting.application.castings.repository.specification.CastingRoleSpecs;
 import com.padimasso.autocasting.application.castings.service.CastingRoleService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
+import com.padimasso.autocasting.application.castings.service.internal.CastingRoleDuplicator;
 import com.padimasso.autocasting.application.common.dto.LastModifiedResponse;
 import com.padimasso.autocasting.application.shared.util.PageHydration;
-import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.*;
@@ -40,6 +38,7 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     private final CastingMapper castingMapper;
     private final MediaStorageService mediaStorageService;
     private final CastingDataApplier castingDataApplier;
+    private final CastingRoleDuplicator castingRoleDuplicator;
     private final EmployerContext employerContext;
 
     @Override
@@ -119,37 +118,8 @@ public class CastingRoleServiceImpl implements CastingRoleService {
     public CastingRoleResponse duplicateCastingRole(UUID roleId, String roleName) {
         CastingRoleEntity sourceRole = findOwnedRoleOrThrow(roleId);
         assertDraftEditable(sourceRole.getCasting());
-        String duplicatedRoleName = TextNormalizer.normalizeNullable(roleName);
 
-        CastingRoleEntity duplicatedRole = CastingRoleEntity.builder()
-            .casting(sourceRole.getCasting())
-            .roleName(duplicatedRoleName != null ? duplicatedRoleName : sourceRole.getRoleName())
-            .roleType(sourceRole.getRoleType())
-            .gender(sourceRole.getGender())
-            .ageMin(sourceRole.getAgeMin())
-            .ageMax(sourceRole.getAgeMax())
-            .description(sourceRole.getDescription())
-            .payRateType(sourceRole.getPayRateType())
-            .currency(sourceRole.getCurrency())
-            .amount(sourceRole.getAmount())
-            .remunerationNotes(sourceRole.getRemunerationNotes())
-            .requiresAudio(sourceRole.isRequiresAudio())
-            .requiresVideo(sourceRole.isRequiresVideo())
-            .requirementDescription(sourceRole.getRequirementDescription())
-            .ethnicity(sourceRole.getEthnicity())
-            .tattoo(sourceRole.getTattoo())
-            .passport(sourceRole.getPassport())
-            .drivingLicense(sourceRole.getDrivingLicense())
-            // Deliberately NOT copied: two roles must never share the same Supabase object.
-            // referencePhotoUrl points at a single file, and deleting/replacing it from either
-            // role would delete it out from under the other. The duplicated role starts with
-            // no photo — the employer re-uploads (even the same image) to get its own URL.
-            .referencePhotoUrl(null)
-            .professions(new HashSet<>(sourceRole.getProfessions() == null ? Set.of() : sourceRole.getProfessions()))
-            .skills(new HashSet<>(sourceRole.getSkills() == null ? Set.of() : sourceRole.getSkills()))
-            .build();
-
-        castingDataApplier.validateRole(duplicatedRole);
+        CastingRoleEntity duplicatedRole = castingRoleDuplicator.duplicate(sourceRole, roleName);
         return castingMapper.toRoleResponse(castingRoleRepository.save(duplicatedRole));
     }
 
