@@ -7,6 +7,8 @@ import com.padimasso.autocasting.application.castings.dto.response.CastingRoleRe
 import com.padimasso.autocasting.application.castings.mapper.CastingMapper;
 import com.padimasso.autocasting.application.castings.model.CastingEntity;
 import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
+import com.padimasso.autocasting.application.castings.service.internal.CastingPublishability;
+import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class AdminCastingMapper {
 
     private final CastingMapper castingMapper;
+    private final CastingStatusTransitionPolicy castingStatusTransitionPolicy;
 
     public AdminCastingRowResponse toRowResponse(CastingEntity casting) {
         var employerProfile = casting.getEmployerProfile();
@@ -38,7 +41,18 @@ public class AdminCastingMapper {
             casting.getModifiedAt(),
             casting.getModifiedBy(),
             employerProfile != null && employerProfile.getUser() != null && employerProfile.getUser().isSuspended(),
-            casting.isDeleted()
+            casting.isDeleted(),
+            allowedStatusCodes(casting)
+        );
+    }
+
+    // Admins move a casting through the same transitions its employer can.
+    private List<String> allowedStatusCodes(CastingEntity casting) {
+        if (casting.isDeleted() || casting.getStatus() == null) return List.of();
+        return castingStatusTransitionPolicy.allowedNextStatuses(
+            casting.getStatus().getStringCode(),
+            casting.getApplicationDeadline(),
+            CastingPublishability.isPublishable(casting)
         );
     }
 

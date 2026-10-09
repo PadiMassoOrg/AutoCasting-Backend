@@ -19,7 +19,14 @@ import com.padimasso.autocasting.application.castings.model.CastingRoleEntity;
 import com.padimasso.autocasting.application.castings.repository.CastingRepository;
 import com.padimasso.autocasting.application.castings.repository.CastingRoleRepository;
 import com.padimasso.autocasting.application.castings.service.internal.CastingDataApplier;
+import com.padimasso.autocasting.application.castings.service.CastingMediaCleanupService;
 import com.padimasso.autocasting.application.castings.service.internal.CastingRoleDuplicator;
+import com.padimasso.autocasting.application.castings.service.internal.CastingStatusTransitionPolicy;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingStatusRequest;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
+import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.CastingModalityOptionEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptionEntity;
 import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
@@ -53,9 +60,12 @@ import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_DRAFT
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PAUSED;
 import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_PUBLISHED;
 import static com.padimasso.autocasting.config.AppConstants.CURRENCY_ARS;
+import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID;
 import static com.padimasso.autocasting.config.AppConstants.GENDER_OPTION_INDISTINCT;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_ADMIN_NOT_EDITABLE;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_INVALID_STATUS_TRANSITION;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_LAST_ROLE_REQUIRED;
+import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_NOT_PUBLISHABLE;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_ROLE_HAS_SELECTED_APPLICATIONS;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTING_ROLE_NOT_FOUND;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.CASTINGS_NOT_FOUND;
@@ -86,6 +96,8 @@ class AdminCastingEditServiceImplTest {
     @Mock
     private MediaStorageService mediaStorageService;
     @Mock
+    private CastingMediaCleanupService castingMediaCleanupService;
+    @Mock
     private AdminCastingMapper adminCastingMapper;
     @Mock
     private HistoryService historyService;
@@ -101,7 +113,8 @@ class AdminCastingEditServiceImplTest {
         var dataApplier = new CastingDataApplier(siteMetadataResolver);
         service = new AdminCastingEditServiceImpl(
             castingRepository, castingRoleRepository, castingApplicationRepository, dataApplier,
-            new CastingRoleDuplicator(dataApplier), mediaStorageService, adminCastingMapper, historyService, objectMapper
+            new CastingRoleDuplicator(dataApplier), mediaStorageService, new CastingStatusTransitionPolicy(),
+            siteMetadataResolver, castingMediaCleanupService, adminCastingMapper, historyService, objectMapper
         );
         castingId = UUID.randomUUID();
         roleId = UUID.randomUUID();
@@ -468,5 +481,151 @@ class AdminCastingEditServiceImplTest {
         assertTrue(entries.stream().anyMatch(entry -> entry.fieldKey().equals("role.deleted") && Boolean.TRUE.equals(entry.newValue())));
         var kept = entries.stream().filter(entry -> entry.fieldKey().equals("role.applicationsKept")).findFirst().orElseThrow();
         assertEquals(java.util.Map.of(CASTING_APPLICATION_STATUS_BLANK, 2L), kept.newValue());
+    }
+
+    // ---- status change
+
+    private CastingEntity completeCasting(String statusCode) {
+        var projectType = new ProjectTypeOptionEntity();
+        projectType.setStringCode("sitemetadata.project_type.short_film");
+        var modality = new CastingModalityOptionEntity();
+        modality.setStringCode("sitemetadata.casting_modality.autocasting");
+        var roleType = new RoleTypeOptionEntity();
+        roleType.setStringCode("sitemetadata.role_type.protagonist");
+        var gender = new GenderOptionEntity();
+        gender.setStringCode(GENDER_OPTION_INDISTINCT);
+
+        var complete = CastingEntity.builder()
+            .id(castingId)
+            .employerProfile(EmployerProfileEntity.builder().id(employerProfileId).build())
+            .status(status(statusCode))
+            .title("Film")
+            .projectType(projectType)
+            .castingModality(modality)
+            .applicationDeadline(LocalDate.now().plusDays(30))
+            .hasWardrobeFitting(false)
+            .shootingStartDate(LocalDate.now().plusDays(40))
+            .shootingEndDate(LocalDate.now().plusDays(41))
+            .build();
+        complete.getRoles().add(CastingRoleEntity.builder()
+            .roleName("Lead").roleType(roleType).gender(gender)
+            .ageMin((short) 18).ageMax((short) 30).payRateType(payRate("sitemetadata.pay_rate.unpaid"))
+            .build());
+        return complete;
+    }
+
+    private final UUID employerProfileId = UUID.randomUUID();
+
+    private void stubStatusLookup(CastingEntity target, String newStatusCode) {
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(target));
+        lenient().when(siteMetadataResolver.resolveCastingStatusByCodeOrThrow(newStatusCode)).thenReturn(status(newStatusCode));
+        lenient().when(castingRepository.saveAndFlush(target)).thenReturn(target);
+    }
+
+    @Test
+    void changeCastingStatus_publishedToPaused_appliesItAndRecordsTheChange() {
+        var target = completeCasting(CASTING_STATUS_PUBLISHED);
+        stubStatusLookup(target, CASTING_STATUS_PAUSED);
+        var row = org.mockito.Mockito.mock(AdminCastingRowResponse.class);
+        when(adminCastingMapper.toRowResponse(target)).thenReturn(row);
+
+        var result = service.changeCastingStatus(castingId, new AdminCastingStatusRequest("on hold", CASTING_STATUS_PAUSED));
+
+        assertSame(row, result);
+        assertEquals(CASTING_STATUS_PAUSED, target.getStatus().getStringCode());
+        var entries = capturedChanges(EntityType.CASTING, castingId, "on hold");
+        assertEquals(1, entries.size());
+        assertEquals("casting.status", entries.get(0).fieldKey());
+        assertEquals(java.util.Map.of("stringCode", CASTING_STATUS_PUBLISHED), entries.get(0).previousValue());
+        assertEquals(java.util.Map.of("stringCode", CASTING_STATUS_PAUSED), entries.get(0).newValue());
+        verify(castingMediaCleanupService, never()).deleteCastingFolder(any(), any());
+    }
+
+    @Test
+    void changeCastingStatus_closing_removesTheStorageFolder() {
+        var target = completeCasting(CASTING_STATUS_PAUSED);
+        stubStatusLookup(target, CASTING_STATUS_CLOSED);
+
+        service.changeCastingStatus(castingId, new AdminCastingStatusRequest("done", CASTING_STATUS_CLOSED));
+
+        assertEquals(CASTING_STATUS_CLOSED, target.getStatus().getStringCode());
+        verify(castingMediaCleanupService).deleteCastingFolder(employerProfileId, castingId);
+    }
+
+    @Test
+    void changeCastingStatus_pausedToPublished_isAllowedOnlyWhenTheCastingIsPublishable() {
+        var complete = completeCasting(CASTING_STATUS_PAUSED);
+        stubStatusLookup(complete, CASTING_STATUS_PUBLISHED);
+        service.changeCastingStatus(castingId, new AdminCastingStatusRequest("back", CASTING_STATUS_PUBLISHED));
+        assertEquals(CASTING_STATUS_PUBLISHED, complete.getStatus().getStringCode());
+
+        var incomplete = completeCasting(CASTING_STATUS_PAUSED);
+        incomplete.setTitle(null);
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(incomplete));
+        var error = assertThrows(IllegalStateException.class,
+            () -> service.changeCastingStatus(castingId, new AdminCastingStatusRequest("back", CASTING_STATUS_PUBLISHED)));
+        assertEquals(CASTINGS_NOT_PUBLISHABLE, error.getMessage());
+        assertEquals(CASTING_STATUS_PAUSED, incomplete.getStatus().getStringCode());
+    }
+
+    @Test
+    void changeCastingStatus_neverPublishesADraftEvenWhenComplete() {
+        var draft = completeCasting(CASTING_STATUS_DRAFT);
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(draft));
+
+        var error = assertThrows(IllegalStateException.class,
+            () -> service.changeCastingStatus(castingId, new AdminCastingStatusRequest("r", CASTING_STATUS_PUBLISHED)));
+
+        assertEquals(CASTINGS_INVALID_STATUS_TRANSITION, error.getMessage());
+        assertEquals(CASTING_STATUS_DRAFT, draft.getStatus().getStringCode());
+        verifyNoInteractions(historyService);
+    }
+
+    @Test
+    void changeCastingStatus_followsTheEmployerTransitions() {
+        for (var forbidden : List.of(
+            List.of(CASTING_STATUS_CLOSED, CASTING_STATUS_PAUSED),
+            List.of(CASTING_STATUS_CLOSED, CASTING_STATUS_PUBLISHED),
+            List.of(CASTING_STATUS_ARCHIVED, CASTING_STATUS_CLOSED),
+            List.of(CASTING_STATUS_PUBLISHED, CASTING_STATUS_DRAFT),
+            List.of(CASTING_STATUS_PUBLISHED, "sitemetadata.casting_status.unknown")
+        )) {
+            var target = completeCasting(forbidden.get(0));
+            when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(target));
+
+            var error = assertThrows(IllegalStateException.class,
+                () -> service.changeCastingStatus(castingId, new AdminCastingStatusRequest("r", forbidden.get(1))));
+
+            assertEquals(CASTINGS_INVALID_STATUS_TRANSITION, error.getMessage());
+            assertEquals(forbidden.get(0), target.getStatus().getStringCode());
+        }
+        verify(castingRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(historyService, castingMediaCleanupService);
+    }
+
+    @Test
+    void changeCastingStatus_afterTheDeadlineOnlyClosingAndArchivingAreOffered() {
+        var expired = completeCasting(CASTING_STATUS_PUBLISHED);
+        expired.setApplicationDeadline(LocalDate.now().minusDays(1));
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(expired));
+
+        var error = assertThrows(IllegalStateException.class,
+            () -> service.changeCastingStatus(castingId, new AdminCastingStatusRequest("r", CASTING_STATUS_PAUSED)));
+
+        assertEquals(CASTINGS_INVALID_STATUS_TRANSITION, error.getMessage());
+    }
+
+    @Test
+    void changeCastingStatus_proposalOrUnknownCasting_isNotFound() {
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.empty());
+        assertEquals(CASTINGS_NOT_FOUND, assertThrows(IllegalArgumentException.class,
+            () -> service.changeCastingStatus(castingId, new AdminCastingStatusRequest("r", CASTING_STATUS_PAUSED))).getMessage());
+
+        var proposal = completeCasting(CASTING_STATUS_PUBLISHED);
+        proposal.getEmployerProfile().setId(PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID);
+        when(castingRepository.findByIdAndDeletedFalse(castingId)).thenReturn(Optional.of(proposal));
+        assertEquals(CASTINGS_NOT_FOUND, assertThrows(IllegalArgumentException.class,
+            () -> service.changeCastingStatus(castingId, new AdminCastingStatusRequest("r", CASTING_STATUS_PAUSED))).getMessage());
+        verifyNoInteractions(historyService);
     }
 }

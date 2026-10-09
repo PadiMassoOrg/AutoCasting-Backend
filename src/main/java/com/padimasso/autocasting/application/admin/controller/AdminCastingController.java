@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleC
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDeleteRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDuplicateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleUpdateRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingStatusRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_STATUS_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_CLOSE_EXPIRED_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_DETAILS_API_URL;
@@ -107,6 +109,19 @@ public class AdminCastingController {
         @Valid @RequestBody AdminCastingRoleUpdateRequest request
     ) {
         return adminCastingEditService.updateCastingRole(roleId, request);
+    }
+
+    @Operation(
+        summary = "Change casting status",
+        description = "Moves a casting to another status on behalf of an admin and records the audit entry with the admin's reason. Only the transitions the casting's employer could make are accepted, and a draft is never published from here. Closing a casting removes its Storage folder.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @PutMapping(ADMIN_CASTING_STATUS_API_URL)
+    public AdminCastingRowResponse changeCastingStatus(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId,
+        @Valid @RequestBody AdminCastingStatusRequest request
+    ) {
+        return adminCastingEditService.changeCastingStatus(castingId, request);
     }
 
     @Operation(

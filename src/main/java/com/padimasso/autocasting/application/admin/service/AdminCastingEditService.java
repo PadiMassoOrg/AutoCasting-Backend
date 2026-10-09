@@ -4,8 +4,10 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleC
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDeleteRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleDuplicateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleUpdateRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminCastingStatusRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
 
 import java.util.UUID;
@@ -39,4 +41,12 @@ public interface AdminCastingEditService {
      * selected application, or when it is the last role of a published or paused casting.
      */
     void deleteCastingRole(UUID roleId, AdminCastingRoleDeleteRequest request);
+
+    /**
+     * Moves a casting to another status and records one history entry with the admin's reason. Only the
+     * transitions its employer could make are accepted ({@code CastingStatusTransitionPolicy}); a draft is never
+     * published from here, that happens at the employer's checkout. Closing removes the casting's Storage folder,
+     * as it does for the employer.
+     */
+    AdminCastingRowResponse changeCastingStatus(UUID castingId, AdminCastingStatusRequest request);
 }

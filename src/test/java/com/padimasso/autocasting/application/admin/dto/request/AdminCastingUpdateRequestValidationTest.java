@@ -93,4 +93,11 @@ class AdminCastingUpdateRequestValidationTest {
         assertTrue(violations(new AdminCastingRoleDuplicateRequest("r", "x".repeat(256)))
             .stream().anyMatch(v -> v.contains("role_name_max_length")));
     }
+
+    @Test
+    void statusChangeRequiresAReasonAndATargetStatus() {
+        assertEquals(java.util.List.of(), violations(new AdminCastingStatusRequest("reason", "sitemetadata.casting_status.paused")));
+        assertTrue(violations(new AdminCastingStatusRequest(" ", "x")).stream().anyMatch(v -> v.startsWith("reason")));
+        assertTrue(violations(new AdminCastingStatusRequest("r", null)).stream().anyMatch(v -> v.startsWith("status")));
+    }
 }
