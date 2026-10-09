@@ -34,6 +34,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 import com.padimasso.autocasting.application.sitemetadata.model.CastingApplicationStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.service.SiteMetadataResolver;
 import com.padimasso.autocasting.application.talent.TalentMediaRequirements;
+import com.padimasso.autocasting.application.talent.mapper.TalentProfileMapper;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import jakarta.transaction.Transactional;
@@ -207,10 +208,19 @@ public class CastingApplicationServiceImpl implements CastingApplicationService 
             ));
 
         // 3) Preservar el orden original de la página
-        var items = ids.stream()
+        var orderedEntities = ids.stream()
             .map(byId::get)
             .filter(java.util.Objects::nonNull)
-            .map(castingApplicationMapper::toTalentCardFromEntity)
+            .toList();
+
+        // Applications of a role an admin deleted are shown with the casting as CLOSED.
+        SiteMetadataObject withdrawnRoleStatus = orderedEntities.stream().anyMatch(a -> a.getCastingRole().isDeleted())
+            ? TalentProfileMapper.mapToSiteMetadataObject(
+                siteMetadataResolver.resolveCastingStatusByCodeOrThrow(CASTING_STATUS_CLOSED))
+            : null;
+
+        var items = orderedEntities.stream()
+            .map(entity -> castingApplicationMapper.toTalentCardFromEntity(entity, withdrawnRoleStatus))
             .toList();
 
         return new SliceResponse<>(

@@ -4,6 +4,7 @@ import com.padimasso.autocasting.application.sitemetadata.dto.response.SiteMetad
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record AdminCastingRowResponse(
@@ -18,6 +19,7 @@ public record AdminCastingRowResponse(
     LocalDateTime modifiedAt,
     String modifiedBy,
     boolean suspended,
-    boolean deleted
+    boolean deleted,
+    List<String> allowedStatusCodes
 ) {
 }

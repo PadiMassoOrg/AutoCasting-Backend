@@ -12,12 +12,19 @@ import com.padimasso.autocasting.application.sitemetadata.model.ProjectTypeOptio
 import com.padimasso.autocasting.application.talent.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.specification.TalentProfileSpecs;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.*;
+
+import static com.padimasso.autocasting.config.AppConstants.CASTING_STATUS_CLOSED;
 
 public final class CastingApplicationSpecs {
 
@@ -39,6 +46,7 @@ public final class CastingApplicationSpecs {
         Specification<CastingApplicationEntity> spec = null;
         spec = and(spec, deletedFalse());
         spec = and(spec, forEmployerAndCastingSlug(f.employerProfileId(), f.castingSlug()));
+        spec = and(spec, castingRoleNotDeleted());
         spec = and(spec, forCastingRoleId(f.castingRoleId()));
         spec = and(spec, employerSearchText(f.search()));
         spec = and(spec, applicationStatusInTokens(f.applicationStatusIdTokens()));
@@ -62,6 +70,12 @@ public final class CastingApplicationSpecs {
 
     public static Specification<CastingApplicationEntity> deletedFalse() {
         return (root, query, cb) -> cb.isFalse(root.get("deleted"));
+    }
+
+    // Applications of a role an admin deleted stay stored for the talent's history, but the employer no
+    // longer has that role, so they are never listed (or counted) on the employer side.
+    public static Specification<CastingApplicationEntity> castingRoleNotDeleted() {
+        return (root, query, cb) -> cb.isFalse(joinOnce(root, "castingRole", JoinType.INNER).get("deleted"));
     }
 
     public static Specification<CastingApplicationEntity> forTalentProfile(UUID talentProfileId) {
@@ -131,6 +145,9 @@ public final class CastingApplicationSpecs {
         };
     }
 
+    // Talents see an application of a deleted role with its casting reported as CLOSED
+    // (CastingApplicationMapper), so the status filter has to match it the same way: a deleted role
+    // matches the CLOSED token only, whatever status its casting really has.
     public static Specification<CastingApplicationEntity> castingStatusInTokens(List<String> tokens) {
         if (tokens == null || tokens.isEmpty() || containsNullToken(tokens)) return null;
         ParsedTokens parsed = parseUuidOrStringCodes(tokens);
@@ -141,10 +158,26 @@ public final class CastingApplicationSpecs {
             Join<CastingRoleEntity, CastingEntity> casting = role.join("casting", JoinType.INNER);
             Join<CastingEntity, CastingStatusOptionEntity> status = casting.join("status", JoinType.LEFT);
 
-            if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) return status.get("id").in(parsed.ids);
-            if (parsed.ids.isEmpty() && !parsed.codes.isEmpty()) return status.get("stringCode").in(parsed.codes);
-            return cb.or(status.get("id").in(parsed.ids), status.get("stringCode").in(parsed.codes));
+            Predicate realStatusMatches;
+            if (!parsed.ids.isEmpty() && parsed.codes.isEmpty()) realStatusMatches = status.get("id").in(parsed.ids);
+            else if (parsed.ids.isEmpty()) realStatusMatches = status.get("stringCode").in(parsed.codes);
+            else realStatusMatches = cb.or(status.get("id").in(parsed.ids), status.get("stringCode").in(parsed.codes));
+
+            Predicate liveRoleMatches = cb.and(cb.isFalse(role.get("deleted")), realStatusMatches);
+            Predicate deletedRoleMatches = cb.and(cb.isTrue(role.get("deleted")), closedRequested(query, cb, parsed));
+            return cb.or(liveRoleMatches, deletedRoleMatches);
         };
+    }
+
+    private static Predicate closedRequested(CriteriaQuery<?> query, CriteriaBuilder cb, ParsedTokens parsed) {
+        Subquery<Integer> closed = query.subquery(Integer.class);
+        Root<CastingStatusOptionEntity> option = closed.from(CastingStatusOptionEntity.class);
+        Predicate requested = cb.or(
+            parsed.codes.isEmpty() ? cb.disjunction() : option.get("stringCode").in(parsed.codes),
+            parsed.ids.isEmpty() ? cb.disjunction() : option.get("id").in(parsed.ids)
+        );
+        closed.select(cb.literal(1)).where(cb.equal(option.get("stringCode"), CASTING_STATUS_CLOSED), requested);
+        return cb.exists(closed);
     }
 
     public static Specification<CastingApplicationEntity> projectTypeInTokens(List<String> tokens) {

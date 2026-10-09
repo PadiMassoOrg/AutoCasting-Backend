@@ -55,6 +55,9 @@ public final class ErrorMessageKeys {
 
     public static final String CASTINGS_NOT_FOUND = "castings.not_found";
     public static final String CASTINGS_ONLY_DRAFT_EDITABLE = "castings.only_draft_editable";
+    public static final String CASTINGS_ADMIN_NOT_EDITABLE = "castings.admin_not_editable";
+    public static final String CASTINGS_ROLE_HAS_SELECTED_APPLICATIONS = "castings.role.has_selected_applications";
+    public static final String CASTINGS_LAST_ROLE_REQUIRED = "castings.role.last_role_required";
     public static final String CASTINGS_NOT_PUBLISHABLE = "castings.not_publishable";
     public static final String CASTINGS_DEADLINE_REQUIRED = "castings.deadline_required";
     public static final String CASTINGS_DEADLINE_PASSED = "castings.deadline_passed";

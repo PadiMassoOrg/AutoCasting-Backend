@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,6 +40,20 @@ public class HistoryServiceImpl implements HistoryService {
     @Transactional(readOnly = true)
     public Page<HistoryEntity> listHistoryByEntity(EntityType entityType, UUID entityId, Pageable pageable) {
         return historyRepository.findAllByEntityTypeAndEntityIdAndDeletedFalse(entityType, entityId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HistoryEntity> listHistoryByEntityAndRelated(
+        EntityType entityType,
+        UUID entityId,
+        EntityType relatedType,
+        Collection<UUID> relatedIds,
+        Pageable pageable
+    ) {
+        // An empty IN list is not portable across databases: a random id matches nothing.
+        Collection<UUID> ids = relatedIds.isEmpty() ? List.of(UUID.randomUUID()) : relatedIds;
+        return historyRepository.findAllByEntityOrRelatedEntities(entityType, entityId, relatedType, ids, pageable);
     }
 
     private String serializeChanges(Object changes) {
