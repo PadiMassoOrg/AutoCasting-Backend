@@ -7,9 +7,11 @@ import com.padimasso.autocasting.application.admin.dto.request.AdminCastingRoleU
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingStatusRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminCastingUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingDetailsResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminCastingHistoryRowResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCastingRowResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminCloseExpiredCastingsResponse;
 import com.padimasso.autocasting.application.admin.service.AdminCastingEditService;
+import com.padimasso.autocasting.application.admin.service.AdminCastingHistoryService;
 import com.padimasso.autocasting.application.admin.service.AdminCastingService;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.castings.dto.response.CastingRoleResponse;
@@ -37,6 +39,7 @@ import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_STATUS
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTINGS_CLOSE_EXPIRED_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_DETAILS_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_HISTORY_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLE_DUPLICATE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_CASTING_ROLES_API_URL;
@@ -48,6 +51,7 @@ public class AdminCastingController {
 
     private final AdminCastingService adminCastingService;
     private final AdminCastingEditService adminCastingEditService;
+    private final AdminCastingHistoryService adminCastingHistoryService;
 
     @Operation(
         summary = "List castings (paginated)",
@@ -109,6 +113,20 @@ public class AdminCastingController {
         @Valid @RequestBody AdminCastingRoleUpdateRequest request
     ) {
         return adminCastingEditService.updateCastingRole(roleId, request);
+    }
+
+    @Operation(
+        summary = "List a casting's modification history",
+        description = "Returns the admin modification history of a casting together with the history of all its roles (deleted ones included), newest first. Role entries carry the role's name.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @GetMapping(ADMIN_CASTING_HISTORY_API_URL)
+    public PageResponse<AdminCastingHistoryRowResponse> listCastingHistory(
+        @Parameter(description = "Casting ID.") @PathVariable UUID castingId,
+        @Parameter(description = "Page index, starting from 0.") @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size.") @RequestParam(defaultValue = "20") int size
+    ) {
+        return adminCastingHistoryService.listCastingHistory(castingId, page, size);
     }
 
     @Operation(

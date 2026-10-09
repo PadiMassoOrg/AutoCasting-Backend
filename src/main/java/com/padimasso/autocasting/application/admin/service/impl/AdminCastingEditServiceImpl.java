@@ -151,6 +151,7 @@ public class AdminCastingEditServiceImpl implements AdminCastingEditService {
         var after = adminCastingMapper.toRoleResponse(saved);
         var changes = new ArrayList<>(ProfileChangeDiff.diff(objectMapper, "role", null, roleSnapshot(after)));
         changes.add(new HistoryChangeEntry("role.duplicatedFrom", null, roleId.toString()));
+        changes.add(new HistoryChangeEntry("role.duplicatedFromName", null, source.getRoleName()));
         recordHistory(EntityType.CASTING_ROLE, saved.getId(), request.reason(), changes);
 
         return after;

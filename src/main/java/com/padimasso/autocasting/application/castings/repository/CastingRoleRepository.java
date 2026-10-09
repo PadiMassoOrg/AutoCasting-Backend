@@ -93,4 +93,14 @@ public interface CastingRoleRepository extends SoftDeleteRepository<CastingRoleE
         @Param("slug") String slug,
         @Param("employerProfileId") UUID employerProfileId
     );
+
+    // Deleted roles included: their history still belongs to the casting.
+    @Query("""
+        select
+            r.id as roleId,
+            r.roleName as roleName
+        from CastingRoleEntity r
+        where r.casting.id = :castingId
+        """)
+    List<CastingRoleKeyProjection> findAllRoleKeysIncludingDeletedByCastingId(@Param("castingId") UUID castingId);
 }

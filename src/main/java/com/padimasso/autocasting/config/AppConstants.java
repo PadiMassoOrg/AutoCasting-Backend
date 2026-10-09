@@ -48,6 +48,7 @@ public class AppConstants {
     public static final String ADMIN_USERS_API_URL = ADMIN_API_URL + "/users";
     public static final String ADMIN_CASTINGS_API_URL = ADMIN_API_URL + "/castings";
     public static final String ADMIN_CASTING_API_URL = ADMIN_CASTINGS_API_URL + "/{castingId}";
+    public static final String ADMIN_CASTING_HISTORY_API_URL = ADMIN_CASTING_API_URL + "/history";
     public static final String ADMIN_CASTING_STATUS_API_URL = ADMIN_CASTING_API_URL + "/status";
     public static final String ADMIN_CASTING_DETAILS_API_URL = ADMIN_CASTINGS_API_URL + "/{slug}/details";
     public static final String ADMIN_CASTING_ROLES_API_URL = ADMIN_CASTINGS_API_URL + "/roles";

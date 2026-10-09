@@ -397,6 +397,7 @@ class AdminCastingEditServiceImplTest {
         assertSame(source.getCasting(), saved.getValue().getCasting());
         var entries = capturedChanges(EntityType.CASTING_ROLE, newRoleId, "copy");
         assertTrue(entries.stream().anyMatch(entry -> entry.fieldKey().equals("role.duplicatedFrom") && roleId.toString().equals(entry.newValue())));
+        assertTrue(entries.stream().anyMatch(entry -> entry.fieldKey().equals("role.duplicatedFromName") && "Lead".equals(entry.newValue())));
     }
 
     @Test

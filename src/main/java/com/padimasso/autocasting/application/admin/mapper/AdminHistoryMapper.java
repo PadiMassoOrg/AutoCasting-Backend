@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.admin.mapper;
 
+import com.padimasso.autocasting.application.admin.dto.response.AdminCastingHistoryRowResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminHistoryRowResponse;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.history.model.HistoryEntity;
@@ -26,7 +27,19 @@ public class AdminHistoryMapper {
         );
     }
 
-    public PageResponse<AdminHistoryRowResponse> toPageResponse(List<AdminHistoryRowResponse> items, Page<?> result) {
+    public AdminCastingHistoryRowResponse toCastingRowResponse(HistoryEntity historyEntry, String entityLabel) {
+        return new AdminCastingHistoryRowResponse(
+            historyEntry.getId(),
+            historyEntry.getEntityType(),
+            historyEntry.getEntityId(),
+            entityLabel,
+            historyEntry.getNote(),
+            historyEntry.getChanges(),
+            historyEntry.getCreatedAt()
+        );
+    }
+
+    public <T> PageResponse<T> toPageResponse(List<T> items, Page<?> result) {
         return new PageResponse<>(
             items,
             result.getNumber(),
