@@ -110,6 +110,8 @@ public class AppConstants {
     public static final String PROPOSAL_TYPE_CASTING = "sitemetadata.proposal_type.casting";
     public static final UUID PROPOSALS_SYSTEM_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000a01");
     public static final UUID PROPOSALS_SYSTEM_EMPLOYER_PROFILE_ID = UUID.fromString("00000000-0000-0000-0000-000000000a02");
+    // Events
+    public static final String ENTRY_ACCESS_ONLINE = "sitemetadata.entry_access.online";
     // Application
     public static final String CASTING_APPLICATION_STATUS_BLANK = "sitemetadata.application_status.blank";
     public static final String CASTING_APPLICATION_STATUS_VIEWED = "sitemetadata.application_status.viewed";

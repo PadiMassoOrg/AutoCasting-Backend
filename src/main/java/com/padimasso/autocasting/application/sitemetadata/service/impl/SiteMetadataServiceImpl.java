@@ -46,6 +46,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
     private final RoleTypeOptionRepository roleTypeOptionRepository;
     private final CastingApplicationStatusOptionRepository castingApplicationStatusOptionRepository;
     private final ProposalTypeOptionRepository proposalTypeOptionRepository;
+    private final EntryAccessOptionRepository entryAccessOptionRepository;
 
     public SiteMetadataResponse getSiteMetadata() {
         var version = computeVersion();
@@ -70,6 +71,7 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
         var foundRoleTypeOptionEntities = roleTypeOptionRepository.findAll();
         var foundCastingApplicationStatusOptionEntities = castingApplicationStatusOptionRepository.findAll();
         var foundProposalTypeOptionEntities = proposalTypeOptionRepository.findAll();
+        var foundEntryAccessOptionEntities = entryAccessOptionRepository.findAll();
 
         return new SiteMetadataResponse(
             version,
@@ -93,7 +95,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             mapToSiteMetadataObject(foundProjectTypeOptionEntities),
             mapToSiteMetadataObject(foundRoleTypeOptionEntities),
             mapToSiteMetadataObject(foundCastingApplicationStatusOptionEntities),
-            mapToSiteMetadataObject(foundProposalTypeOptionEntities)
+            mapToSiteMetadataObject(foundProposalTypeOptionEntities),
+            mapToSiteMetadataObject(foundEntryAccessOptionEntities)
         );
     }
 
@@ -157,7 +160,8 @@ public class SiteMetadataServiceImpl implements SiteMetadataService {
             "projectType:" + projectTypeOptionRepository.count() + ":" + ts(projectTypeOptionRepository.findMaxModifiedAt()),
             "roleType:" + roleTypeOptionRepository.count() + ":" + ts(roleTypeOptionRepository.findMaxModifiedAt()),
             "castingApplicationStatus:" + castingApplicationStatusOptionRepository.count() + ":" + ts(castingApplicationStatusOptionRepository.findMaxModifiedAt()),
-            "proposalType:" + proposalTypeOptionRepository.count() + ":" + ts(proposalTypeOptionRepository.findMaxModifiedAt())
+            "proposalType:" + proposalTypeOptionRepository.count() + ":" + ts(proposalTypeOptionRepository.findMaxModifiedAt()),
+            "entryAccess:" + entryAccessOptionRepository.count() + ":" + ts(entryAccessOptionRepository.findMaxModifiedAt())
         );
         return sha256(parts);
     }

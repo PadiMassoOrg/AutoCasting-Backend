@@ -1,11 +1,13 @@
 package com.padimasso.autocasting.application.events.model;
 
+import com.padimasso.autocasting.application.sitemetadata.model.EntryAccessOptionEntity;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,10 +18,17 @@ class EventEntityValidationTest {
     private static final LocalDate START = LocalDate.of(2026, 10, 12);
     private static final LocalDate END = LocalDate.of(2026, 10, 14);
 
+    private static EntryAccessOptionEntity access(String code) {
+        EntryAccessOptionEntity option = new EntryAccessOptionEntity();
+        option.setId(UUID.randomUUID());
+        option.setStringCode("sitemetadata.entry_access." + code);
+        return option;
+    }
+
     private static EventEntity.EventEntityBuilder valid() {
         return EventEntity.builder()
             .name("Muestra de teatro")
-            .entryAccess(EntryAccess.FREE)
+            .entryAccess(access("free"))
             .startDate(START)
             .endDate(END)
             .location("Teatro del Abasto, Buenos Aires")
@@ -98,29 +107,29 @@ class EventEntityValidationTest {
     @Test
     void onlineAccess_withoutTicketUrl_isRejected() {
         assertEquals(List.of("events.ticket_url.online_only_and_required"),
-            violations(valid().entryAccess(EntryAccess.ONLINE).ticketUrl(null).build()));
+            violations(valid().entryAccess(access("online")).ticketUrl(null).build()));
     }
 
     @Test
     void onlineAccess_withBlankTicketUrl_isRejected() {
         assertEquals(List.of("events.ticket_url.online_only_and_required"),
-            violations(valid().entryAccess(EntryAccess.ONLINE).ticketUrl("  ").build()));
+            violations(valid().entryAccess(access("online")).ticketUrl("  ").build()));
     }
 
     @Test
     void onlineAccess_withTicketUrl_isAccepted() {
-        assertTrue(violations(valid().entryAccess(EntryAccess.ONLINE).ticketUrl("https://example.com/tickets/1").build()).isEmpty());
+        assertTrue(violations(valid().entryAccess(access("online")).ticketUrl("https://example.com/tickets/1").build()).isEmpty());
     }
 
     @Test
     void freeAccess_withTicketUrl_isRejected() {
         assertEquals(List.of("events.ticket_url.online_only_and_required"),
-            violations(valid().entryAccess(EntryAccess.FREE).ticketUrl("https://example.com/tickets/1").build()));
+            violations(valid().entryAccess(access("free")).ticketUrl("https://example.com/tickets/1").build()));
     }
 
     @Test
     void payAtDoorAccess_withTicketUrl_isRejected() {
         assertEquals(List.of("events.ticket_url.online_only_and_required"),
-            violations(valid().entryAccess(EntryAccess.PAY_AT_DOOR).ticketUrl("https://example.com/tickets/1").build()));
+            violations(valid().entryAccess(access("pay_at_door")).ticketUrl("https://example.com/tickets/1").build()));
     }
 }

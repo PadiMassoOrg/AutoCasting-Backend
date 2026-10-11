@@ -2,6 +2,7 @@ package com.padimasso.autocasting.application.events.model;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.common.model.AuditableEntity;
+import com.padimasso.autocasting.application.sitemetadata.model.EntryAccessOptionEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,8 @@ import org.hibernate.annotations.SQLDelete;
 
 import java.time.LocalDate;
 import java.util.UUID;
+
+import static com.padimasso.autocasting.config.AppConstants.ENTRY_ACCESS_ONLINE;
 
 @Entity
 @Table(name = "events")
@@ -38,9 +41,9 @@ public class EventEntity extends AuditableEntity {
     private String name;
 
     @NotNull(message = "events.entry_access.required")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private EntryAccess entryAccess;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "entry_access_option_id", nullable = false)
+    private EntryAccessOptionEntity entryAccess;
 
     @Column(columnDefinition = "text")
     private String ticketUrl;
@@ -67,12 +70,12 @@ public class EventEntity extends AuditableEntity {
     @Column(columnDefinition = "text")
     private String description;
 
-    // The ticket link is required for ONLINE access and must be absent otherwise (mirrors ck_events_ticket_url).
+    // The ticket link is required for ONLINE access and must be absent otherwise.
     @AssertTrue(message = "events.ticket_url.online_only_and_required")
     public boolean isTicketUrlConsistent() {
         if (entryAccess == null) return true;
         boolean hasTicketUrl = ticketUrl != null && !ticketUrl.isBlank();
-        return entryAccess == EntryAccess.ONLINE ? hasTicketUrl : ticketUrl == null;
+        return ENTRY_ACCESS_ONLINE.equals(entryAccess.getStringCode()) ? hasTicketUrl : ticketUrl == null;
     }
 
     @AssertTrue(message = "events.date_range.invalid")

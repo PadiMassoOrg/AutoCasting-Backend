@@ -28,6 +28,7 @@ public record SiteMetadataResponse(
     List<SiteMetadataObject> projectTypeOptions,
     List<SiteMetadataObject> roleTypeOptions,
     List<SiteMetadataObject> castingApplicationStatusOptions,
-    List<SiteMetadataObject> proposalTypeOptions
+    List<SiteMetadataObject> proposalTypeOptions,
+    List<SiteMetadataObject> entryAccessOptions
 ) {
 }
