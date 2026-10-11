@@ -23,6 +23,7 @@
 -- - cada talent recibe 6 registros de education y 6 de credits (hash-based, idempotente) para
 --   habilitar pruebas de scroll en el InfoCarousel de public-profile
 -- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
+-- - 18 events demo (2 terminados, 1 en curso, 15 futuros; FREE / PAY_AT_DOOR / ONLINE) para probar el catálogo público de eventos
 --
 -- - los employers seed no tienen logo (image_url NULL); las fotos de talent usan URLs externas (Pexels).
 --   El seed no escribe URLs de Supabase Storage.
@@ -52,6 +53,7 @@ BEGIN
 -- - cada role de casting PUBLISHED recibe entre 3 y 16 applicants (distribución determinística)
 -- - asd@asd.com (dual-mode) aplica a 15 castings PUBLISHED distintos como talent
 -- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
+-- - 18 events demo (2 terminados, 1 en curso, 15 futuros; FREE / PAY_AT_DOOR / ONLINE) para probar el catálogo público de eventos
 --
 -- Reejecutable (idempotente) en cualquier momento, con backend levantado o no.
 -- ============================================================
@@ -1464,6 +1466,51 @@ JOIN public.skills s ON s.string_code = role_skills.skill_code
 ON CONFLICT (casting_role_id, skill_id) DO NOTHING;
 
 -- ------------------------------------------------------------
+-- 3.5) Eventos demo (módulo Events, AI-92). Owner = user (cualquier modo), no profile.
+--    18 eventos (slug E-DEMO-NN, todos con location e image_url): 2 ya terminados (no aparecen en el catálogo por defecto), 1 en curso,
+--    15 futuros con los 3 tipos de acceso (FREE / PAY_AT_DOOR / ONLINE) para probar
+--    scroll infinito (> 8 por página), filtro por rango de fechas y bordes de overlap.
+--    Fechas relativas a CURRENT_DATE: re-ejecutar el seed las corre junto con el calendario.
+-- ------------------------------------------------------------
+DELETE FROM public.events e
+USING tmp_seed_user_ids u
+WHERE e.user_id = u.user_id;
+
+INSERT INTO public.events (
+  id, user_id, slug, name, entry_access, ticket_url, start_date, end_date, dates_info, location, image_url, description,
+  created_at, created_by, modified_at, modified_by, deleted
+)
+SELECT
+  gen_random_uuid(), u.user_id,
+  format('E-DEMO-%s', LPAD(row_number() OVER (ORDER BY v.start_offset, v.name)::text, 2, '0')),
+  v.name, v.entry_access, v.ticket_url,
+  CURRENT_DATE + v.start_offset, CURRENT_DATE + v.end_offset, v.dates_info, v.location,
+  'https://savubzaypraqdehudynb.supabase.co/storage/v1/object/public/profile-media-public/autocasting/A4351A42-DC7E-4B25-817E-5E9516C5711E_1_105_c.jpeg',
+  v.description,
+  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
+FROM (VALUES
+  ('asd@asd.com',   'Muestra de escenas — Taller de actuación',   'FREE',        NULL::text,                               -20, -18, 'Ver-Dom 19:00hs', 'Teatro del Abasto, Buenos Aires', 'Evento ya terminado: no debe verse en el catálogo por defecto.'),
+  ('asd1@asd.com',  'Ciclo de cortometrajes independientes',      'PAY_AT_DOOR', NULL::text,                               -45, -40, 'Mar-Dom 21:00hs', 'Cine Gaumont, Buenos Aires', 'Evento ya terminado: solo visible con un dateFrom en el pasado.'),
+  ('asd10@asd.com', 'Maratón de casting para publicidad',         'FREE',        NULL::text,                                -1,   3, 'Todos los días 10:00-18:00hs', 'Estudios Pampa, Buenos Aires', 'Evento en curso (empezó ayer): debe verse por defecto.'),
+  ('asd@asd.com',   'Workshop de casting frente a cámara',        'ONLINE',      'https://example.com/tickets/workshop-cam',  2,   2, 'Sáb 15:00hs', 'Estudio Palermo, Buenos Aires', 'Entrenamiento intensivo de self-tape y trabajo frente a cámara con feedback en vivo.'),
+  ('asd1@asd.com',  'Noche de improvisación teatral',             'PAY_AT_DOOR', NULL::text,                                3,   3, 'Jue 21:30hs', 'Espacio Callejón, Buenos Aires', 'Show de improvisación con elenco rotativo. Entrada en puerta.'),
+  ('asd20@asd.com', 'Presentación de documental "Sur"',           'FREE',        NULL::text,                                5,   5, 'Dom 18:00hs', 'Cine Teatro Córdoba, Córdoba', 'Proyección y charla con el equipo realizador. Cupos limitados.'),
+  ('asd2@asd.com',  'Seminario de voz y dicción',                 'ONLINE',      'https://example.com/tickets/voz-diccion',   6,   8, 'Lun-Mié 19:30hs', 'Casa de la Cultura, Rosario', 'Tres encuentros presenciales sobre técnica vocal para actores.'),
+  ('asd10@asd.com', 'Feria de representantes y talentos',         'PAY_AT_DOOR', NULL::text,                                9,  10, 'Sáb-Dom 11:00-20:00hs', 'Centro Cultural Konex, Buenos Aires', 'Encuentro entre agencias, castineras y talentos.'),
+  ('asd3@asd.com',  'Lectura dramatizada de guion original',      'FREE',        NULL::text,                               10,  10, 'Mar 20:00hs', 'Sala Hugo del Carril, Rosario', NULL::text),
+  ('asd@asd.com',   'Festival de teatro independiente',           'ONLINE',      'https://example.com/tickets/festival-teatro', 12, 19, 'Todos los días 20:30hs', 'Teatro El Cubo, Buenos Aires', 'Ocho jornadas con obras de elencos independientes de todo el país.'),
+  ('asd20@asd.com', 'Clase abierta de actuación para cámara',     'FREE',        NULL::text,                               14,  14, 'Mié 18:30hs', 'Estudio Sur, Córdoba', 'Clase abierta y gratuita, sin experiencia previa requerida.'),
+  ('asd4@asd.com',  'Stand-up y microteatro',                     'PAY_AT_DOOR', NULL::text,                               15,  15, 'Vie 22:00hs', 'Microteatro Palermo, Buenos Aires', 'Doble función: stand-up primero y microteatro después.'),
+  ('asd1@asd.com',  'Taller de escritura de monólogos',           'ONLINE',      'https://example.com/tickets/monologos',    18,  20, 'Jue-Sáb 17:00hs', 'Espacio Dumont, Córdoba', 'Cómo escribir y defender un monólogo para audiciones.'),
+  ('asd10@asd.com', 'Encuentro de networking audiovisual',        'FREE',        NULL::text,                               21,  21, 'Jue 19:00hs', 'Hotel Panamericano, Buenos Aires', 'Networking entre productores, directores y actores.'),
+  ('asd2@asd.com',  'Gala de premios del teatro off',             'PAY_AT_DOOR', NULL::text,                               25,  25, 'Sáb 21:00hs', 'Teatro Colón, Buenos Aires', 'Entrega de premios con cena show.'),
+  ('asd20@asd.com', 'Residencia de dirección de actores',         'ONLINE',      'https://example.com/tickets/residencia',   30,  60, 'Lunes y miércoles 18:00hs', 'Escuela de Dirección, Buenos Aires', 'Residencia de un mes. Evento largo para probar el borde del filtro de fechas.'),
+  ('asd3@asd.com',  'Muestra de fin de año — Escuela de actores', 'FREE',        NULL::text,                               45,  47, 'Vie-Dom 20:00hs', 'Escuela de Actores, Rosario', 'Muestras de egresados de la escuela.'),
+  ('asd@asd.com',   'Casting abierto para teatro musical',        'PAY_AT_DOOR', NULL::text,                               60,  60, 'Sáb 10:00hs', 'Teatro Gran Rex, Buenos Aires', 'Audiciones abiertas, se solicita traer partitura o pista.')
+) AS v(owner_email, name, entry_access, ticket_url, start_offset, end_offset, dates_info, location, description)
+JOIN tmp_seed_user_ids u ON u.email = v.owner_email;
+
+-- ------------------------------------------------------------
 -- 4) Aplicaciones talent -> roles de castings PUBLISHED (draft no recibe applicants)
 --    objetivo: entre 3 y 15 applicants por role (hasta 16 en los roles donde además aplica
 --    asd@asd.com como parte de sus 15 aplicaciones garantizadas, ver más abajo)
@@ -1595,6 +1642,33 @@ JOIN tmp_submission_notes_pool snp
 -- ------------------------------------------------------------
 -- 5) Validaciones fuertes post-seed
 -- ------------------------------------------------------------
+IF (
+  SELECT COUNT(*)
+  FROM public.events e
+  JOIN tmp_seed_user_ids u ON u.user_id = e.user_id
+  WHERE e.deleted = false
+) <> 18 THEN
+  RAISE EXCEPTION 'Seed inválido: cantidad de events seed distinta de 18';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.events e
+  JOIN tmp_seed_user_ids u ON u.user_id = e.user_id
+  WHERE e.deleted = false AND e.end_date >= CURRENT_DATE
+) <> 16 THEN
+  RAISE EXCEPTION 'Seed inválido: events vigentes/futuros esperados (16) no coinciden';
+END IF;
+
+IF (
+  SELECT COUNT(DISTINCT e.entry_access)
+  FROM public.events e
+  JOIN tmp_seed_user_ids u ON u.user_id = e.user_id
+  WHERE e.deleted = false
+) <> 3 THEN
+  RAISE EXCEPTION 'Seed inválido: events seed no cubren los 3 tipos de acceso';
+END IF;
+
 IF (SELECT COUNT(*) FROM public.users WHERE email = 'asd@asd.com') <> 1 THEN
   RAISE EXCEPTION 'Seed inválido: asd@asd.com no quedó en estado esperado';
 END IF;

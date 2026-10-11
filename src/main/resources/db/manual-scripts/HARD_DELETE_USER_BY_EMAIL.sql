@@ -123,6 +123,10 @@ BEGIN
              SELECT c.id FROM public.casting c WHERE c.employer_profile_id = v_employer_profile_id
            ));
 
+    -- events.user_id -> users no tiene CASCADE (los eventos pertenecen al user, no a un profile).
+    DELETE FROM public.events
+    WHERE user_id = v_user_id;
+
     DELETE FROM public.legal_acceptances
     WHERE user_id = v_user_id;
 

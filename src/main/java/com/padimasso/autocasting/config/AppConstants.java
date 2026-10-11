@@ -31,6 +31,8 @@ public class AppConstants {
     // Database
     public static final String TALENT_DATABASE_API_URL = BASE_API_URL + "/talent-database";
     public static final String CASTING_DATABASE_API_URL = BASE_API_URL + "/castings-database";
+    // Events
+    public static final String EVENTS_API_URL = BASE_API_URL + "/events";
     // Talent
     public static final String TALENT_PROFILE_API_URL = BASE_API_URL + "/talent";
     public static final String TALENT_CASTING_APPLICATIONS_URL = TALENT_PROFILE_API_URL + "/applications";

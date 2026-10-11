@@ -84,6 +84,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_PROFILE_API_URL + "/*").permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.CASTING_DATABASE_API_URL).permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.TALENT_DATABASE_API_URL).permitAll()
+                    .requestMatchers(HttpMethod.GET, AppConstants.EVENTS_API_URL).permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.CASTING_DETAILS_URL + "/*/roles/*").permitAll()
                     .requestMatchers(HttpMethod.GET, AppConstants.CASTING_DETAILS_URL + "/*").permitAll()
                     .requestMatchers(HttpMethod.POST, AppConstants.PROPOSALS_API_URL + "/*/attach").authenticated()
