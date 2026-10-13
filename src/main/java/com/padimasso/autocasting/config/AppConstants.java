@@ -57,7 +57,9 @@ public class AppConstants {
     public static final String ADMIN_CASTING_ROLE_API_URL = ADMIN_CASTING_ROLES_API_URL + "/{roleId}";
     public static final String ADMIN_CASTING_ROLE_DUPLICATE_API_URL = ADMIN_CASTING_ROLE_API_URL + "/duplicate";
     public static final String MAINTENANCE_TASK_EVENT_IMAGES_CLEANUP = "events.cleanup_images";
-    public static final String ADMIN_EVENTS_CLEANUP_IMAGES_API_URL = ADMIN_API_URL + "/events/cleanup-images";
+    public static final String ADMIN_EVENTS_API_URL = ADMIN_API_URL + "/events";
+    public static final String ADMIN_EVENT_DETAILS_API_URL = ADMIN_EVENTS_API_URL + "/{slug}/details";
+    public static final String ADMIN_EVENTS_CLEANUP_IMAGES_API_URL = ADMIN_EVENTS_API_URL + "/cleanup-images";
     public static final String ADMIN_CASTINGS_CLOSE_EXPIRED_API_URL = ADMIN_CASTINGS_API_URL + "/close-expired";
     public static final String ADMIN_USER_TALENT_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/talent";
     public static final String ADMIN_USER_TALENT_MEDIA_API_URL = ADMIN_USER_TALENT_PROFILE_API_URL + "/media/{slot}";

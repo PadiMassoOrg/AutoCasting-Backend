@@ -26,4 +26,8 @@ public interface EventRepository extends SoftDeleteRepository<EventEntity, UUID>
     // Same visibility rule as the catalog: not deleted, not owned by a suspended user and not ended yet.
     @Query("select e from EventEntity e join fetch e.entryAccess join e.user u where e.slug = :slug and e.deleted = false and u.suspended = false and e.endDate >= :today")
     Optional<EventEntity> findPublicBySlug(@Param("slug") String slug, @Param("today") LocalDate today);
+
+    // Admin lookup: no visibility rules besides deleted events, so ended events and events of suspended owners resolve.
+    @Query("select e from EventEntity e join fetch e.entryAccess where e.slug = :slug and e.deleted = false")
+    Optional<EventEntity> findAdminBySlug(@Param("slug") String slug);
 }

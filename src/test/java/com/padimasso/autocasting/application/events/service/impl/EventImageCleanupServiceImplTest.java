@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -150,7 +151,7 @@ class EventImageCleanupServiceImplTest {
     @Test
     void cleanup_reportsADeleteFailureAsNothingDeleted() throws Exception {
         liveEventAndOneDeadImage();
-        org.mockito.Mockito.doThrow(new IllegalStateException("boom")).when(storageClient).deleteObjects(anyList());
+        doThrow(new IllegalStateException("boom")).when(storageClient).deleteObjects(anyList());
 
         EventImageCleanupResponse response = service.cleanup(false);
 

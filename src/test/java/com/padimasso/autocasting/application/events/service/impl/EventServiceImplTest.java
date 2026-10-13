@@ -73,9 +73,13 @@ class EventServiceImplTest {
             .build();
     }
 
+    private static Specification<EventEntity> anySpec() {
+        return any();
+    }
+
     private Pageable capturePageable() {
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        verify(eventRepository).findAll(any(Specification.class), captor.capture());
+        verify(eventRepository).findAll(anySpec(), captor.capture());
         return captor.getValue();
     }
 
@@ -83,21 +87,21 @@ class EventServiceImplTest {
     void search_mapsEventsToCardsAndReportsSliceMetadata() {
         EventEntity first = event("Muestra de teatro", access("free"), LocalDate.of(2026, 10, 12), LocalDate.of(2026, 10, 14));
         EventEntity second = event("Workshop", access("online"), LocalDate.of(2026, 10, 20), LocalDate.of(2026, 10, 20));
-        when(eventRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(eventRepository.findAll(anySpec(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(first, second), PageRequest.of(0, 2), 5));
 
         SliceResponse<EventCardResponse> response = service.search(new EventFilter(null, null), 0, 2);
 
         assertEquals(2, response.items().size());
-        assertEquals(first.getId(), response.items().get(0).id());
-        assertEquals(first.getSlug(), response.items().get(0).slug());
-        assertEquals("Muestra de teatro", response.items().get(0).name());
+        assertEquals(first.getId(), response.items().getFirst().id());
+        assertEquals(first.getSlug(), response.items().getFirst().slug());
+        assertEquals("Muestra de teatro", response.items().getFirst().name());
         assertEquals(second.getSlug(), response.items().get(1).slug());
-        assertEquals(LocalDate.of(2026, 10, 12), response.items().get(0).startDate());
-        assertEquals(LocalDate.of(2026, 10, 14), response.items().get(0).endDate());
-        assertEquals("Lun-Mar 20:30hs", response.items().get(0).datesInfo());
-        assertEquals("Teatro San Martín, Buenos Aires", response.items().get(0).location());
-        assertEquals(first.getImageUrl(), response.items().get(0).imageUrl());
+        assertEquals(LocalDate.of(2026, 10, 12), response.items().getFirst().startDate());
+        assertEquals(LocalDate.of(2026, 10, 14), response.items().getFirst().endDate());
+        assertEquals("Lun-Mar 20:30hs", response.items().getFirst().datesInfo());
+        assertEquals("Teatro San Martín, Buenos Aires", response.items().getFirst().location());
+        assertEquals(first.getImageUrl(), response.items().getFirst().imageUrl());
         assertTrue(response.hasNext());
         assertEquals(0, response.page());
         assertEquals(2, response.size());
@@ -107,7 +111,7 @@ class EventServiceImplTest {
     @Test
     void search_lastPage_reportsNoNext() {
         EventEntity only = event("Estreno", access("pay_at_door"), LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 1));
-        when(eventRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(eventRepository.findAll(anySpec(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of(only), PageRequest.of(1, 8), 9));
 
         SliceResponse<EventCardResponse> response = service.search(null, 1, 8);
@@ -118,7 +122,7 @@ class EventServiceImplTest {
 
     @Test
     void search_usesAnUnsortedPageRequestBecauseTheCatalogOrderLivesInTheSpecification() {
-        when(eventRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(eventRepository.findAll(anySpec(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of()));
 
         service.search(new EventFilter(null, null), 0, 8);
@@ -128,7 +132,7 @@ class EventServiceImplTest {
 
     @Test
     void search_clampsPageSizeToMax() {
-        when(eventRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(eventRepository.findAll(anySpec(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of()));
 
         service.search(new EventFilter(null, null), 0, 500);
@@ -138,7 +142,7 @@ class EventServiceImplTest {
 
     @Test
     void search_clampsPageSizeToAtLeastOne() {
-        when(eventRepository.findAll(any(Specification.class), any(Pageable.class)))
+        when(eventRepository.findAll(anySpec(), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of()));
 
         service.search(new EventFilter(null, null), 0, 0);
