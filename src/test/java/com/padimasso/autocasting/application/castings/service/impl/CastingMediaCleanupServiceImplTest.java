@@ -1,64 +1,88 @@
 package com.padimasso.autocasting.application.castings.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.padimasso.autocasting.application.shared.storage.StoredObject;
+import com.padimasso.autocasting.application.shared.storage.SupabaseStorageClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
+import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
 class CastingMediaCleanupServiceImplTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final UUID EMPLOYER = UUID.fromString("00000000-0000-0000-0000-0000000000e1");
+    private static final UUID CASTING = UUID.fromString("00000000-0000-0000-0000-0000000000c1");
+    private static final String PREFIX = "employer/" + EMPLOYER + "/castings/" + CASTING + "/";
 
-    // ---- isFolderEntry ----
-    // Regression coverage for a real bug: Supabase Storage's list endpoint only returns the
-    // immediate children of a prefix. Our layout nests role photos one level deeper
-    // (.../castings/{castingId}/role-reference-photos/{file}), so a naive non-recursive list
-    // against the casting prefix only ever saw the "role-reference-photos" folder pseudo-entry
-    // itself — never the files inside it — and the resulting "delete key" wasn't a real object,
-    // so casting/role deletion silently never removed anything from Supabase.
+    @Mock
+    private SupabaseStorageClient storageClient;
 
-    @Test
-    void isFolderEntry_nullIdAndNullMetadata_isFolder() {
-        ObjectNode item = objectMapper.createObjectNode();
-        item.putNull("id");
-        item.putNull("metadata");
-        item.put("name", "role-reference-photos");
+    private CastingMediaCleanupServiceImpl service;
 
-        assertTrue(CastingMediaCleanupServiceImpl.isFolderEntry(item));
+    @BeforeEach
+    void setUp() {
+        service = new CastingMediaCleanupServiceImpl(storageClient);
     }
 
     @Test
-    void isFolderEntry_missingIdAndMetadata_isFolder() {
-        // Jackson treats an absent field the same as a "null" JsonNode via .path(), so a
-        // response that omits these fields entirely for folder pseudo-entries is still detected.
-        ObjectNode item = objectMapper.createObjectNode();
-        item.put("name", "role-reference-photos");
+    void deleteCastingFolder_deletesEveryObjectListedUnderTheCastingFolder() throws Exception {
+        when(storageClient.isConfigured()).thenReturn(true);
+        when(storageClient.listObjects(PREFIX)).thenReturn(List.of(
+            new StoredObject(PREFIX + "role-reference-photos/1.webp", null),
+            new StoredObject(PREFIX + "role-reference-photos/2.webp", null)));
 
-        assertTrue(CastingMediaCleanupServiceImpl.isFolderEntry(item));
+        service.deleteCastingFolder(EMPLOYER, CASTING);
+
+        verify(storageClient).deleteObjects(List.of(
+            PREFIX + "role-reference-photos/1.webp", PREFIX + "role-reference-photos/2.webp"));
     }
 
     @Test
-    void isFolderEntry_hasIdAndMetadata_isNotFolder() {
-        ObjectNode item = objectMapper.createObjectNode();
-        item.put("id", "eaa8bdb5-2e00-4767-b5a9-d2502efe2196");
-        item.putObject("metadata").put("size", 1234);
-        item.put("name", "1700000000000.jpg");
+    void deleteCastingFolder_doesNothingWithoutIds() throws Exception {
+        service.deleteCastingFolder(null, CASTING);
+        service.deleteCastingFolder(EMPLOYER, null);
 
-        assertFalse(CastingMediaCleanupServiceImpl.isFolderEntry(item));
+        verify(storageClient, never()).listObjects(anyString());
+        verify(storageClient, never()).deleteObjects(anyList());
     }
 
     @Test
-    void isFolderEntry_hasIdButNullMetadata_isNotFolder() {
-        // A real file entry always has both id and metadata populated by Supabase; a partial
-        // match (id present, metadata null) is treated as a file, not a folder, so we never
-        // accidentally skip deleting a real object due to an unexpected shape.
-        ObjectNode item = objectMapper.createObjectNode();
-        item.put("id", "eaa8bdb5-2e00-4767-b5a9-d2502efe2196");
-        item.putNull("metadata");
-        item.put("name", "1700000000000.jpg");
+    void deleteCastingFolder_doesNothingWhenStorageIsNotConfigured() throws Exception {
+        when(storageClient.isConfigured()).thenReturn(false);
 
-        assertFalse(CastingMediaCleanupServiceImpl.isFolderEntry(item));
+        service.deleteCastingFolder(EMPLOYER, CASTING);
+
+        verify(storageClient, never()).listObjects(anyString());
+        verify(storageClient, never()).deleteObjects(anyList());
+    }
+
+    @Test
+    void deleteCastingFolder_neverThrowsWhenStorageFails() throws Exception {
+        when(storageClient.isConfigured()).thenReturn(true);
+        when(storageClient.listObjects(PREFIX)).thenThrow(new IllegalStateException("boom"));
+
+        service.deleteCastingFolder(EMPLOYER, CASTING);
+
+        verify(storageClient, never()).deleteObjects(anyList());
+    }
+
+    @Test
+    void deleteCastingFolder_neverThrowsWhenTheDeleteFails() throws Exception {
+        when(storageClient.isConfigured()).thenReturn(true);
+        when(storageClient.listObjects(PREFIX)).thenReturn(List.of(new StoredObject(PREFIX + "a.webp", null)));
+        doThrow(new IllegalStateException("boom")).when(storageClient).deleteObjects(anyList());
+
+        service.deleteCastingFolder(EMPLOYER, CASTING);
     }
 }

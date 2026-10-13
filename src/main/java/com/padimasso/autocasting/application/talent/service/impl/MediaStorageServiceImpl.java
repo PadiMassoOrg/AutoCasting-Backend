@@ -1,87 +1,43 @@
 package com.padimasso.autocasting.application.talent.service.impl;
 
+import com.padimasso.autocasting.application.shared.storage.SupabasePublicUrls;
+import com.padimasso.autocasting.application.shared.storage.SupabaseStorageClient;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
 import com.padimasso.autocasting.application.talent.util.MediaThumbnails;
-import com.padimasso.autocasting.config.AppProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MediaStorageServiceImpl implements MediaStorageService {
 
-    private final AppProperties appProperties;
+    private final SupabaseStorageClient storageClient;
 
     @Override
     public void deleteByPublicUrl(String publicUrl) {
-        if (isBlank(publicUrl)) {
+        if (publicUrl == null || publicUrl.isBlank()) {
             return;
         }
 
-        var cfg = appProperties.getSupabase();
-        if (cfg == null || isBlank(cfg.getUrl()) || isBlank(cfg.getServiceRoleKey()) || isBlank(cfg.getMediaBucket())) {
+        if (!storageClient.isConfigured()) {
             log.warn("Supabase media storage is not configured; skipping deletion of {}", publicUrl);
             return;
         }
 
-        String objectKey = extractObjectKey(publicUrl, cfg.getMediaBucket());
+        String objectKey = SupabasePublicUrls.objectKey(publicUrl, storageClient.mediaBucket());
         if (objectKey == null) {
             log.warn("Could not resolve Supabase object key from media URL {}", publicUrl);
             return;
         }
 
-        String apiBase = trimTrailingSlash(cfg.getUrl());
-        String deleteUrl = apiBase + "/storage/v1/object/" + cfg.getMediaBucket();
-
         // Bulk delete ignores keys that don't exist, so photos without a thumbnail (uploaded before
         // thumbnails existed, or non-talent media) are not an error.
         try {
-            RestClient.builder()
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + cfg.getServiceRoleKey())
-                .defaultHeader("apikey", cfg.getServiceRoleKey())
-                .build()
-                .method(HttpMethod.DELETE)
-                .uri(deleteUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("prefixes", MediaThumbnails.withThumbnail(objectKey)))
-                .retrieve()
-                .toBodilessEntity();
+            storageClient.deleteObjects(MediaThumbnails.withThumbnail(objectKey));
         } catch (Exception ex) {
             log.warn("Could not delete Supabase media object for key {}", objectKey, ex);
         }
-    }
-
-    private static String extractObjectKey(String publicUrl, String bucket) {
-        String clean = publicUrl.split("#")[0].split("\\?")[0];
-        String marker = "/storage/v1/object/public/" + bucket + "/";
-        int idx = clean.indexOf(marker);
-        if (idx == -1) {
-            return null;
-        }
-
-        String encodedKey = clean.substring(idx + marker.length());
-        return URLDecoder.decode(encodedKey, StandardCharsets.UTF_8);
-    }
-
-    private static String trimTrailingSlash(String value) {
-        String v = value == null ? "" : value.trim();
-        while (v.endsWith("/")) {
-            v = v.substring(0, v.length() - 1);
-        }
-        return v;
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }

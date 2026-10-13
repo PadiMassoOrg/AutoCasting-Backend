@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,7 +19,11 @@ public interface EventRepository extends SoftDeleteRepository<EventEntity, UUID>
     @Override
     Page<EventEntity> findAll(@Nullable Specification<EventEntity> spec, Pageable pageable);
 
-    // Same visibility rule as the catalog: not deleted and not owned by a suspended user.
-    @Query("select e from EventEntity e join fetch e.entryAccess join e.user u where e.slug = :slug and e.deleted = false and u.suspended = false")
-    Optional<EventEntity> findPublicBySlug(@Param("slug") String slug);
+    // Images that must stay in storage: the ones of events that are neither deleted nor ended.
+    @Query("select e.imageUrl from EventEntity e where e.deleted = false and e.endDate >= :today")
+    List<String> findLiveImageUrls(@Param("today") LocalDate today);
+
+    // Same visibility rule as the catalog: not deleted, not owned by a suspended user and not ended yet.
+    @Query("select e from EventEntity e join fetch e.entryAccess join e.user u where e.slug = :slug and e.deleted = false and u.suspended = false and e.endDate >= :today")
+    Optional<EventEntity> findPublicBySlug(@Param("slug") String slug, @Param("today") LocalDate today);
 }

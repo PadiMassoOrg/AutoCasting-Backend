@@ -23,9 +23,12 @@ class EventDateWindowTest {
     }
 
     @Test
-    void effectiveFrom_withPastDateFrom_honoursDateFrom() {
-        LocalDate dateFrom = TODAY.minusDays(30);
+    void effectiveFrom_withPastDateFrom_clampsToToday() {
+        assertEquals(TODAY, EventDateWindow.effectiveFrom(TODAY.minusDays(30), TODAY));
+    }
 
-        assertEquals(dateFrom, EventDateWindow.effectiveFrom(dateFrom, TODAY));
+    @Test
+    void effectiveFrom_withDateFromToday_usesToday() {
+        assertEquals(TODAY, EventDateWindow.effectiveFrom(TODAY, TODAY));
     }
 }

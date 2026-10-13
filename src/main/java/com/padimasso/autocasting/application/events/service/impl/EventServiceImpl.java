@@ -12,9 +12,9 @@ import com.padimasso.autocasting.application.shared.web.SliceResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
@@ -34,13 +34,11 @@ public class EventServiceImpl implements EventService {
     public SliceResponse<EventCardResponse> search(EventFilter filter, int page, int size) {
         int ps = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 
-        var pageable = PageRequest.of(
-            page,
-            ps,
-            Sort.by(Sort.Direction.ASC, "startDate", "id")
-        );
+        LocalDate today = CastingDeadlines.today();
+        var spec = EventSpecs.fromFilter(filter, today).and(EventSpecs.catalogOrder(today));
 
-        var result = eventRepository.findAll(EventSpecs.fromFilter(filter, CastingDeadlines.today()), pageable);
+        // Unsorted on purpose: the catalog order is applied by EventSpecs.catalogOrder.
+        var result = eventRepository.findAll(spec, PageRequest.of(page, ps));
 
         List<EventCardResponse> items = result.getContent().stream()
             .map(eventMapper::toCardResponse)
@@ -54,7 +52,7 @@ public class EventServiceImpl implements EventService {
     public EventDetailsResponse getBySlug(String slug) {
         if (slug == null || slug.isBlank()) throw new IllegalArgumentException(GENERAL_SLUG_REQUIRED);
 
-        return eventRepository.findPublicBySlug(slug.trim())
+        return eventRepository.findPublicBySlug(slug.trim(), CastingDeadlines.today())
             .map(eventMapper::toDetailsResponse)
             .orElseThrow(() -> new IllegalArgumentException(EVENTS_NOT_FOUND));
     }

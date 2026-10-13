@@ -24,7 +24,7 @@ public class EventController {
 
     private final EventService eventService;
 
-    @Operation(summary = "Search public events (upcoming by default, overlap with dateFrom/dateTo)")
+    @Operation(summary = "Search public events (only events that have not ended; overlap with dateFrom/dateTo)")
     @GetMapping(AppConstants.EVENTS_API_URL)
     public SliceResponse<EventCardResponse> searchEvents(
         @RequestParam(defaultValue = "0") int page,

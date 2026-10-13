@@ -1,5 +1,6 @@
 package com.padimasso.autocasting.application.events.service.impl;
 
+import com.padimasso.autocasting.application.castings.util.CastingDeadlines;
 import com.padimasso.autocasting.application.events.dto.EventFilter;
 import com.padimasso.autocasting.application.events.dto.response.EventCardResponse;
 import com.padimasso.autocasting.application.events.dto.response.EventDetailsResponse;
@@ -15,7 +16,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,10 +30,10 @@ import static com.padimasso.autocasting.exception.ErrorMessageKeys.EVENTS_NOT_FO
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_SLUG_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -117,16 +117,13 @@ class EventServiceImplTest {
     }
 
     @Test
-    void search_sortsByStartDateAscendingThenId() {
+    void search_usesAnUnsortedPageRequestBecauseTheCatalogOrderLivesInTheSpecification() {
         when(eventRepository.findAll(any(Specification.class), any(Pageable.class)))
             .thenReturn(new PageImpl<>(List.of()));
 
         service.search(new EventFilter(null, null), 0, 8);
 
-        Sort sort = capturePageable().getSort();
-        assertNotNull(sort.getOrderFor("startDate"));
-        assertEquals(Sort.Direction.ASC, sort.getOrderFor("startDate").getDirection());
-        assertNotNull(sort.getOrderFor("id"));
+        assertFalse(capturePageable().getSort().isSorted());
     }
 
     @Test
@@ -153,7 +150,7 @@ class EventServiceImplTest {
     void getBySlug_returnsFullEventDetails() {
         EventEntity event = event("Muestra de teatro", access("online"), LocalDate.of(2026, 10, 12), LocalDate.of(2026, 10, 14));
         event.setTicketUrl("https://example.com/tickets/1");
-        when(eventRepository.findPublicBySlug(event.getSlug())).thenReturn(Optional.of(event));
+        when(eventRepository.findPublicBySlug(eq(event.getSlug()), any(LocalDate.class))).thenReturn(Optional.of(event));
 
         EventDetailsResponse response = service.getBySlug(" " + event.getSlug() + " ");
 
@@ -169,7 +166,7 @@ class EventServiceImplTest {
 
     @Test
     void getBySlug_unknownSlug_throwsNotFound() {
-        when(eventRepository.findPublicBySlug("E-UNKNOWN")).thenReturn(Optional.empty());
+        when(eventRepository.findPublicBySlug(eq("E-UNKNOWN"), any(LocalDate.class))).thenReturn(Optional.empty());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.getBySlug("E-UNKNOWN"));
 
@@ -181,5 +178,19 @@ class EventServiceImplTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.getBySlug("  "));
 
         assertEquals(GENERAL_SLUG_REQUIRED, ex.getMessage());
+    }
+
+    @Test
+    void getBySlug_looksTheEventUpWithTodayInTheBusinessZoneSoEndedEventsAreNotFound() {
+        when(eventRepository.findPublicBySlug(eq("E-ENDED"), any(LocalDate.class))).thenReturn(Optional.empty());
+        LocalDate before = CastingDeadlines.today();
+
+        assertThrows(IllegalArgumentException.class, () -> service.getBySlug("E-ENDED"));
+
+        LocalDate after = CastingDeadlines.today();
+        ArgumentCaptor<LocalDate> today = ArgumentCaptor.forClass(LocalDate.class);
+        verify(eventRepository).findPublicBySlug(eq("E-ENDED"), today.capture());
+        assertFalse(today.getValue().isBefore(before));
+        assertFalse(today.getValue().isAfter(after));
     }
 }
