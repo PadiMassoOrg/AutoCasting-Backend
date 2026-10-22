@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-22
+
+- Infra: Heroku dado de baja; el Backend se despliega solo en Fly.io. Se eliminan `Procfile` y `system.properties` (y sus entradas en `.dockerignore`).
+- Sin cambios de código de la aplicación ni de esquema.
+- Scripts: sin cambios en `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` ni `HARD_DELETE.sql` (sin cambios de esquema).
+
 ## 2026-10-01
 
 - Versión: `1.6.0`
