@@ -11,8 +11,8 @@ import com.padimasso.autocasting.application.proposal.dto.response.ProposalLinkR
 import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import com.padimasso.autocasting.application.proposal.repository.ProposalRepository;
-import com.padimasso.autocasting.application.proposal.service.internal.ProposalTokenGenerator;
 import com.padimasso.autocasting.application.proposal.type.ProposalTypeHandlerRegistry;
+import com.padimasso.autocasting.application.shared.util.SecureTokenGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +33,7 @@ public class AdminProposalServiceImpl implements AdminProposalService {
 
     private final ProposalRepository proposalRepository;
     private final AdminProposalMapper adminProposalMapper;
-    private final ProposalTokenGenerator proposalTokenGenerator;
+    private final SecureTokenGenerator secureTokenGenerator;
     private final ProposalTypeHandlerRegistry proposalTypeHandlerRegistry;
 
     @Override
@@ -71,7 +71,7 @@ public class AdminProposalServiceImpl implements AdminProposalService {
     @Transactional
     public ProposalLinkResponse regenerateLink(UUID proposalId) {
         ProposalEntity proposal = lockPendingProposal(proposalId);
-        proposal.setToken(proposalTokenGenerator.generate());
+        proposal.setToken(secureTokenGenerator.generate());
         proposal.setFirstOpenedAt(null);
         return new ProposalLinkResponse(proposalRepository.save(proposal).getToken());
     }

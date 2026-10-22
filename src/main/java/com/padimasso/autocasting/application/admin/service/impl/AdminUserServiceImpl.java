@@ -1,11 +1,9 @@
 package com.padimasso.autocasting.application.admin.service.impl;
 
-import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
-import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
@@ -18,18 +16,18 @@ import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
 import com.padimasso.autocasting.application.admin.repository.specification.AdminUserSpecs;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.auth.model.UserMode;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import com.padimasso.autocasting.application.common.model.EntityType;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.history.dto.HistoryChangeEntry;
 import com.padimasso.autocasting.application.history.service.HistoryService;
-import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
-import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
-import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
+import com.padimasso.autocasting.application.email.service.EmailDeliveryService;
+import com.padimasso.autocasting.application.email.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility;
 import com.padimasso.autocasting.exception.ApiException;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +35,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -44,9 +43,7 @@ import java.util.stream.Collectors;
 import static com.padimasso.autocasting.config.AppConstants.MAX_PAGE_SIZE;
 import static com.padimasso.autocasting.config.AppConstants.PROPOSALS_SYSTEM_USER_ID;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.ADMIN_USER_UPDATE_NO_CHANGES;
-import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_IDS_REQUIRED;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_INVALID_PARAMETER;
-import static com.padimasso.autocasting.exception.ErrorMessageKeys.GENERAL_UNEXPECTED;
 import static com.padimasso.autocasting.exception.ErrorMessageKeys.PROFILE_NOT_FOUND;
 
 @Service
@@ -62,7 +59,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final AdminUserMapper adminUserMapper;
     private final AdminProfileMapper adminProfileMapper;
     private final HistoryService historyService;
-    private final TalentWelcomeEmailService talentWelcomeEmailService;
+    private final EmailDeliveryService emailDeliveryService;
     private final TalentPhotoRemovedEmailService talentPhotoRemovedEmailService;
 
     @Override
@@ -71,7 +68,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         int size,
         String q,
         boolean notVisibleInCatalog,
-        AdminUsersOrderBy orderBy
+        AdminUsersOrderBy orderBy,
+        UserMode userType
     ) {
         int normalizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int normalizedPage = Math.max(page, 0);
@@ -84,6 +82,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (notVisibleInCatalog) {
             var notVisibleSpec = AdminUserSpecs.notVisibleInTalentCatalog();
             spec = spec.and(notVisibleSpec);
+        }
+        if (userType != null) {
+            spec = spec.and(AdminUserSpecs.byUserType(userType));
         }
         if (effectiveOrderBy.isActivityOrder()) {
             spec = spec.and(AdminUserSpecs.orderByActivity(effectiveOrderBy));
@@ -112,6 +113,8 @@ public class AdminUserServiceImpl implements AdminUserService {
             });
         }
 
+        Map<UUID, List<EmailDeliveryService.LastDelivery>> lastDeliveries = emailDeliveryService.findLastDeliveries(userIds);
+
         var items = users.stream()
             .map(user -> {
                 var activity = activityByUserId.get(user.getId());
@@ -120,7 +123,8 @@ public class AdminUserServiceImpl implements AdminUserService {
                     activity != null ? activity.getEmployerCompanyName() : null,
                     activity != null ? activity.getTalentStageName() : null,
                     talentPublicSlugs.get(user.getId()),
-                    activity != null ? activity.getLastSavedAt() : null
+                    activity != null ? activity.getLastSavedAt() : null,
+                    lastDeliveries.getOrDefault(user.getId(), List.of())
                 );
             })
             .toList();
@@ -164,6 +168,13 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (user.isDeleted() != nextDeleted) {
             changes.add(new HistoryChangeEntry("deleted", user.isDeleted(), nextDeleted));
             user.setDeleted(nextDeleted);
+        }
+
+        var currentlySubscribed = user.getMarketingEmailsUnsubscribedAt() == null;
+        var nextSubscribed = request.emailingListSubscribed();
+        if (nextSubscribed != null && nextSubscribed != currentlySubscribed) {
+            changes.add(new HistoryChangeEntry("emailingListSubscribed", currentlySubscribed, nextSubscribed));
+            user.setMarketingEmailsUnsubscribedAt(nextSubscribed ? null : LocalDateTime.now());
         }
 
         if (changes.isEmpty()) {
@@ -265,42 +276,6 @@ public class AdminUserServiceImpl implements AdminUserService {
             .orElseThrow(() -> ApiException.notFound(PROFILE_NOT_FOUND));
 
         return adminProfileMapper.toEmployerProfileResponse(profile);
-    }
-
-    @Override
-    public AdminBulkTalentWelcomeEmailResultResponse sendBulkTalentWelcomeEmail(AdminBulkTalentWelcomeEmailRequest request) {
-        List<UUID> uniqueUserIds = request.userIds().stream()
-            .filter(Objects::nonNull)
-            .distinct()
-            .toList();
-
-        if (uniqueUserIds.isEmpty()) {
-            throw ApiException.badRequest(GENERAL_IDS_REQUIRED);
-        }
-
-        List<TalentProfileEntity> profiles = talentProfileRepository.findAllByUserIdInForAdmin(uniqueUserIds);
-        Map<UUID, TalentProfileEntity> profilesByUserId = new HashMap<>();
-        profiles.forEach(profile -> profilesByUserId.put(profile.getUser().getId(), profile));
-
-        int sentCount = 0;
-        List<AdminBulkTalentWelcomeEmailResultResponse.Failure> failures = new ArrayList<>();
-
-        for (UUID userId : uniqueUserIds) {
-            TalentProfileEntity profile = profilesByUserId.get(userId);
-            if (profile == null) {
-                failures.add(new AdminBulkTalentWelcomeEmailResultResponse.Failure(userId, PROFILE_NOT_FOUND));
-                continue;
-            }
-
-            boolean sent = talentWelcomeEmailService.sendWelcomeEmail(profile);
-            if (sent) {
-                sentCount++;
-            } else {
-                failures.add(new AdminBulkTalentWelcomeEmailResultResponse.Failure(userId, GENERAL_UNEXPECTED));
-            }
-        }
-
-        return new AdminBulkTalentWelcomeEmailResultResponse(sentCount, failures.size(), failures);
     }
 
     private UserEntity findManageableUserOrThrow(UUID userId) {

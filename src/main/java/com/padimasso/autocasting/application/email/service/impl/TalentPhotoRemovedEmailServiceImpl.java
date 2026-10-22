@@ -1,8 +1,8 @@
-package com.padimasso.autocasting.application.talent.service.impl;
+package com.padimasso.autocasting.application.email.service.impl;
 
-import com.padimasso.autocasting.application.auth.service.EmailService;
+import com.padimasso.autocasting.application.email.service.EmailService;
+import com.padimasso.autocasting.application.email.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
-import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.config.AppProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

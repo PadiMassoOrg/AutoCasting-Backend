@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.admin.mapper;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResponse;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
+import com.padimasso.autocasting.application.email.service.EmailDeliveryService;
 import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,8 @@ public class AdminUserMapper {
         String employerCompanyName,
         String talentStageName,
         String talentPublicSlug,
-        LocalDateTime lastSavedAt
+        LocalDateTime lastSavedAt,
+        List<EmailDeliveryService.LastDelivery> lastDeliveries
     ) {
         return new AdminUserRowResponse(
             user.getId(),
@@ -34,6 +36,10 @@ public class AdminUserMapper {
             user.getEmployerOnboardingStatus(),
             talentPublicSlug,
             lastSavedAt,
+            user.getMarketingEmailsUnsubscribedAt() == null,
+            lastDeliveries.stream()
+                .map(delivery -> new AdminUserRowResponse.EmailDelivery(delivery.type(), delivery.lastSentAt()))
+                .toList(),
             user.isSuspended(),
             user.isDeleted(),
             user.getCreatedAt(),
@@ -54,6 +60,7 @@ public class AdminUserMapper {
             user.getEmployerOnboardingStatus(),
             user.isSuspended(),
             user.isDeleted(),
+            user.getMarketingEmailsUnsubscribedAt() == null,
             user.getCreatedAt(),
             user.getCreatedBy(),
             user.getModifiedAt(),

@@ -11,9 +11,9 @@ import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalProgress;
 import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import com.padimasso.autocasting.application.proposal.repository.ProposalRepository;
-import com.padimasso.autocasting.application.proposal.service.internal.ProposalTokenGenerator;
 import com.padimasso.autocasting.application.proposal.type.ProposalTypeHandler;
 import com.padimasso.autocasting.application.proposal.type.ProposalTypeHandlerRegistry;
+import com.padimasso.autocasting.application.shared.util.SecureTokenGenerator;
 import com.padimasso.autocasting.application.sitemetadata.model.ProposalTypeOptionEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ class AdminProposalServiceImplTest {
     @Mock
     private ProposalRepository proposalRepository;
     @Mock
-    private ProposalTokenGenerator proposalTokenGenerator;
+    private SecureTokenGenerator secureTokenGenerator;
     @Mock
     private ProposalTypeHandler castingHandler;
 
@@ -61,7 +61,7 @@ class AdminProposalServiceImplTest {
         service = new AdminProposalServiceImpl(
             proposalRepository,
             new AdminProposalMapper(),
-            proposalTokenGenerator,
+            secureTokenGenerator,
             new ProposalTypeHandlerRegistry(List.of(castingHandler))
         );
     }
@@ -185,7 +185,7 @@ class AdminProposalServiceImplTest {
     @Test
     void regenerateLink_pendingProposal_replacesTokenAndResetsFirstOpened() {
         ProposalEntity proposal = lockedProposal(ProposalStatus.PENDING);
-        when(proposalTokenGenerator.generate()).thenReturn("new-token");
+        when(secureTokenGenerator.generate()).thenReturn("new-token");
         when(proposalRepository.save(proposal)).thenReturn(proposal);
 
         var response = service.regenerateLink(proposal.getId());
@@ -200,7 +200,7 @@ class AdminProposalServiceImplTest {
         ProposalEntity proposal = lockedProposal(ProposalStatus.CLAIMED);
 
         assertThrows(IllegalStateException.class, () -> service.regenerateLink(proposal.getId()));
-        verify(proposalTokenGenerator, never()).generate();
+        verify(secureTokenGenerator, never()).generate();
     }
 
     @Test

@@ -2,7 +2,9 @@ package com.padimasso.autocasting.application.admin.repository.specification;
 
 import com.padimasso.autocasting.application.admin.model.AdminUserActivityEntity;
 import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
+import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.auth.model.UserMode;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.specification.TalentProfileSpecs;
@@ -126,6 +128,11 @@ public final class AdminUserSpecs {
 
     private static boolean isCountQuery(Class<?> resultType) {
         return Long.class.equals(resultType) || long.class.equals(resultType);
+    }
+
+    public static Specification<UserEntity> byUserType(UserMode userType) {
+        String onboardingStatusAttribute = userType == UserMode.TALENT ? "talentOnboardingStatus" : "employerOnboardingStatus";
+        return (root, query, cb) -> cb.notEqual(root.get(onboardingStatusAttribute), OnboardingStatus.NOT_STARTED);
     }
 
     public static Specification<UserEntity> excludingSystemUsers() {

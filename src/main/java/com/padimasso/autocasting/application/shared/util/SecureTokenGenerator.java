@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.proposal.service.internal;
+package com.padimasso.autocasting.application.shared.util;
 
 import org.springframework.stereotype.Component;
 
@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 @Component
-public class ProposalTokenGenerator {
+public class SecureTokenGenerator {
 
     static final int TOKEN_BYTES = 32;
 

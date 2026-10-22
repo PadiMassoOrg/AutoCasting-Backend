@@ -1,8 +1,9 @@
-package com.padimasso.autocasting.application.talent.service.impl;
+package com.padimasso.autocasting.application.email.service.impl;
 
-import com.padimasso.autocasting.application.auth.service.EmailService;
+import com.padimasso.autocasting.application.email.service.EmailService;
+import com.padimasso.autocasting.application.email.service.TalentWelcomeEmailService;
+import com.padimasso.autocasting.application.email.util.EmailUnsubscribeLinks;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
-import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.application.talent.util.TalentCatalogVisibility;
 import com.padimasso.autocasting.config.AppProperties;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -26,7 +29,7 @@ public class TalentWelcomeEmailServiceImpl implements TalentWelcomeEmailService 
     private final AppProperties appProperties;
 
     @Override
-    public boolean sendWelcomeEmail(TalentProfileEntity profile) {
+    public boolean sendWelcomeEmail(TalentProfileEntity profile, String unsubscribeToken) {
         var basicInfo = profile.getBasicInfo();
         String talentName = basicInfo != null ? basicInfo.getStageName() : null;
         String email = profile.getUser() != null ? profile.getUser().getEmail() : null;
@@ -51,6 +54,11 @@ public class TalentWelcomeEmailServiceImpl implements TalentWelcomeEmailService 
             ctx.setVariable("instagramPngUrl", assetsBase + "/insta_icon.png");
             ctx.setVariable("linkedinPngUrl", assetsBase + "/linkedin_icon.png");
             ctx.setVariable("talentName", talentName);
+            Map<String, String> headers = Map.of();
+            if (unsubscribeToken != null) {
+                ctx.setVariable("unsubscribeUrl", EmailUnsubscribeLinks.pageUrl(appProperties, unsubscribeToken));
+                headers = EmailUnsubscribeLinks.headers(appProperties, unsubscribeToken);
+            }
 
             String subject;
             String templateName;
@@ -66,7 +74,7 @@ public class TalentWelcomeEmailServiceImpl implements TalentWelcomeEmailService 
             }
 
             String htmlBody = templateEngine.process(templateName, ctx);
-            emailService.sendHtmlEmail(email, subject, htmlBody);
+            emailService.sendHtmlEmail(email, subject, htmlBody, Map.of(), headers);
             return true;
         } catch (Exception e) {
             log.error("Failed to send talent welcome email for profileId {}", profile.getId(), e);

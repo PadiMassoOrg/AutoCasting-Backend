@@ -11,6 +11,7 @@ public record AdminUserUpdateRequest(
     UserMode activeMode,
     boolean suspended,
     boolean deleted,
+    Boolean emailingListSubscribed,
     @NotBlank(message = "validation.required")
     String note
 ) {

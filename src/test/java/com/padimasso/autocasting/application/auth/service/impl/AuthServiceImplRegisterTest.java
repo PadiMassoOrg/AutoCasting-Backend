@@ -7,11 +7,13 @@ import com.padimasso.autocasting.application.auth.model.RoleEntity;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.repository.RoleRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
-import com.padimasso.autocasting.application.auth.service.EmailService;
 import com.padimasso.autocasting.application.auth.service.GoogleIdTokenVerifierService;
 import com.padimasso.autocasting.application.auth.service.JwtService;
 import com.padimasso.autocasting.application.auth.service.RefreshTokenService;
 import com.padimasso.autocasting.application.auth.service.UserProvisioningService;
+import com.padimasso.autocasting.application.email.service.EmailDeliveryService;
+import com.padimasso.autocasting.application.email.service.PasswordResetEmailService;
+import com.padimasso.autocasting.application.email.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.application.employer.model.EmployerBasicInfoEntity;
 import com.padimasso.autocasting.application.employer.model.EmployerProfileEntity;
 import com.padimasso.autocasting.application.employer.repository.EmployerBasicInfoRepository;
@@ -29,8 +31,6 @@ import com.padimasso.autocasting.application.talent.repository.CharacteristicsRe
 import com.padimasso.autocasting.application.talent.repository.ContactRepository;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
-import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
-import com.padimasso.autocasting.config.AppProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +38,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,8 +58,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplRegisterTest {
 
-    @Mock
-    private SpringTemplateEngine templateEngine;
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -89,11 +85,7 @@ class AuthServiceImplRegisterTest {
     @Mock
     private RefreshTokenService refreshTokenService;
     @Mock
-    private EmailService emailService;
-    @Mock
-    private AppProperties appProperties;
-    @Mock
-    private MessageSource messageSource;
+    private PasswordResetEmailService passwordResetEmailService;
     @Mock
     private AuthContext authContext;
     @Mock
@@ -105,6 +97,8 @@ class AuthServiceImplRegisterTest {
     @Mock
     private TalentWelcomeEmailService talentWelcomeEmailService;
     @Mock
+    private EmailDeliveryService emailDeliveryService;
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     private AuthServiceImpl service;
@@ -115,7 +109,6 @@ class AuthServiceImplRegisterTest {
     @BeforeEach
     void setUp() {
         service = new AuthServiceImpl(
-            templateEngine,
             userRepository,
             roleRepository,
             planRepository,
@@ -129,14 +122,13 @@ class AuthServiceImplRegisterTest {
             passwordEncoder,
             jwtService,
             refreshTokenService,
-            emailService,
-            appProperties,
-            messageSource,
+            passwordResetEmailService,
             authContext,
             googleIdTokenVerifierService,
             userProvisioningService,
             legalService,
             talentWelcomeEmailService,
+            emailDeliveryService,
             eventPublisher
         );
     }

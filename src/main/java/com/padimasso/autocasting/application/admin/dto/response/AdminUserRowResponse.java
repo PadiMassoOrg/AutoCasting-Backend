@@ -3,6 +3,7 @@ package com.padimasso.autocasting.application.admin.dto.response;
 import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.UserAccountProvider;
 import com.padimasso.autocasting.application.auth.model.UserMode;
+import com.padimasso.autocasting.application.email.model.EmailType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,8 @@ public record AdminUserRowResponse(
     OnboardingStatus employerOnboardingStatus,
     String talentPublicSlug,
     LocalDateTime lastSavedAt,
+    boolean emailingListSubscribed,
+    List<EmailDelivery> emailDeliveries,
     boolean suspended,
     boolean deleted,
     LocalDateTime createdAt,
@@ -27,4 +30,9 @@ public record AdminUserRowResponse(
     LocalDateTime modifiedAt,
     String modifiedBy
 ) {
+    public record EmailDelivery(
+        EmailType type,
+        LocalDateTime lastSentAt
+    ) {
+    }
 }

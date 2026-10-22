@@ -7,6 +7,8 @@ import com.padimasso.autocasting.application.admin.mapper.AdminUserMapper;
 import com.padimasso.autocasting.application.admin.repository.AdminUserActivityRepository;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
 import com.padimasso.autocasting.application.common.model.EntityType;
+import com.padimasso.autocasting.application.email.service.EmailDeliveryService;
+import com.padimasso.autocasting.application.email.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.model.MediaEntity;
@@ -14,8 +16,6 @@ import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
-import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
-import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import com.padimasso.autocasting.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
     @Mock
     private HistoryService historyService;
     @Mock
-    private TalentWelcomeEmailService talentWelcomeEmailService;
+    private EmailDeliveryService emailDeliveryService;
     @Mock
     private TalentPhotoRemovedEmailService talentPhotoRemovedEmailService;
 
@@ -84,7 +84,7 @@ class AdminUserServiceImplRemoveTalentMediaTest {
             adminUserMapper,
             adminProfileMapper,
             historyService,
-            talentWelcomeEmailService,
+            emailDeliveryService,
             talentPhotoRemovedEmailService
         );
 

@@ -1,7 +1,7 @@
-package com.padimasso.autocasting.application.talent.service.impl;
+package com.padimasso.autocasting.application.email.service.impl;
 
 import com.padimasso.autocasting.application.auth.model.UserEntity;
-import com.padimasso.autocasting.application.auth.service.EmailService;
+import com.padimasso.autocasting.application.email.service.EmailService;
 import com.padimasso.autocasting.application.talent.model.BasicInfoEntity;
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.config.AppProperties;

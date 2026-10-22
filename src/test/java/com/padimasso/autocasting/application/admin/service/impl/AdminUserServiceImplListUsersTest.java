@@ -6,14 +6,16 @@ import com.padimasso.autocasting.application.admin.model.AdminUserActivityEntity
 import com.padimasso.autocasting.application.admin.repository.AdminUserActivityRepository;
 import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
+import com.padimasso.autocasting.application.auth.model.UserMode;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.email.model.EmailType;
+import com.padimasso.autocasting.application.email.service.EmailDeliveryService;
+import com.padimasso.autocasting.application.email.service.TalentPhotoRemovedEmailService;
 import com.padimasso.autocasting.application.employer.repository.EmployerProfileRepository;
 import com.padimasso.autocasting.application.history.service.HistoryService;
 import com.padimasso.autocasting.application.talent.repository.MediaRepository;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
 import com.padimasso.autocasting.application.talent.service.MediaStorageService;
-import com.padimasso.autocasting.application.talent.service.TalentPhotoRemovedEmailService;
-import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +29,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,7 +65,7 @@ class AdminUserServiceImplListUsersTest {
     @Mock
     private HistoryService historyService;
     @Mock
-    private TalentWelcomeEmailService talentWelcomeEmailService;
+    private EmailDeliveryService emailDeliveryService;
     @Mock
     private TalentPhotoRemovedEmailService talentPhotoRemovedEmailService;
 
@@ -81,7 +84,7 @@ class AdminUserServiceImplListUsersTest {
             adminUserMapper,
             adminProfileMapper,
             historyService,
-            talentWelcomeEmailService,
+            emailDeliveryService,
             talentPhotoRemovedEmailService
         );
         user = UserEntity.builder().id(UUID.randomUUID()).build();
@@ -94,7 +97,7 @@ class AdminUserServiceImplListUsersTest {
         when(adminUserActivityRepository.findAllById(anyList())).thenReturn(List.of());
         when(talentProfileRepository.findAllByUserIdInForAdmin(anyList())).thenReturn(List.of());
 
-        service.listUsers(0, 8, null, false, orderBy);
+        service.listUsers(0, 8, null, false, orderBy, null);
 
         var pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(userRepository).findAllIncludingDeleted(any(Specification.class), pageable.capture());
@@ -111,16 +114,16 @@ class AdminUserServiceImplListUsersTest {
         ));
         when(talentProfileRepository.findAllByUserIdInForAdmin(anyList())).thenReturn(List.of());
 
-        service.listUsers(0, 8, null, false, AdminUsersOrderBy.CREATION_DATE_DESC);
+        service.listUsers(0, 8, null, false, AdminUsersOrderBy.CREATION_DATE_DESC, null);
 
-        verify(adminUserMapper).toRowResponse(eq(user), eq("Acme Studio"), eq("Jane Doe"), isNull(), eq(LAST_SAVED_AT));
+        verify(adminUserMapper).toRowResponse(eq(user), eq("Acme Studio"), eq("Jane Doe"), isNull(), eq(LAST_SAVED_AT), eq(List.of()));
     }
 
     @Test
     void listUsers_userMissingFromView_hasNoActivityValues() {
         listAndCapturePageable(AdminUsersOrderBy.CREATION_DATE_DESC);
 
-        verify(adminUserMapper).toRowResponse(eq(user), isNull(), isNull(), isNull(), isNull());
+        verify(adminUserMapper).toRowResponse(eq(user), isNull(), isNull(), isNull(), isNull(), eq(List.of()));
     }
 
     @Test
@@ -144,5 +147,20 @@ class AdminUserServiceImplListUsersTest {
         var pageable = listAndCapturePageable(AdminUsersOrderBy.LAST_SAVED_DESC);
 
         assertTrue(pageable.getSort().isUnsorted());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void listUsers_rowCarriesTheLastDeliveryOfEachEmailType() {
+        var lastDeliveries = List.of(new EmailDeliveryService.LastDelivery(EmailType.TALENT_WELCOME, LocalDateTime.of(2026, 10, 1, 9, 30)));
+        when(userRepository.findAllIncludingDeleted(any(Specification.class), any(Pageable.class)))
+            .thenReturn(new PageImpl<>(List.of(user)));
+        when(adminUserActivityRepository.findAllById(anyList())).thenReturn(List.of());
+        when(talentProfileRepository.findAllByUserIdInForAdmin(anyList())).thenReturn(List.of());
+        when(emailDeliveryService.findLastDeliveries(List.of(user.getId()))).thenReturn(Map.of(user.getId(), lastDeliveries));
+
+        service.listUsers(0, 8, null, false, AdminUsersOrderBy.CREATION_DATE_DESC, UserMode.TALENT);
+
+        verify(adminUserMapper).toRowResponse(eq(user), isNull(), isNull(), isNull(), isNull(), eq(lastDeliveries));
     }
 }

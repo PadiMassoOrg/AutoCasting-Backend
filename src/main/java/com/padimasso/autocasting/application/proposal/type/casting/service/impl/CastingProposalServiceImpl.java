@@ -14,12 +14,12 @@ import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalProgress;
 import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import com.padimasso.autocasting.application.proposal.repository.ProposalRepository;
-import com.padimasso.autocasting.application.proposal.service.internal.ProposalTokenGenerator;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.request.CastingProposalCreateRequest;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.request.CastingProposalRoleRequest;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.response.CastingProposalCreatedResponse;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.response.CastingProposalDetailsResponse;
 import com.padimasso.autocasting.application.proposal.type.casting.service.CastingProposalService;
+import com.padimasso.autocasting.application.shared.util.SecureTokenGenerator;
 import com.padimasso.autocasting.application.shared.util.TextNormalizer;
 import com.padimasso.autocasting.application.sitemetadata.model.ProposalTypeOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.repository.ProposalTypeOptionRepository;
@@ -49,7 +49,7 @@ public class CastingProposalServiceImpl implements CastingProposalService {
     private final ProposalTypeOptionRepository proposalTypeOptionRepository;
     private final SiteMetadataResolver siteMetadataResolver;
     private final CastingDataApplier castingDataApplier;
-    private final ProposalTokenGenerator proposalTokenGenerator;
+    private final SecureTokenGenerator secureTokenGenerator;
     private final AdminCastingMapper adminCastingMapper;
 
     @Override
@@ -75,7 +75,7 @@ public class CastingProposalServiceImpl implements CastingProposalService {
 
         ProposalEntity proposal = ProposalEntity.builder()
             .type(castingType)
-            .token(proposalTokenGenerator.generate())
+            .token(secureTokenGenerator.generate())
             .status(ProposalStatus.PENDING)
             .casting(savedCasting)
             .build();

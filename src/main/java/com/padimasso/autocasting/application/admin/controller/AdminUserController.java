@@ -1,11 +1,11 @@
 package com.padimasso.autocasting.application.admin.controller;
 
-import com.padimasso.autocasting.application.admin.dto.request.AdminBulkTalentWelcomeEmailRequest;
+import com.padimasso.autocasting.application.admin.dto.request.AdminBulkEmailRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminEmployerProfileUpdateRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminRemoveTalentMediaRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentMediaSlot;
 import com.padimasso.autocasting.application.admin.dto.request.AdminTalentProfileUpdateRequest;
-import com.padimasso.autocasting.application.admin.dto.response.AdminBulkTalentWelcomeEmailResultResponse;
+import com.padimasso.autocasting.application.admin.dto.response.AdminBulkEmailResultResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminEmployerProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminTalentProfileResponse;
 import com.padimasso.autocasting.application.admin.dto.response.AdminUserDetailResponse;
@@ -13,9 +13,11 @@ import com.padimasso.autocasting.application.admin.dto.response.AdminUserRowResp
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserSuspensionRequest;
 import com.padimasso.autocasting.application.admin.dto.request.AdminUserUpdateRequest;
 import com.padimasso.autocasting.application.admin.repository.order.AdminUsersOrderBy;
+import com.padimasso.autocasting.application.admin.service.AdminBulkEmailService;
 import com.padimasso.autocasting.application.admin.service.AdminEmployerProfileEditService;
 import com.padimasso.autocasting.application.admin.service.AdminTalentProfileEditService;
 import com.padimasso.autocasting.application.admin.service.AdminUserService;
+import com.padimasso.autocasting.application.auth.model.UserMode;
 import com.padimasso.autocasting.application.common.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -39,7 +41,7 @@ import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_SUSPENSIO
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_TALENT_MEDIA_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USER_TALENT_PROFILE_API_URL;
 import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_API_URL;
-import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL;
+import static com.padimasso.autocasting.config.AppConstants.ADMIN_USERS_BULK_EMAILS_API_URL;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,6 +51,7 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
     private final AdminTalentProfileEditService adminTalentProfileEditService;
     private final AdminEmployerProfileEditService adminEmployerProfileEditService;
+    private final AdminBulkEmailService adminBulkEmailService;
 
     @Operation(
         summary = "List users (paginated)",
@@ -64,9 +67,11 @@ public class AdminUserController {
         @Parameter(description = "When true, only returns talents whose profile is not visible in the public catalog (e.g. missing required photos, suspended, or deleted).")
         @RequestParam(defaultValue = "false") boolean notVisibleInCatalog,
         @Parameter(description = "Sort order. Name and last-saved orders place users without a value last.")
-        @RequestParam(defaultValue = "LAST_SAVED_DESC") AdminUsersOrderBy orderBy
+        @RequestParam(defaultValue = "LAST_SAVED_DESC") AdminUsersOrderBy orderBy,
+        @Parameter(description = "When set, only returns users that started that side's onboarding (a user can be both).")
+        @RequestParam(required = false) UserMode userType
     ) {
-        return adminUserService.listUsers(page, size, q, notVisibleInCatalog, orderBy);
+        return adminUserService.listUsers(page, size, q, notVisibleInCatalog, orderBy, userType);
     }
 
     @Operation(
@@ -174,14 +179,14 @@ public class AdminUserController {
     }
 
     @Operation(
-        summary = "Bulk send talent onboarding welcome email",
-        description = "Sends the onboarding welcome email to each selected talent's user account.",
+        summary = "Bulk send an email",
+        description = "Sends the chosen email type to the selected users. Users that are inactive, outside the email's audience, unsubscribed, or that received the same email within the resend cooldown (unless forceResend) are skipped with a reason.",
         security = @SecurityRequirement(name = "bearerAuth")
     )
-    @PostMapping(ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL)
-    public AdminBulkTalentWelcomeEmailResultResponse sendBulkTalentWelcomeEmail(
-        @Valid @RequestBody AdminBulkTalentWelcomeEmailRequest request
+    @PostMapping(ADMIN_USERS_BULK_EMAILS_API_URL)
+    public AdminBulkEmailResultResponse sendBulkEmail(
+        @Valid @RequestBody AdminBulkEmailRequest request
     ) {
-        return adminUserService.sendBulkTalentWelcomeEmail(request);
+        return adminBulkEmailService.sendBulkEmail(request);
     }
 }
