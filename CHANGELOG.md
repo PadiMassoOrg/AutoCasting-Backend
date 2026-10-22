@@ -2,9 +2,19 @@
 
 ## 2026-10-22
 
+- Versión: `1.6.1`
+- Feature (AI-94): emails masivos desde Admin.
+  - Nuevo dominio `application/email`: los servicios de email existentes se mueven ahí y el email de reset de contraseña se extrae de `AuthServiceImpl` (`PasswordResetEmailService`). `ProposalTokenGenerator` pasa a ser el `SecureTokenGenerator` compartido.
+  - `POST /admin/users/bulk/emails` reemplaza a `/admin/users/bulk/welcome-email`. Cada `EmailType` declara su audiencia (talent / employer con onboarding iniciado, o todos). Se omiten, con motivo, los usuarios inactivos, fuera de la audiencia, dados de baja o que recibieron el mismo email en los últimos 10 días (esto último salvo `forceResend`). `GET /admin/emails/types` lista los tipos.
+  - `GET /admin/users` agrega el filtro `userType` y, por fila, `emailingListSubscribed` y el último envío de cada tipo de email. El `PATCH` del detalle de usuario acepta `emailingListSubscribed` (queda en el historial).
+  - Baja pública `POST /api/v1/email-preferences/{token}/unsubscribe` (también one-click RFC 8058). Los emails masivos llevan link de baja en el footer y headers `List-Unsubscribe`.
+  - El welcome automático al completar el onboarding de talent registra el envío.
+- Feature (AI-71): edición de castings desde Admin. Endpoints para editar un casting y sus roles, crear, duplicar y borrar roles (`/admin/castings/roles`), cambiar el estado de un casting (`PUT /admin/castings/{castingId}/status`, con las mismas transiciones que el employer) e historial del casting y sus roles (`GET /admin/castings/{castingId}/history`). Todos piden motivo y registran historial; castings cerrados y archivados no se editan.
+- Feature (AI-69): edición de perfiles desde Admin: `PATCH /admin/users/{userId}/profiles/talent` y `PATCH /admin/users/{userId}/profiles/employer`, atómicos, con motivo e historial compacto (`ProfileChangeDiff`). Fix de las búsquedas de créditos y educación del repositorio.
+- Infra (AI-69): JVM y JDBC fijados en UTC (`-Duser.timezone=UTC`, `hibernate.jdbc.time_zone=UTC`).
 - Infra: Heroku dado de baja; el Backend se despliega solo en Fly.io. Se eliminan `Procfile` y `system.properties` (y sus entradas en `.dockerignore`).
-- Sin cambios de código de la aplicación ni de esquema.
-- Scripts: sin cambios en `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` ni `HARD_DELETE.sql` (sin cambios de esquema).
+- Migración: `V63__email_deliveries_and_unsubscribe.sql` (tabla `email_deliveries`; `users.email_unsubscribe_token` y `users.marketing_emails_unsubscribed_at`).
+- Scripts: `SEED_DEMO_30_USERS_3_EMPLOYERS.sql` agrega personas de prueba (talents no visibles en catálogo, employer puro, envíos previos, baja y suspensión) y marca el onboarding de employer de `asd10`/`asd20`; `HARD_DELETE_USER_BY_EMAIL.sql` borra `email_deliveries`. `HARD_DELETE.sql` sin cambios.
 
 ## 2026-10-01
 
