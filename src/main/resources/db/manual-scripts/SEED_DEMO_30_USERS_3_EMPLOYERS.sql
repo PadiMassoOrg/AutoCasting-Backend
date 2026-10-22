@@ -23,6 +23,23 @@
 -- - cada talent recibe 6 registros de education y 6 de credits (hash-based, idempotente) para
 --   habilitar pruebas de scroll en el InfoCarousel de public-profile
 -- - legal_acceptances para current TERMS + PRIVACY (locale=es) en los usuarios seed
+-- - 5 talent profiles NO visibles en el catálogo (faltan fotos obligatorias), para probar el filtro
+--   "No visible en catálogo" y los emails de "Completá tu perfil" de Admin:
+--   * asd26 / asd27: sin headshot ni full body, onboarding de talent IN_PROGRESS
+--   * asd28: solo headshot; asd29: solo full body
+--   * asd25: employer puro (onboarding de talent NOT_STARTED, employer IN_PROGRESS, modo EMPLOYER)
+--   no reciben aplicaciones (sin fotos no pueden postularse)
+-- - personas para probar los emails masivos de Admin (email_deliveries / baja / suspensión):
+--   * asd21: TALENT_WELCOME enviado hace 3 días (se omite por RECENTLY_SENT, salvo "forzar")
+--   * asd22: TALENT_WELCOME enviado hace 25 días (se puede reenviar)
+--   * asd23: TALENT_WELCOME enviado hace 40 días y dado de baja (fila deshabilitada, "De baja")
+--   * asd24: suspendido (fila deshabilitada)
+--   * asd25: employer puro (fuera de la audiencia de TALENT_WELCOME)
+--   * asd26: TALENT_WELCOME (variante "completá tu perfil") enviado hace 5 días
+--   * asd10: talent + employer, TALENT_WELCOME enviado hace 15 días
+--   * asd30: dado de baja por un admin (sin token ni envíos previos; "Lista de emails" = no)
+--   asd21/asd22/asd23 tienen token de baja fijo `seed-unsub-<usuario>` para probar el link
+--   /unsubscribe/<token> del Frontend (ej. /unsubscribe/seed-unsub-asd22).
 --
 -- - los employers seed no tienen logo (image_url NULL); las fotos de talent usan URLs externas (Pexels).
 --   El seed no escribe URLs de Supabase Storage.
@@ -243,6 +260,14 @@ INSERT INTO tmp_employer_personas (email, company_type_code, company_name, tax_n
 ('asd@asd.com',   'sitemetadata.company_type.company',       'ASD Studios',               'ASD-0001', 'Buenos Aires, AR', 'https://autocasting.app',        'Productora demo para QA de castings y aplicaciones.'),
 ('asd10@asd.com', 'sitemetadata.company_type.talent_agency', 'Agencia Vértice Talentos',   'AVT-0010', 'Rosario, AR',       'https://verticetalentos.com.ar', 'Agencia de representación de talento para publicidad, cine y streaming.'),
 ('asd20@asd.com', 'sitemetadata.company_type.producer',      'Sur Content Producciones',   'SCP-0020', 'Córdoba, AR',       'https://surcontent.com.ar',      'Productora audiovisual independiente especializada en documentales y ficción.');
+
+-- Los employers "upgrade" (talents que además tienen empresa y castings) completaron también el
+-- onboarding de employer; sin esto quedan NOT_STARTED y no aparecen como employers en Admin.
+UPDATE public.users u
+SET employer_onboarding_status = 'COMPLETED'
+FROM tmp_employer_personas ep
+WHERE u.email = ep.email
+  AND u.employer_onboarding_status <> 'COMPLETED';
 
 -- ------------------------------------------------------------
 -- 1.5) Aceptaciones legales seed (current TERMS + PRIVACY, locale es)
@@ -591,6 +616,97 @@ FROM (
 JOIN tmp_headshot_pool hp ON hp.idx = m.headshot_idx
 JOIN tmp_headshot_pool fbp ON fbp.idx = m.full_body_idx
 WHERE tm.talent_profile_id = m.talent_profile_id;
+
+-- Talents NO visibles en catálogo: se les quitan las fotos obligatorias (headshot y/o full body).
+-- talent_onboarding_status NULL = se mantiene el COMPLETED del upsert de usuarios.
+CREATE TEMP TABLE tmp_not_visible_talents (
+  email text PRIMARY KEY,
+  keep_headshot boolean NOT NULL,
+  keep_full_body boolean NOT NULL,
+  talent_onboarding_status text
+) ON COMMIT DROP;
+
+INSERT INTO tmp_not_visible_talents (email, keep_headshot, keep_full_body, talent_onboarding_status) VALUES
+  ('asd25@asd.com', false, false, 'NOT_STARTED'),
+  ('asd26@asd.com', false, false, 'IN_PROGRESS'),
+  ('asd27@asd.com', false, false, 'IN_PROGRESS'),
+  ('asd28@asd.com', true,  false, NULL),
+  ('asd29@asd.com', false, true,  NULL);
+
+UPDATE public.talent_media tm
+SET headshot_image_url = CASE WHEN nv.keep_headshot THEN tm.headshot_image_url ELSE NULL END,
+    full_body_image_url = CASE WHEN nv.keep_full_body THEN tm.full_body_image_url ELSE NULL END,
+    modified_at = NOW(),
+    modified_by = 'SEED_DEMO'
+FROM public.talent_profile tp
+JOIN public.users u ON u.id = tp.user_id
+JOIN tmp_not_visible_talents nv ON nv.email = u.email
+WHERE tm.talent_profile_id = tp.id;
+
+UPDATE public.users u
+SET talent_onboarding_status = nv.talent_onboarding_status
+FROM tmp_not_visible_talents nv
+WHERE u.email = nv.email
+  AND nv.talent_onboarding_status IS NOT NULL;
+
+-- asd25: employer puro (nunca empezó el onboarding de talent)
+UPDATE public.users
+SET active_mode = 'EMPLOYER',
+    employer_onboarding_status = 'IN_PROGRESS'
+WHERE email = 'asd25@asd.com';
+
+-- ------------------------------------------------------------
+-- 2.5) Personas para emails masivos de Admin: envíos previos, baja y suspensión
+-- ------------------------------------------------------------
+
+-- Estado limpio en cada corrida (el upsert de usuarios no toca estas columnas)
+UPDATE public.users u
+SET suspended = false,
+    email_unsubscribe_token = NULL,
+    marketing_emails_unsubscribed_at = NULL
+FROM tmp_seed_user_ids t
+WHERE u.id = t.user_id;
+
+DELETE FROM public.email_deliveries ed
+USING tmp_seed_user_ids t
+WHERE ed.user_id = t.user_id;
+
+CREATE TEMP TABLE tmp_email_personas (
+  email text PRIMARY KEY,
+  welcome_sent_days_ago int,
+  has_unsubscribe_token boolean NOT NULL,
+  unsubscribed boolean NOT NULL,
+  suspended boolean NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO tmp_email_personas (email, welcome_sent_days_ago, has_unsubscribe_token, unsubscribed, suspended) VALUES
+  ('asd21@asd.com', 3,    true,  false, false),
+  ('asd22@asd.com', 25,   true,  false, false),
+  ('asd23@asd.com', 40,   true,  true,  false),
+  ('asd24@asd.com', NULL, false, false, true),
+  ('asd26@asd.com', 5,    false, false, false),
+  ('asd10@asd.com', 15,   false, false, false),
+  ('asd30@asd.com', NULL, false, true,  false);
+
+INSERT INTO public.email_deliveries (
+  id, user_id, email_type, sent_at, created_at, created_by, modified_at, modified_by, deleted
+)
+SELECT
+  gen_random_uuid(),
+  u.id,
+  'TALENT_WELCOME',
+  NOW() - make_interval(days => ep.welcome_sent_days_ago),
+  NOW(), 'SEED_DEMO', NOW(), 'SEED_DEMO', false
+FROM tmp_email_personas ep
+JOIN public.users u ON u.email = ep.email
+WHERE ep.welcome_sent_days_ago IS NOT NULL;
+
+UPDATE public.users u
+SET email_unsubscribe_token = CASE WHEN ep.has_unsubscribe_token THEN 'seed-unsub-' || split_part(ep.email, '@', 1) END,
+    marketing_emails_unsubscribed_at = CASE WHEN ep.unsubscribed THEN NOW() - interval '2 days' END,
+    suspended = ep.suspended
+FROM tmp_email_personas ep
+WHERE u.email = ep.email;
 
 -- Ethnicity / hair_color / eye_color / diet pools
 CREATE TEMP TABLE tmp_ethnicity_pool (
@@ -1477,6 +1593,7 @@ SELECT
 FROM public.users u
 JOIN public.talent_profile tp ON tp.user_id = u.id
 WHERE u.email ~ '^asd[0-9]+@asd\.com$'
+  AND u.email NOT IN (SELECT email FROM tmp_not_visible_talents)
 ORDER BY u.email;
 
 CREATE TEMP TABLE tmp_target_roles ON COMMIT DROP AS
@@ -1725,6 +1842,38 @@ IF (
     AND ld.type IN ('TERMS', 'PRIVACY')
 ) <> 62 THEN
   RAISE EXCEPTION 'Seed inválido: aceptaciones legales esperadas para usuarios demo (62) no coinciden';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.talent_media tm
+  JOIN public.talent_profile tp ON tp.id = tm.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email ~ '^asd[0-9]+@asd\.com$'
+    AND (tm.headshot_image_url IS NULL OR tm.full_body_image_url IS NULL)
+) <> (SELECT COUNT(*) FROM tmp_not_visible_talents) THEN
+  RAISE EXCEPTION 'Seed inválido: talents sin fotos obligatorias distintos de tmp_not_visible_talents (asd25..asd29)';
+END IF;
+
+IF (
+  SELECT COUNT(*)
+  FROM public.email_deliveries ed
+  JOIN tmp_seed_user_ids t ON t.user_id = ed.user_id
+) <> (SELECT COUNT(*) FROM tmp_email_personas WHERE welcome_sent_days_ago IS NOT NULL)
+  OR (SELECT COUNT(*) FROM public.users u JOIN tmp_seed_user_ids t ON t.user_id = u.id WHERE u.marketing_emails_unsubscribed_at IS NOT NULL) <> (SELECT COUNT(*) FROM tmp_email_personas WHERE unsubscribed)
+  OR (SELECT COUNT(*) FROM public.users u JOIN tmp_seed_user_ids t ON t.user_id = u.id WHERE u.suspended) <> (SELECT COUNT(*) FROM tmp_email_personas WHERE suspended)
+THEN
+  RAISE EXCEPTION 'Seed inválido: personas de emails masivos (envíos previos / baja / suspensión) no quedaron como se esperaba';
+END IF;
+
+IF EXISTS (
+  SELECT 1
+  FROM public.casting_application ca
+  JOIN public.talent_profile tp ON tp.id = ca.talent_profile_id
+  JOIN public.users u ON u.id = tp.user_id
+  WHERE u.email IN (SELECT email FROM tmp_not_visible_talents)
+) THEN
+  RAISE EXCEPTION 'Seed inválido: talents no visibles en catálogo con aplicaciones';
 END IF;
 
 IF (

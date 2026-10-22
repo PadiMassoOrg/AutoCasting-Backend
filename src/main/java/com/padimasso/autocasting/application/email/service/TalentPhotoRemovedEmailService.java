@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.talent.service;
+package com.padimasso.autocasting.application.email.service;
 
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 

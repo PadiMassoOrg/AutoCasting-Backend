@@ -90,6 +90,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, AppConstants.PROPOSALS_API_URL + "/*/claim").authenticated()
                     .requestMatchers(HttpMethod.GET, AppConstants.PROPOSALS_API_URL + "/*/claim-result").authenticated()
                     .requestMatchers(HttpMethod.GET, AppConstants.PROPOSALS_API_URL + "/*").permitAll()
+                    .requestMatchers(HttpMethod.POST, AppConstants.EMAIL_UNSUBSCRIBE_API_URL).permitAll()
                     // Authenticated Shared Endpoints
                     .requestMatchers(HttpMethod.GET, AppConstants.ME_API_URL).authenticated()
                     .requestMatchers(HttpMethod.PATCH, AppConstants.ONBOARDING_API_URL).authenticated()

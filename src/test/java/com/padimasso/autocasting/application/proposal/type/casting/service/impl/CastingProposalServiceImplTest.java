@@ -12,10 +12,10 @@ import com.padimasso.autocasting.application.proposal.dto.request.ProposalIntern
 import com.padimasso.autocasting.application.proposal.model.ProposalEntity;
 import com.padimasso.autocasting.application.proposal.model.ProposalStatus;
 import com.padimasso.autocasting.application.proposal.repository.ProposalRepository;
-import com.padimasso.autocasting.application.proposal.service.internal.ProposalTokenGenerator;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.request.CastingProposalCreateRequest;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.request.CastingProposalRoleRequest;
 import com.padimasso.autocasting.application.proposal.type.casting.dto.response.CastingProposalCreatedResponse;
+import com.padimasso.autocasting.application.shared.util.SecureTokenGenerator;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingModalityOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CastingStatusOptionEntity;
 import com.padimasso.autocasting.application.sitemetadata.model.CurrencyOptionEntity;
@@ -69,7 +69,7 @@ class CastingProposalServiceImplTest {
     @Mock
     private SiteMetadataResolver siteMetadataResolver;
     @Mock
-    private ProposalTokenGenerator proposalTokenGenerator;
+    private SecureTokenGenerator secureTokenGenerator;
     @Mock
     private AdminCastingMapper adminCastingMapper;
 
@@ -90,7 +90,7 @@ class CastingProposalServiceImplTest {
             proposalTypeOptionRepository,
             siteMetadataResolver,
             new CastingDataApplier(siteMetadataResolver),
-            proposalTokenGenerator,
+            secureTokenGenerator,
             adminCastingMapper
         );
 
@@ -116,7 +116,7 @@ class CastingProposalServiceImplTest {
         lenient().when(siteMetadataResolver.resolveSkillsOrThrow(Set.of())).thenReturn(Set.of());
         lenient().when(siteMetadataResolver.resolvePayRateTypeByCodeOrThrow(PAY_RATE_TYPE_UNPAID)).thenReturn(unpaid);
         lenient().when(siteMetadataResolver.resolveCurrencyByCodeOrThrow(CURRENCY_ARS)).thenReturn(new CurrencyOptionEntity());
-        lenient().when(proposalTokenGenerator.generate()).thenReturn("generated-token");
+        lenient().when(secureTokenGenerator.generate()).thenReturn("generated-token");
         lenient().when(castingRepository.save(any(CastingEntity.class))).thenAnswer(invocation -> {
             CastingEntity casting = invocation.getArgument(0);
             casting.setDefaultCode("C-TEST0001");

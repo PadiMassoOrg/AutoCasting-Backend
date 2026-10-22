@@ -59,7 +59,8 @@ public class AppConstants {
     public static final String ADMIN_USER_TALENT_MEDIA_API_URL = ADMIN_USER_TALENT_PROFILE_API_URL + "/media/{slot}";
     public static final String ADMIN_USER_EMPLOYER_PROFILE_API_URL = ADMIN_USERS_API_URL + "/{userId}/profiles/employer";
     public static final String ADMIN_USER_SUSPENSION_API_URL = ADMIN_USERS_API_URL + "/{userId}/suspension";
-    public static final String ADMIN_USERS_BULK_WELCOME_EMAIL_API_URL = ADMIN_USERS_API_URL + "/bulk/welcome-email";
+    public static final String ADMIN_USERS_BULK_EMAILS_API_URL = ADMIN_USERS_API_URL + "/bulk/emails";
+    public static final String ADMIN_EMAIL_TYPES_API_URL = ADMIN_API_URL + "/emails/types";
     public static final String ADMIN_HISTORY_API_URL = ADMIN_API_URL + "/history";
     public static final String ADMIN_HISTORY_ENTITY_API_URL = ADMIN_HISTORY_API_URL + "/{entityType}/{entityId}";
     public static final String ADMIN_PROPOSALS_API_URL = ADMIN_API_URL + "/proposals";
@@ -77,6 +78,10 @@ public class AppConstants {
     public static final String PROPOSAL_ATTACH_API_URL = PROPOSAL_API_URL + "/attach";
     public static final String PROPOSAL_CLAIM_API_URL = PROPOSAL_API_URL + "/claim";
     public static final String PROPOSAL_CLAIM_RESULT_API_URL = PROPOSAL_API_URL + "/claim-result";
+    // Email preferences - Public
+    public static final String EMAIL_PREFERENCES_API_URL = BASE_API_URL + "/email-preferences";
+    public static final String EMAIL_UNSUBSCRIBE_API_URL = EMAIL_PREFERENCES_API_URL + "/{token}/unsubscribe";
+    public static final int EMAIL_RESEND_COOLDOWN_DAYS = 10;
     // Legal
     public static final String LEGAL_CURRENT_DOCUMENT_API_URL = BASE_API_URL + "/legal/current";
     public static final String LEGAL_REQUIREMENTS_API_URL = BASE_API_URL + "/legal/requirements";

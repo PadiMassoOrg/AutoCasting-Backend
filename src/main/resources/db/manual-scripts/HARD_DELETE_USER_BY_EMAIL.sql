@@ -144,6 +144,10 @@ BEGIN
     DELETE FROM public.refresh_tokens
     WHERE user_id = v_user_id;
 
+    -- email_deliveries tiene ON DELETE CASCADE desde users, pero se borra explícito por claridad.
+    DELETE FROM public.email_deliveries
+    WHERE user_id = v_user_id;
+
     DELETE FROM public.user_roles
     WHERE user_id = v_user_id;
 

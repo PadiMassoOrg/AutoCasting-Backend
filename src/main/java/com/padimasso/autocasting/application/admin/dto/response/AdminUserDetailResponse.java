@@ -18,6 +18,7 @@ public record AdminUserDetailResponse(
     OnboardingStatus employerOnboardingStatus,
     boolean suspended,
     boolean deleted,
+    boolean emailingListSubscribed,
     LocalDateTime createdAt,
     String createdBy,
     LocalDateTime modifiedAt,

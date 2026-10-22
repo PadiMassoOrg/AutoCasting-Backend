@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -63,6 +64,12 @@ public class UserEntity extends AuditableEntity implements UserDetails {
     @Column(nullable = false)
     @Builder.Default
     private boolean suspended = false;
+
+    @Column(name = "email_unsubscribe_token", unique = true, length = 64)
+    private String emailUnsubscribeToken;
+
+    @Column(name = "marketing_emails_unsubscribed_at")
+    private LocalDateTime marketingEmailsUnsubscribedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

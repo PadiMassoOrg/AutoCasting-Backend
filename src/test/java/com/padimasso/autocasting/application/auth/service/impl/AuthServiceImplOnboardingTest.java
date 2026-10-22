@@ -7,8 +7,11 @@ import com.padimasso.autocasting.application.auth.model.OnboardingStatus;
 import com.padimasso.autocasting.application.auth.model.UserEntity;
 import com.padimasso.autocasting.application.auth.model.UserMode;
 import com.padimasso.autocasting.application.auth.repository.UserRepository;
+import com.padimasso.autocasting.application.email.model.EmailType;
+import com.padimasso.autocasting.application.email.service.EmailDeliveryService;
+import com.padimasso.autocasting.application.email.service.TalentWelcomeEmailService;
+import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 import com.padimasso.autocasting.application.talent.repository.TalentProfileRepository;
-import com.padimasso.autocasting.application.talent.service.TalentWelcomeEmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -17,10 +20,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +42,8 @@ class AuthServiceImplOnboardingTest {
     private TalentProfileRepository talentProfileRepository;
     @Mock
     private TalentWelcomeEmailService talentWelcomeEmailService;
+    @Mock
+    private EmailDeliveryService emailDeliveryService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
     @InjectMocks
@@ -82,5 +90,43 @@ class AuthServiceImplOnboardingTest {
         service.updateOnboarding(employerRequest(OnboardingStatus.IN_PROGRESS));
 
         verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    private UserEntity talentUser() {
+        UserEntity user = UserEntity.builder()
+            .id(UUID.randomUUID())
+            .talentOnboardingStatus(OnboardingStatus.IN_PROGRESS)
+            .employerOnboardingStatus(OnboardingStatus.NOT_STARTED)
+            .build();
+        when(authContext.getCurrentUserOrThrow()).thenReturn(user);
+        return user;
+    }
+
+    private UserOnboardingRequest talentCompletedRequest() {
+        return new UserOnboardingRequest(UserMode.TALENT, OnboardingStatus.COMPLETED, OnboardingStatus.NOT_STARTED);
+    }
+
+    @Test
+    void updateOnboarding_talentJustCompleted_sendsWelcomeEmailAndRecordsDelivery() {
+        UserEntity user = talentUser();
+        TalentProfileEntity profile = TalentProfileEntity.builder().id(UUID.randomUUID()).build();
+        when(talentProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
+        when(talentWelcomeEmailService.sendWelcomeEmail(profile)).thenReturn(true);
+
+        service.updateOnboarding(talentCompletedRequest());
+
+        verify(emailDeliveryService).recordAll(List.of(user.getId()), EmailType.TALENT_WELCOME);
+    }
+
+    @Test
+    void updateOnboarding_talentWelcomeEmailNotSent_doesNotRecordDelivery() {
+        UserEntity user = talentUser();
+        TalentProfileEntity profile = TalentProfileEntity.builder().id(UUID.randomUUID()).build();
+        when(talentProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
+        when(talentWelcomeEmailService.sendWelcomeEmail(profile)).thenReturn(false);
+
+        service.updateOnboarding(talentCompletedRequest());
+
+        verify(emailDeliveryService, never()).recordAll(anyCollection(), any());
     }
 }

@@ -1,4 +1,4 @@
-package com.padimasso.autocasting.application.talent.service;
+package com.padimasso.autocasting.application.email.service;
 
 import com.padimasso.autocasting.application.talent.model.TalentProfileEntity;
 
@@ -9,5 +9,13 @@ public interface TalentWelcomeEmailService {
      * (stage name, public slug or email) or the send itself fails, so callers can
      * decide how to handle a skipped/failed send without the caller's own flow breaking.
      */
-    boolean sendWelcomeEmail(TalentProfileEntity profile);
+    default boolean sendWelcomeEmail(TalentProfileEntity profile) {
+        return sendWelcomeEmail(profile, null);
+    }
+
+    /**
+     * Same as above; with an unsubscribe token (admin bulk sends) the email carries the unsubscribe
+     * footer link and the one-click unsubscribe headers.
+     */
+    boolean sendWelcomeEmail(TalentProfileEntity profile, String unsubscribeToken);
 }
